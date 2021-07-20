@@ -2,7 +2,8 @@
 
 ## Dependencies
 
-Ensure docker is installed on your system. View dockers website for installtion details
+Ensure docker is installed on your system. View dockers website for installation
+details.
 
 <https://docs.docker.com/engine/install/>
 
@@ -36,3 +37,4 @@ Alternatively, this can be run with the following command:
 ```bash
 docker run -t mwa_time_data_reconstructor
 ``
+
