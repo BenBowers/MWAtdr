@@ -52,18 +52,6 @@ COPY --chown=app:app local_test/ local_test/
 COPY --chown=app:app mpi_test/ mpi_test/
 
 
-# Image for main application executable.
-FROM base AS main
-
-# Build "main" CMake target only.
-RUN mkdir build && \
-	cd build && \
-	cmake .. && \
-	cmake --build . --target main
-
-ENTRYPOINT ["mpirun", "./build/main"]
-
-
 # Image for non-MPI tests.
 FROM base AS local_test
 
@@ -86,3 +74,15 @@ RUN mkdir build && \
 	cmake --build . --target mpi_test
 
 ENTRYPOINT ["mpirun", "./build/mpi_test"]
+
+
+# Image for main application executable.
+FROM base AS main
+
+# Build "main" CMake target only.
+RUN mkdir build && \
+	cd build && \
+	cmake .. && \
+	cmake --build . --target main
+
+ENTRYPOINT ["mpirun", "./build/main"]
