@@ -14,17 +14,14 @@ set(MPI_TEST_SOURCE_DIR "mpi_test")
 
 set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/main.cpp"
-    "${MAIN_SOURCE_DIR}/print.cpp"
 )
 
 set(LOCAL_TEST_SOURCE_FILES
     "${LOCAL_TEST_SOURCE_DIR}/main.cpp"
-    "${MAIN_SOURCE_DIR}/print.cpp"
 )
 
 set(MPI_TEST_SOURCE_FILES
     "${MPI_TEST_SOURCE_DIR}/main.cpp"
-    "${MAIN_SOURCE_DIR}/print.cpp"
 )
 
 # This must come before the add_executable(), otherwise they won't have any effect.
