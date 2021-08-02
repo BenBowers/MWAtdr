@@ -1,0 +1,9 @@
+*.cpp   text
+*.hpp   text
+*.md    text
+*.ps1   text eol=crlf
+*.sh    text eol=lf
+*.text  text
+
+Dockerfile  text
+LICENSE text
