@@ -1,21 +1,25 @@
 #pragma once
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <optional>
 
 
+struct AppConfig;
+struct AntennaConfig;
+struct AntennaInputRange;
+struct ChannelRemapping;
+struct ObservationProcessingResults;
 class PrimaryNodeCommunicator;
 class SecondaryNodeCommunicator;
 
 
 // Represents and manages the communication channel between nodes (processes).
-class InternodeCommunicator {
+class InternodeCommunicator : public std::enable_shared_from_this<InternodeCommunicator> {
 public:
     InternodeCommunicator(InternodeCommunicator const&) = delete;
     InternodeCommunicator(InternodeCommunicator&&) = delete;
-
-    ~InternodeCommunicator();
 
     // Gets the ID of this node. ID 0 represents the primary node.
     unsigned getNodeID() const;
@@ -24,41 +28,33 @@ public:
     unsigned getNodeCount() const;
 
     // Gets a PrimaryNodeCommunicator that may be used by the primary node to communicate with the secondary nodes.
+    // The returned object shares ownership of this InternodeCommunicator via shared_ptr.
     PrimaryNodeCommunicator getPrimaryNodeCommunicator() const;
 
     // Gets a SecondaryNodeCommunicator that may be used by the secondary nodes to communicate with the primary node.
+    // The returned object shares ownership of this InternodeCommunicator via shared_ptr.
     SecondaryNodeCommunicator getSecondaryNodeCommunicator() const;
 
     InternodeCommunicator& operator=(InternodeCommunicator const&) = delete;
     InternodeCommunicator& operator=(InternodeCommunicator&&) = delete;
 
-    // Initialises the internode communication, and constructs the InternodeCommunicator singleton instance.
-    // Must be called before any other communication functionality. Cannot be called more than once.
-    static void initInstance();
-
-    // Gets the InternodeCommunicator singleton instance.
-    static InternodeCommunicator const& getInstance();
-
-    // Destroys the InternodeCommunicator singleton instance and terminates internode communication.
-    // Should be called once you're done with internode communication (i.e. at the end of the program).
-    static void destroyInstance();
-
-    // Raises an exception if the internode communication has not yet been initialised, or if it has been terminated.
-    static void assertInstance();
+    // Initialises the internode communication. Cannot be called more than once.
+    // When all owning shared_ptr instances get destructed, the internode communication is terminated.
+    static std::shared_ptr<InternodeCommunicator> init();
 
 private:
     InternodeCommunicator();
-
-    // The singleton instance (even though this class doesn't have any per-instance state).
-    static std::unique_ptr<InternodeCommunicator> _instance;
+    ~InternodeCommunicator();
 
     // Indicates if internode communication has been initialised before.
-    static bool _initialised;
+    static std::atomic_flag _initialised;
+
+    friend struct std::default_delete<InternodeCommunicator>;
 };
 
 
 // Provides the primary node's side of the internode communication.
-// Before using this class, internode communication must be initialised by the InternodeCommunicator class.
+// Instances of this class may be acquired from the InternodeCommunicator class.
 // All communication methods are blocking. If the receiver/sender on the other side doesn't coorperate as expected, a
 // deadlock may occur.
 class PrimaryNodeCommunicator {
@@ -98,14 +94,16 @@ public:
     PrimaryNodeCommunicator& operator=(PrimaryNodeCommunicator&&) = default;
 
 private:
-    PrimaryNodeCommunicator() = default;
+    PrimaryNodeCommunicator(std::shared_ptr<InternodeCommunicator const> internodeCommunicator);
+
+    std::shared_ptr<InternodeCommunicator const> _internodeCommunicator;
 
     friend class InternodeCommunicator;
 };
 
 
 // Provides the secondary nodes' side of the internode communication.
-// Before using this class, internode communication must be initialised by the InternodeCommunicator class.
+// Instances of this class may be acquired from the InternodeCommunicator class.
 // All communication methods are blocking. If the receiver/sender on the other side doesn't coorperate as expected, a
 // deadlock may occur.
 class SecondaryNodeCommunicator {
@@ -145,7 +143,9 @@ public:
     SecondaryNodeCommunicator& operator=(SecondaryNodeCommunicator&&) = default;
 
 private:
-    SecondaryNodeCommunicator() = default;
+    SecondaryNodeCommunicator(std::shared_ptr<InternodeCommunicator const> internodeCommunicator);
+
+    std::shared_ptr<InternodeCommunicator const> _internodeCommunicator;
 
     friend class InternodeCommunicator;
 };

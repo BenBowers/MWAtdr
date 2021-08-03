@@ -1,6 +1,8 @@
 #include "internode_communication.hpp"
 
+#include <atomic>
 #include <map>
+#include <memory>
 #include <stdexcept>
 #include <string>
 
@@ -17,80 +19,53 @@ static void assertMPISuccess(int mpiErrorCode) {
 }
 
 
-InternodeCommunicator::~InternodeCommunicator() {
-    MPI_Finalize();
-}
-
 unsigned InternodeCommunicator::getNodeID() const {
-    assertInstance();
-
     int id;
     assertMPISuccess(MPI_Comm_rank(MPI_COMM_WORLD, &id));
     return id;
 }
 
 unsigned InternodeCommunicator::getNodeCount() const {
-    assertInstance();
-
     int count;
     assertMPISuccess(MPI_Comm_size(MPI_COMM_WORLD, &count));
     return count;
 }
 
 PrimaryNodeCommunicator InternodeCommunicator::getPrimaryNodeCommunicator() const {
-    assertInstance();
-    return PrimaryNodeCommunicator{};
+    return PrimaryNodeCommunicator{shared_from_this()};
 }
 
 SecondaryNodeCommunicator InternodeCommunicator::getSecondaryNodeCommunicator() const {
-    assertInstance();
-    return SecondaryNodeCommunicator{};
+    return SecondaryNodeCommunicator{shared_from_this()};
 }
 
-void InternodeCommunicator::initInstance() {
-    _instance.reset(new InternodeCommunicator{});
-}
-
-InternodeCommunicator const& InternodeCommunicator::getInstance() {
-    assertInstance();
-    return *_instance;
-}
-
-void InternodeCommunicator::destroyInstance() {
-    _instance.reset();
-}
-
-void InternodeCommunicator::assertInstance() {
-    if (!_initialised) {
-        throw std::logic_error{"Internode communication cannot be used before calling initInstance()"};
-    }
-    else if (!_instance) {
-        throw std::logic_error{"Internode communication cannot be used after calling destroyInstance()"};
-    }
+std::shared_ptr<InternodeCommunicator> InternodeCommunicator::init() {
+    return {new InternodeCommunicator{}, std::default_delete<InternodeCommunicator>{}};
 }
 
 InternodeCommunicator::InternodeCommunicator() {
     // MPI may only be initialised once.
-    if (_initialised) {
+    if (_initialised.test_and_set()) {
         throw std::logic_error{"Internode communication may only be initialised once."};
     }
     else {
         assertMPISuccess(MPI_Init(nullptr, nullptr));
-        _initialised = true;
     }
 }
 
-std::unique_ptr<InternodeCommunicator> InternodeCommunicator::_instance{};
-bool InternodeCommunicator::_initialised = false;
+InternodeCommunicator::~InternodeCommunicator() {
+    MPI_Finalize();
+}
+
+std::atomic_flag InternodeCommunicator::_initialised = ATOMIC_FLAG_INIT;
 
 
 void PrimaryNodeCommunicator::sendAppStartupStatus(bool status) {
-    InternodeCommunicator::assertInstance();
     // TODO: real implementation
 }
 
 std::map<unsigned, bool> PrimaryNodeCommunicator::receiveNodeSetupStatus() {
-    auto const nodeCount = InternodeCommunicator::getInstance().getNodeCount();
+    auto const nodeCount = _internodeCommunicator->getNodeCount();
     std::map<unsigned, bool> status;
     // TODO: real implementation
     for (unsigned i = 1; i < nodeCount; ++i) {
@@ -100,28 +75,24 @@ std::map<unsigned, bool> PrimaryNodeCommunicator::receiveNodeSetupStatus() {
 }
 
 void PrimaryNodeCommunicator::sendAppConfig(AppConfig const& appConfig) {
-    InternodeCommunicator::assertInstance();
     // TODO: real implementation
 }
 
 void PrimaryNodeCommunicator::sendAntennaConfig(AntennaConfig const& antennaConfig) {
-    InternodeCommunicator::assertInstance();
     // TODO: real implementation
 }
 
 void PrimaryNodeCommunicator::sendChannelRemapping(ChannelRemapping const& channelRemapping) {
-    InternodeCommunicator::assertInstance();
     // TODO: real implementation
 }
 
 void PrimaryNodeCommunicator::sendAntennaInputAssignment(unsigned node,
         std::optional<AntennaInputRange> const& antennaInputAssignment) {
-    InternodeCommunicator::assertInstance();
     // TODO: real implementation
 }
 
 std::map<unsigned, ObservationProcessingResults> PrimaryNodeCommunicator::receiveProcessingResults() {
-    auto const nodeCount = InternodeCommunicator::getInstance().getNodeCount();
+    auto const nodeCount = _internodeCommunicator->getNodeCount();
     std::map<unsigned, ObservationProcessingResults> results;
     // TODO: real implementation
     for (unsigned i = 1; i < nodeCount; ++i) {
@@ -130,6 +101,10 @@ std::map<unsigned, ObservationProcessingResults> PrimaryNodeCommunicator::receiv
     return results;
 }
 
+PrimaryNodeCommunicator::PrimaryNodeCommunicator(std::shared_ptr<InternodeCommunicator const> internodeCommunicator) :
+    _internodeCommunicator{internodeCommunicator}
+{}
+
 
 bool SecondaryNodeCommunicator::receiveAppStartupStatus() {
     // TODO: real implementation
@@ -137,12 +112,10 @@ bool SecondaryNodeCommunicator::receiveAppStartupStatus() {
 }
 
 void SecondaryNodeCommunicator::sendNodeSetupStatus(bool status) {
-    InternodeCommunicator::assertInstance();
     // TODO: real implementation
 }
 
 AppConfig SecondaryNodeCommunicator::receiveAppConfig() {
-    InternodeCommunicator::assertInstance();
     // TODO: real implementation
     return {
         1000000, 1000008, "/group/mwavcs/myobservation", "/group/mwavcs/reconstructed_observation",
@@ -151,7 +124,6 @@ AppConfig SecondaryNodeCommunicator::receiveAppConfig() {
 }
 
 AntennaConfig SecondaryNodeCommunicator::receiveAntennaConfig() {
-    InternodeCommunicator::assertInstance();
     // TODO: real implementation
     return {
         {{0, 'X'}, {0, 'Y'}, {1, 'X'}, {1, 'Y'}, {2, 'X'}, {2, 'Y'}, {3, 'X'}, {3, 'Y'}, {4, 'X'}, {4, 'Y'}, {5, 'X'}, {5, 'Y'}},
@@ -160,7 +132,6 @@ AntennaConfig SecondaryNodeCommunicator::receiveAntennaConfig() {
 }
 
 ChannelRemapping SecondaryNodeCommunicator::receiveChannelRemapping() {
-    InternodeCommunicator::assertInstance();
     // TODO: real implementation
     return {
         512,
@@ -170,11 +141,14 @@ ChannelRemapping SecondaryNodeCommunicator::receiveChannelRemapping() {
 
 std::optional<AntennaInputRange> SecondaryNodeCommunicator::receiveAntennaInputAssignment() {
     // TODO: real implementation
-    auto const nodeID = InternodeCommunicator::getInstance().getNodeID();
+    auto const nodeID = _internodeCommunicator->getNodeID();
     return AntennaInputRange{nodeID, nodeID};
 }
 
 void SecondaryNodeCommunicator::sendProcessingResults(ObservationProcessingResults const& results) {
-    InternodeCommunicator::assertInstance();
     // TODO: real implementation
 }
+
+SecondaryNodeCommunicator::SecondaryNodeCommunicator(std::shared_ptr<InternodeCommunicator const> internodeCommunicator) :
+    _internodeCommunicator{internodeCommunicator}
+{}
