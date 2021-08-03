@@ -1,10 +1,9 @@
 param(
-    [String]$target
+    [Parameter(Mandatory=$True, Position = 0)]
+    [String] $target,
+
+    [Parameter(Mandatory=$False, Position = 1, ValueFromRemainingArguments=$true)]
+    [String[]] $arguments
 )
 
-if ([string]::IsNullOrEmpty($target)) {
-    Write-Output "Usage: docker_run.ps1 <target>"
-    exit 1
-}
-
-docker run -t "mwa_time_data_reconstructor/$target"
+docker run -t "mwa_time_data_reconstructor/$target" @arguments
