@@ -7,7 +7,7 @@ std::vector<short> processSignal(std::vector<std::complex<float>> signalData,
     std::cout << "ProcessSignal Called" << std::endl;
     remapChannels(signalData, remappingData.channelMap);
     performPFB(signalData, coefficiantPFB, remappingData.channelMap);
-    std::vector<int> postDFTSignalData = performDFT(signalData);
+    std::vector<float> postDFTSignalData = performDFT(signalData);
     downsampleData(postDFTSignalData, remappingData.newSamplingFreq);
     std::vector<short> outData = doPostProcessing(postDFTSignalData);
     return outData;
@@ -24,16 +24,16 @@ void performPFB(std::vector<std::complex<float>> signalData,
     std::cout << "performPFB() called" << std::endl;
 }
 
-std::vector<int> performDFT(std::vector<std::complex<float>> signalData) {
+std::vector<float> performDFT(std::vector<std::complex<float>> signalData) {
     std::cout << "performDFT() called" << std::endl;
-    return std::vector<int>();
+    return std::vector<float>();
 }
 
-void downsampleData(std::vector<int> signalData, unsigned samplingRate) {
+void downsampleData(std::vector<float> signalData, unsigned samplingRate) {
     std::cout << "downsampleData() called" << std::endl;
 }
 
-std::vector<short> doPostProcessing(std::vector<int> signalData) {
+std::vector<short> doPostProcessing(std::vector<float> signalData) {
     std::cout << "doPostProcessing() called" << std::endl;
     return std::vector<short>();
 }
