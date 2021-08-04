@@ -1,8 +1,10 @@
 #pragma once
 #include<complex>
 #include<vector>
+#include<map>
+#include"channel_remapping.hpp"
 
-std::vector<int> processSignal(std::vector<std::complex<float>> signalData,
+std::vector<short> processSignal(std::vector<std::complex<float>> signalData,
                                std::vector<std::complex<float>> coefficiantPFB,
                                ChannelRemapping remappingData);
 
