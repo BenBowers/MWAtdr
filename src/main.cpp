@@ -3,5 +3,5 @@
 #include <iostream>
 
 int main() {
-	//std::vector<AntennaInputRange> ranges = assignNodeAntennaInputs(0, 0);
+	std::vector<AntennaInputRange> ranges = assignNodeAntennaInputs(0, 0);
 }
