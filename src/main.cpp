@@ -3,5 +3,9 @@
 #include <iostream>
 
 int main() {
-	std::vector<AntennaInputRange> ranges = assignNodeAntennaInputs(0, 0);
+	auto ranges = assignNodeAntennaInputs(4, 4);
+
+    for (auto const& i : ranges) {
+        std::cout << i.value().begin;
+	}
 }

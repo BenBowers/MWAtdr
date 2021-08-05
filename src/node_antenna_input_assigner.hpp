@@ -1,4 +1,6 @@
 #pragma once
+
+#include <optional>
 #include <vector>
 
 struct AntennaInputRange {
@@ -6,4 +8,4 @@ struct AntennaInputRange {
 	unsigned int end;
 };
 
-std::vector<AntennaInputRange> assignNodeAntennaInputs(int numNodes, unsigned int numAntennaInputs);
+std::vector<std::optional<AntennaInputRange>> assignNodeAntennaInputs(unsigned numNodes, unsigned numAntennaInputs);
