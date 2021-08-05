@@ -15,6 +15,7 @@ set(MPI_TEST_SOURCE_DIR "mpi_test")
 set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/main.cpp"
     "${MAIN_SOURCE_DIR}/channel_remapping.cpp"
+    "${MAIN_SOURCE_DIR}/signal_processing.cpp"
 )
 
 set(LOCAL_TEST_SOURCE_FILES
