@@ -1,7 +1,7 @@
 #pragma once
 
-#include "common.hpp"
-#include "channel_remapping.hpp"
+#include "Common.hpp"
+#include "ChannelRemapping.hpp"
 
 #include <fstream>
 #include <iostream>

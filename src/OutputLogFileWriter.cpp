@@ -1,4 +1,4 @@
-#include "output_log_file_writer.hpp"
+#include "OutputLogFileWriter.hpp"
 
 void writeLogFile(AppConfig observation, ChannelRemapping mapping,
 				  ObservationProcessingReults results, AntennaConfig physical) {
