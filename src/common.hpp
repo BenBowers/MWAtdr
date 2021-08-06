@@ -7,21 +7,21 @@
 
 struct AppConfig {
 	std::string inputDirectoryPath;
-	unsigned int observationID;
-	unsigned int signalStartTime;
+	unsigned observationID;
+	unsigned signalStartTime;
 	std::string invPolyphaseFilterPath;
 	std::string outputDirectoryPath;
 };
 
 
 struct AntennaInputPhysID {
-	unsigned int tile;
+	unsigned tile;
 	char signalChain;
 };
 
 struct AntennaConfig {
 	std::vector<AntennaInputPhysID> antennaInputs;
-	std::set<unsigned int> frequencyChannels;
+	std::set<unsigned> frequencyChannels;
 };
 
 
