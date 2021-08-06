@@ -1,4 +1,4 @@
-#include "internode_communication.hpp"
+#include "InternodeCommunication.hpp"
 
 #include <atomic>
 #include <map>
