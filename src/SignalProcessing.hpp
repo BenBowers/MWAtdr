@@ -3,7 +3,7 @@
 #include<vector>
 #include<cstdint>
 
-// Forward declaration of ChannelRemapping struct "channel_remapping.hpp"
+// Forward declaration of ChannelRemapping struct "ChannelRemapping.hpp"
 struct ChannelRemapping;
 
 // Function responsible for all the transoformations, filters and downsampling

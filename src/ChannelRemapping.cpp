@@ -1,4 +1,4 @@
-#include "channel_remapping.hpp"
+#include "ChannelRemapping.hpp"
 
 #include <stdexcept>
 
