@@ -8,16 +8,15 @@ ChannelRemapping computeChannelRemapping(unsigned samplingFreq, std::set<unsigne
         throw std::invalid_argument{"samplingFreq must be even"};
     }
     for (auto const channel : channels) {
-        // TODO: is it >= or > ?
-        if (channel >= samplingFreq / 2) {
-            throw std::invalid_argument{"Frequency channels must be < samplingFreq/2"};
+        if (channel > samplingFreq / 2) {
+            throw std::invalid_argument{"Frequency channels must be <= samplingFreq/2"};
         }
     }
 
     // TODO: real remapping
     ChannelRemapping result{samplingFreq, {}};
     for (auto const channel : channels) {
-        result.channelMap.emplace(channel, channel);
+        result.channelMap.emplace(channel, ChannelRemapping::RemappedChannel{channel, false});
     }
     return result;
 }
