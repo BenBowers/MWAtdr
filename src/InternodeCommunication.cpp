@@ -133,8 +133,8 @@ AppConfig SecondaryNodeCommunicator::receiveAppConfig() {
     // TODO: real implementation
     std::cout << "Node " << _internodeCommunicator->getNodeID() << ": receiving app config from primary node" << std::endl;
     return {
-        1000000, 1000008, "/group/mwavcs/myobservation", "/group/mwavcs/reconstructed_observation",
-        "/group/mwavcs/inverse_polyphase_filter.bin"
+        "./myobservation", 1000000, 1000008, "./inverse_polyphase_filter.bin",
+        "./reconstructed_observation"
     };
 }
 
@@ -152,7 +152,8 @@ ChannelRemapping SecondaryNodeCommunicator::receiveChannelRemapping() {
     std::cout << "Node " << _internodeCommunicator->getNodeID() << ": receiving channel remapping from primary node" << std::endl;
     return {
         512,
-        {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}, {6, 6}, {7, 7}, {8, 8}, {9, 9}}
+        {{0, {0, false}}, {1, {1, false}}, {2, {2, false}}, {3, {3, false}}, {4, {4, false}}, {5, {5, false}},
+            {6, {6, false}}, {7, {7, false}}, {8, {8, false}}, {9, {9, false}}}
     };
 }
 
