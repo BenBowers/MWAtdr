@@ -8,7 +8,9 @@
 
 #include <mpi.h>
 
-// TODO: include required modules not yet implemented.
+#include "ChannelRemapping.hpp"
+#include "Common.hpp"
+#include "NodeAntennaInputAssigner.hpp"
 
 
 // Raises an exception if the MPI error code does not indicate success.
