@@ -12,6 +12,9 @@
 #include "Common.hpp"
 #include "NodeAntennaInputAssigner.hpp"
 
+// TODO: remove
+#include <iostream>
+
 
 // Raises an exception if the MPI error code does not indicate success.
 static void assertMPISuccess(int mpiErrorCode) {
@@ -64,6 +67,7 @@ std::atomic_flag InternodeCommunicator::_initialised = ATOMIC_FLAG_INIT;
 
 void PrimaryNodeCommunicator::sendAppStartupStatus(bool status) {
     // TODO: real implementation
+    std::cout << "Node 0: Sending app startup status to all secondary nodes" << std::endl;
 }
 
 std::map<unsigned, bool> PrimaryNodeCommunicator::receiveNodeSetupStatus() {
@@ -71,6 +75,7 @@ std::map<unsigned, bool> PrimaryNodeCommunicator::receiveNodeSetupStatus() {
     std::map<unsigned, bool> status;
     // TODO: real implementation
     for (unsigned i = 1; i < nodeCount; ++i) {
+        std::cout << "Node 0: Receiving node setup status from secondary node " << i << std::endl;
         status[i] = true;
     }
     return status;
@@ -78,19 +83,23 @@ std::map<unsigned, bool> PrimaryNodeCommunicator::receiveNodeSetupStatus() {
 
 void PrimaryNodeCommunicator::sendAppConfig(AppConfig const& appConfig) {
     // TODO: real implementation
+    std::cout << "Node 0: sending app config to all secondary nodes" << std::endl;
 }
 
 void PrimaryNodeCommunicator::sendAntennaConfig(AntennaConfig const& antennaConfig) {
     // TODO: real implementation
+    std::cout << "Node 0: sending antenna config to all secondary nodes" << std::endl;
 }
 
 void PrimaryNodeCommunicator::sendChannelRemapping(ChannelRemapping const& channelRemapping) {
     // TODO: real implementation
+    std::cout << "Node 0: sending channel remapping to all secondary nodes" << std::endl;
 }
 
 void PrimaryNodeCommunicator::sendAntennaInputAssignment(unsigned node,
         std::optional<AntennaInputRange> const& antennaInputAssignment) {
     // TODO: real implementation
+    std::cout << "Node 0: sending antenna input assignment to secondary node " << node << std::endl;
 }
 
 std::map<unsigned, ObservationProcessingResults> PrimaryNodeCommunicator::receiveProcessingResults() {
@@ -98,6 +107,7 @@ std::map<unsigned, ObservationProcessingResults> PrimaryNodeCommunicator::receiv
     std::map<unsigned, ObservationProcessingResults> results;
     // TODO: real implementation
     for (unsigned i = 1; i < nodeCount; ++i) {
+        std::cout << "Node 0: Receiving processing results from secondary node " << i << std::endl;
         results[i] = {};
     }
     return results;
@@ -110,15 +120,18 @@ PrimaryNodeCommunicator::PrimaryNodeCommunicator(std::shared_ptr<InternodeCommun
 
 bool SecondaryNodeCommunicator::receiveAppStartupStatus() {
     // TODO: real implementation
+    std::cout << "Node " << _internodeCommunicator->getNodeID() << ": receiving app startup status from primary node" << std::endl;
     return true;
 }
 
 void SecondaryNodeCommunicator::sendNodeSetupStatus(bool status) {
     // TODO: real implementation
+    std::cout << "Node " << _internodeCommunicator->getNodeID() << ": sending node setup status to primary node" << std::endl;
 }
 
 AppConfig SecondaryNodeCommunicator::receiveAppConfig() {
     // TODO: real implementation
+    std::cout << "Node " << _internodeCommunicator->getNodeID() << ": receiving app config from primary node" << std::endl;
     return {
         1000000, 1000008, "/group/mwavcs/myobservation", "/group/mwavcs/reconstructed_observation",
         "/group/mwavcs/inverse_polyphase_filter.bin"
@@ -127,6 +140,7 @@ AppConfig SecondaryNodeCommunicator::receiveAppConfig() {
 
 AntennaConfig SecondaryNodeCommunicator::receiveAntennaConfig() {
     // TODO: real implementation
+    std::cout << "Node " << _internodeCommunicator->getNodeID() << ": receiving antenna config from primary node" << std::endl;
     return {
         {{0, 'X'}, {0, 'Y'}, {1, 'X'}, {1, 'Y'}, {2, 'X'}, {2, 'Y'}, {3, 'X'}, {3, 'Y'}, {4, 'X'}, {4, 'Y'}, {5, 'X'}, {5, 'Y'}},
         {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
@@ -135,6 +149,7 @@ AntennaConfig SecondaryNodeCommunicator::receiveAntennaConfig() {
 
 ChannelRemapping SecondaryNodeCommunicator::receiveChannelRemapping() {
     // TODO: real implementation
+    std::cout << "Node " << _internodeCommunicator->getNodeID() << ": receiving channel remapping from primary node" << std::endl;
     return {
         512,
         {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}, {6, 6}, {7, 7}, {8, 8}, {9, 9}}
@@ -144,11 +159,13 @@ ChannelRemapping SecondaryNodeCommunicator::receiveChannelRemapping() {
 std::optional<AntennaInputRange> SecondaryNodeCommunicator::receiveAntennaInputAssignment() {
     // TODO: real implementation
     auto const nodeID = _internodeCommunicator->getNodeID();
+    std::cout << "Node " << nodeID << ": receiving antenna input assignment from primary node" << std::endl;
     return AntennaInputRange{nodeID, nodeID};
 }
 
 void SecondaryNodeCommunicator::sendProcessingResults(ObservationProcessingResults const& results) {
     // TODO: real implementation
+    std::cout << "Node " << _internodeCommunicator->getNodeID() << ": sending processing results to primary node" << std::endl;
 }
 
 SecondaryNodeCommunicator::SecondaryNodeCommunicator(std::shared_ptr<InternodeCommunicator const> internodeCommunicator) :
