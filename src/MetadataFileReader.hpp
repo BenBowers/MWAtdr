@@ -1,3 +1,8 @@
 #pragma once
 
-class MetadataFileReader;
+#include "Common.hpp"
+
+class MetadataFileReader {
+	public:
+        AntennaConfig getAntennaConfig();
+};
