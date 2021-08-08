@@ -18,6 +18,7 @@ set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/SignalProcessing.cpp"
     "${MAIN_SOURCE_DIR}/NodeAntennaInputAssigner.cpp"
     "${MAIN_SOURCE_DIR}/MetadataFileReader.cpp"
+    "${MAIN_SOURCE_DIR}/OutputLogFileWriter.cpp"
 )
 
 set(LOCAL_TEST_SOURCE_FILES
