@@ -1,10 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "readInputFile.hpp"
-#include "readCoeData.hpp"
-
-
 //pre declaration of output singnal wrigter function
 void outSignalWriter(std::int16_t inputData[], std::int16_t obsID, std::int16_t startTime, char* outFileDirectory);
 
@@ -38,4 +34,3 @@ void outSignalWriter(std::int16_t inputData[], std::int16_t obsID, std::int16_t 
         myfile.write("test\n",sizeof(char[5]));
         myfile.close();   
 }
->>>>>>> Stashed changes
