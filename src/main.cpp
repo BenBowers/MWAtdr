@@ -1,24 +1,26 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "common.hpp"
+
 //pre declaration of output singnal wrigter function
-void outSignalWriter(std::int16_t inputData[], std::int16_t obsID, std::int16_t startTime, char* outFileDirectory);
+void outSignalWriter(std::int16_t inputData[], AppConfig observation);
 
 int main() {
 
-    int test[5] = {1,1,1,1,1};
-    outSignalWriter(test,123456789,123456789,"/local_test");
+    std::int16_t test[5] = {1,1,1,1,1};
+    outSignalWriter(test,observation);
 
 }
 
 
-void outSignalWriter(std::int16_t inputData[], std::int16_t obsID, std::int16_t startTime, char* outFileDirectory){
+void outSignalWriter(std::int16_t inputData[], AppConfig observation){
     
 
     //typecasting intagers to strings for the purpose of creating the output file name
     //TODO include an output directory
-    std::string sObsID = std::to_string(obsID);
-    std::string sStartTime = std::to_string(startTime);
+    std::string sObsID = std::to_string(observation.observationID);
+    std::string sStartTime = std::to_string(observation.signalStartTime);
 
     //creating the output file with the correct name 
     std::ofstream myfile(sObsID + "_" + sStartTime + "_signalchain.bin",std::ios::out | std::ios::binary);
