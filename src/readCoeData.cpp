@@ -7,8 +7,8 @@
 std::vector<std::int16_t> readCoeData(char* fileName){
     
     //realy messay way of reading a file most likly to change the internals of this function in the future.
-    
-    //std::ifstream infile(fileName);
+    fileName = "test.txt";
+    std::ifstream infile(fileName);
     std::vector<std::int16_t> result;
     //checking to see if the file is open
     if(infile.is_open()){
