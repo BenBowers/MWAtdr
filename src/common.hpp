@@ -4,32 +4,33 @@
 #include <set>
 #include <vector>
 
-
+// Contains the observation details, and input and output file directories
+// Entered as command line arguments
 struct AppConfig {
 	std::string inputDirectoryPath;
-	unsigned int observationID;
-	unsigned int signalStartTime;
+	unsigned observationID;
+	unsigned signalStartTime;
 	std::string invPolyphaseFilterPath;
 	std::string outputDirectoryPath;
 };
 
 
 struct AntennaInputPhysID {
-	unsigned int tile;
+	unsigned tile;
 	char signalChain;
 };
 
 struct AntennaConfig {
 	std::vector<AntennaInputPhysID> antennaInputs;
-	std::set<unsigned int> frequencyChannels;
+	std::set<unsigned> frequencyChannels;
 };
 
 
 struct AntennaInputProcessingResults {
 	bool success;
-	std::set<unsigned int> usedChannels;
+	std::set<unsigned> usedChannels;
 };
 
 struct ObservationProcessingResults {
-	std::map<unsigned int, AntennaInputProcessingResults> results;
+	std::map<unsigned, AntennaInputProcessingResults> results;
 };
