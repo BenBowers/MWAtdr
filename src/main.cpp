@@ -28,7 +28,7 @@ int main() {
 
 		primary.sendAppConfig(appConfig);
 		primary.sendAntennaConfig(antennaConfig);
-		//primary.sendChannelRemapping();
+		//primary.sendChannelRemapping(channelRemapping);
 
 		// Assign and communicate the range of antenna inputs each node will process
 		auto antennaInputRanges = assignNodeAntennaInputs(communicator->getNodeCount(), 4);
