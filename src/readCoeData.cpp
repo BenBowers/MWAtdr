@@ -4,7 +4,7 @@
 //main function for reading in the coeficent data  will return a vector of those coeficents.
 
 //takes a file name as its only input and will return an intager array of the coeficents
-std::vector<int16_t> readCoeData(char* fileName){
+std::vector<int16_t> readCoeData(std::string fileName){
     
     //realy messay way of reading a file most likly to change the internals of this function in the future.
     fileName = "test.txt";
