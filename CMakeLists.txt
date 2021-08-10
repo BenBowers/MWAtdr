@@ -14,8 +14,6 @@ set(MPI_TEST_SOURCE_DIR "mpi_test")
 
 set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/main.cpp"
-    "${MAIN_SOURCE_DIR}/channel_remapping.cpp"
-    "${MAIN_SOURCE_DIR}/signal_processing.cpp"
     "${MAIN_SOURCE_DIR}/outSignlWriter.cpp"
     "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"
     "${MAIN_SOURCE_DIR}/InternodeCommunication.cpp"
