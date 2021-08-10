@@ -4,13 +4,14 @@
 //main function for reading in the coeficent data  will return a vector of those coeficents.
 
 //takes a file name as its only input and will return an intager array of the coeficents
-std::vector<std::int16_t> readCoeData(char* fileName){
+std::vector<int16_t> readCoeData(char* fileName){
     
     //realy messay way of reading a file most likly to change the internals of this function in the future.
     fileName = "test.txt";
     std::ifstream infile(fileName);
-    std::vector<std::int16_t> result;
+    std::vector<int16_t> result;
     //checking to see if the file is open
+   
     if(infile.is_open()){
         while(true){
             int data;
@@ -19,7 +20,7 @@ std::vector<std::int16_t> readCoeData(char* fileName){
             if(infile.eof()){
                 break;
             }
-            result.push_fowrd(data);
+            result.push_back(data);
         }
         infile.close();
     }
@@ -33,7 +34,7 @@ std::vector<std::int16_t> readCoeData(char* fileName){
     //creating and filling an array of 1's for testing and produce knowen resaults
 
     for (std::int16_t i = 0; i = 256;i++){
-        result.push_fowrd(1);
+        result.push_back(1);
     }
 
     return result;
