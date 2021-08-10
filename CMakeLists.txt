@@ -14,7 +14,13 @@ set(MPI_TEST_SOURCE_DIR "mpi_test")
 
 set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/main.cpp"
-    "${MAIN_SOURCE_DIR}/readCoeData.cpp"
+    "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"
+    "${MAIN_SOURCE_DIR}/InternodeCommunication.cpp"
+    "${MAIN_SOURCE_DIR}/SignalProcessing.cpp"
+    "${MAIN_SOURCE_DIR}/NodeAntennaInputAssigner.cpp"
+    "${MAIN_SOURCE_DIR}/MetadataFileReader.cpp"
+    "${MAIN_SOURCE_DIR}/OutputLogFileWriter.cpp"
+    "${MAIN_SOURCE_DIR}/readCoeData.cpp"    
 )
 
 set(LOCAL_TEST_SOURCE_FILES
