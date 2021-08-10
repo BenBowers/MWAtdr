@@ -1,4 +1,9 @@
 #include "readCoeData.hpp"
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <array>
+#include <string>
 //note c++ dose not allow for the return of an array from a function as such vecotrs will be used for simpicity.
 
 //main function for reading in the coeficent data  will return a vector of those coeficents.
