@@ -3,6 +3,7 @@
 #include "InternodeCommunication.hpp"
 #include "MetadataFileReader.hpp"
 #include "NodeAntennaInputAssigner.hpp"
+#include "OutputLogFileWriter.hpp"
 #include "SignalProcessing.hpp"
 
 // TODO: remove
@@ -23,9 +24,11 @@ int main() {
         // Create primary node communicator
 		auto primary = communicator->getPrimaryNodeCommunicator();
 
+        // Node startup and error checking
 		primary.sendAppStartupStatus(true);
 		primary.receiveNodeSetupStatus();
 
+        // Send observation and signal processing details
 		primary.sendAppConfig(appConfig);
 		primary.sendAntennaConfig(antennaConfig);
 		//primary.sendChannelRemapping(channelRemapping);
@@ -36,20 +39,31 @@ int main() {
 		for (int i = 1; i < communicator->getNodeCount(); i++) {
 			primary.sendAntennaInputAssignment(i, antennaInputRanges.at(i));
 		}
+
+		// Do signal processing stuff
+
+        auto processingResults = primary.receiveProcessingResults();
+
+        //writeLogFile(appConfig, channelRemapping, processingResults, antennaConfig);
 	}
 	else {
+		ObservationProcessingResults processingResults;
+
         // Create secondary node communicator
 		auto secondary = communicator->getSecondaryNodeCommunicator();
 
+        // Node startup and error checking
         secondary.receiveAppStartupStatus();
 		secondary.sendNodeSetupStatus(true);
 
+        // Receive observation and signal processing details
 		auto appConfig = secondary.receiveAppConfig();
 		auto antennaConfig = secondary.receiveAntennaConfig();
 		auto channelRemapping = secondary.receiveChannelRemapping();
 		auto antennaInputRange = secondary.receiveAntennaInputAssignment();
-	}
 
-	// Processing success/failure (secondary send)
-	// Termination (primary and secondary)
+		// Do signal processing stuff
+
+        secondary.sendProcessingResults(processingResults);
+	}
 }
