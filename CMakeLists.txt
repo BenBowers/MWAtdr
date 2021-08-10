@@ -17,6 +17,12 @@ set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/channel_remapping.cpp"
     "${MAIN_SOURCE_DIR}/signal_processing.cpp"
     "${MAIN_SOURCE_DIR}/outSignlWriter.cpp"
+    "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"
+    "${MAIN_SOURCE_DIR}/InternodeCommunication.cpp"
+    "${MAIN_SOURCE_DIR}/SignalProcessing.cpp"
+    "${MAIN_SOURCE_DIR}/NodeAntennaInputAssigner.cpp"
+    "${MAIN_SOURCE_DIR}/MetadataFileReader.cpp"
+    "${MAIN_SOURCE_DIR}/OutputLogFileWriter.cpp"
 )
 
 set(LOCAL_TEST_SOURCE_FILES
