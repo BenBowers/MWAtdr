@@ -16,6 +16,7 @@ set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/main.cpp"
     "${MAIN_SOURCE_DIR}/channel_remapping.cpp"
     "${MAIN_SOURCE_DIR}/signal_processing.cpp"
+    "${MAIN_SOURCE_DIR}/readInputFile.cpp"
 )
 
 set(LOCAL_TEST_SOURCE_FILES
