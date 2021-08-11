@@ -13,7 +13,7 @@ set(LOCAL_TEST_SOURCE_DIR "local_test")
 set(MPI_TEST_SOURCE_DIR "mpi_test")
 
 set(MAIN_SOURCE_FILES
-    "${MAIN_SOURCE_DIR}/main.cpp"
+    "${MAIN_SOURCE_DIR}/Main.cpp"
     "${MAIN_SOURCE_DIR}/ReadInputFile.cpp"
     "${MAIN_SOURCE_DIR}/OutSignalWriter.cpp"
     "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"

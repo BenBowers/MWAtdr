@@ -31,7 +31,7 @@ struct AntennaInputProcessingResults {
 	std::set<unsigned> usedChannels;
 };
 
-// Contains antenna id as key, processing results as value
+// Contains antenna input id as key, processing results as value
 struct ObservationProcessingResults {
 	std::map<unsigned, AntennaInputProcessingResults> results;
 };
