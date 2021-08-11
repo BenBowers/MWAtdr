@@ -8,7 +8,7 @@
 
 //Main function for reading in of the data file takes the name of the directory that the data files are stored in
 //will read all files for a specific calculation into 1 complex vector array for signal processing
-std::vector<std::complex<float> > readFile(std::string fileName,int antenaInput){   
+std::vector<std::complex<float> > readreadInputDataFileFile(std::string fileName,int antenaInput){   
     //declaration of variables used to construct the complex number. In future will be set by reading in the file
     double real;
     double imaginary;
@@ -34,6 +34,6 @@ std::vector<std::complex<float> > readFile(std::string fileName,int antenaInput)
 //all data files will be 1 specific size so it will be assumed that any file that is not of the correct size is malfored and not usable for calculations.
 //it is going to be assumed for testing purposes that all files are correct.
 //TODO Actual file validation
-bool validateData(std::string fileName){
+bool validateInputData(std::string fileName){
     return true;
 }
