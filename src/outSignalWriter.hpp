@@ -1,3 +1,4 @@
 #pragma once
+#include <cstdint>
 
-void outSignalWriter(std::int16_t inputData[], AppConfig observation);
+void outSignalWriter(std::vector<std::int16_t> &inputData, const AppConfig &observation);

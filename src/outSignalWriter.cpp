@@ -1,9 +1,10 @@
 #include <vector>
 #include <fstream>
-#include "common.hpp"
-#include "outSignalWriter.hpp"
+#include <cstdint>
+#include "Common.hpp"
+#include "OutSignalWriter.hpp"
 
-void outSignalWriter(std::int16_t inputData[], AppConfig observation){
+void outSignalWriter(std::vector<std::int16_t> &inputData, const AppConfig &observation){
     
 
     //typecasting intagers to strings for the purpose of creating the output file name
