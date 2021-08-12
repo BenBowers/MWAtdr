@@ -1,12 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
-if [[ $# -ne 1 ]] ; then
-    echo "Usage: docker_run.sh <target>"
+if [[ $# -lt 1 ]] ; then
+    echo "Usage: docker_run.sh <target> [<args>]"
     exit 1
 fi
 
 target=$1
 
-docker run -t "mwa_time_data_reconstructor/$target"
+docker run -t "mwa_time_data_reconstructor/$target" "${@:2}"
