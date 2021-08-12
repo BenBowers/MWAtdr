@@ -9,8 +9,9 @@ set(LOCAL_TEST_EXECUTABLE "local_test")
 set(MPI_TEST_EXECUTABLE "mpi_test")
 
 set(MAIN_SOURCE_DIR "src")
-set(LOCAL_TEST_SOURCE_DIR "local_test")
-set(MPI_TEST_SOURCE_DIR "mpi_test")
+set(TEST_SOURCE_DIR "test")
+set(LOCAL_TEST_SOURCE_DIR "${TEST_SOURCE_DIR}/local")
+set(MPI_TEST_SOURCE_DIR "${TEST_SOURCE_DIR}/mpi")
 
 set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/Main.cpp"
@@ -26,10 +27,12 @@ set(MAIN_SOURCE_FILES
 )
 
 set(LOCAL_TEST_SOURCE_FILES
+    "${TEST_SOURCE_DIR}/TestHelper.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/main.cpp"
 )
 
 set(MPI_TEST_SOURCE_FILES
+    "${TEST_SOURCE_DIR}/TestHelper.cpp"
     "${MPI_TEST_SOURCE_DIR}/main.cpp"
 )
 

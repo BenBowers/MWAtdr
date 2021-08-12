@@ -48,8 +48,7 @@ USER app
 # Copy project resources.
 COPY --chown=app:app CMakeLists.txt ./
 COPY --chown=app:app src/ src/
-COPY --chown=app:app local_test/ local_test/
-COPY --chown=app:app mpi_test/ mpi_test/
+COPY --chown=app:app test/ test/
 
 
 # Image for non-MPI tests.

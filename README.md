@@ -14,8 +14,9 @@ Multiple Docker build stages are used to create appropriate environments for the
 The source code is structured as follows:
 
 - `src/` - Main application source code.
-- `local_test/` - Source code for the `local_test` target.
-- `mpi_test/` - Source code for the `mpi_test` target.
+- `test/` - Test code.
+  - `local/` - Test code specific to the `local_test` target.
+  - `mpi/` - Test code specific to the `mpi_test` target.
 
 The executables are built with CMake.
 
