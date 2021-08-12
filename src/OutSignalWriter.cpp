@@ -2,6 +2,7 @@
 #include <fstream>
 #include <cstdint>
 #include <string>
+#include <iostream>
 #include "Common.hpp"
 #include "OutSignalWriter.hpp"
 
