@@ -8,9 +8,9 @@
 #SBATCH --time=00:01:00
 #SBATCH --export=none
 
-module load singularity
+module load singularity-openmpi
 
 export pawseyRepository=/astro/mwavcs/capstone/
 export containerImage=$pawseyRepository/mpi_test_latest.sif
 
-srun --export=all -n $SLURM_NTASKS singularity exec $containerImage $ROOT/app/build/mpi_test
+srun --export=all --mpi=pmi2 -n $SLURM_NTASKS singularity exec $containerImage $ROOT/app/build/mpi_test
