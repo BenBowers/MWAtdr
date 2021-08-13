@@ -28,12 +28,12 @@ set(MAIN_SOURCE_FILES
 
 set(LOCAL_TEST_SOURCE_FILES
     "${TEST_SOURCE_DIR}/TestHelper.cpp"
-    "${LOCAL_TEST_SOURCE_DIR}/main.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/Main.cpp"
 )
 
 set(MPI_TEST_SOURCE_FILES
     "${TEST_SOURCE_DIR}/TestHelper.cpp"
-    "${MPI_TEST_SOURCE_DIR}/main.cpp"
+    "${MPI_TEST_SOURCE_DIR}/Main.cpp"
 )
 
 # This must come before the add_executable(), otherwise they won't have any effect.
