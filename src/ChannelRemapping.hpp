@@ -28,3 +28,8 @@ struct ChannelRemapping {
 //  - channels: the original set of frequency channels. Each channel is represented as a multiple of the channel
 //      bandwidth. Each channel must be <= samplingFreq/2.
 ChannelRemapping computeChannelRemapping(unsigned samplingFreq, std::set<unsigned> const& channels);
+
+
+// ChannelRemapping comparison mainly for testing purposes.
+bool operator==(ChannelRemapping const& lhs, ChannelRemapping const& rhs);
+bool operator==(ChannelRemapping::RemappedChannel const& lhs, ChannelRemapping::RemappedChannel const& rhs);
