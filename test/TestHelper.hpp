@@ -33,13 +33,14 @@ struct AssertionError {
 };
 
 
-// Creates a TestCase instance from a name and a statement block.
+// Creates a TestCase instance from a name and a statement.
 // E.g.:
 //   defTestCase("my test case", {
 //       foo();
 //       bar();
 //   })
-#define defTestCase(name, block) TestCase{(name), [&]() block }
+//   defTestCase("another test case", qux())
+#define defTestCase(name, statement) TestCase{(name), [&]() { statement; } }
 
 
 // Asserts that an expression is true.
