@@ -1,5 +1,6 @@
 #include<iostream>
 #include<map>
+#include<mkl.h>
 #include"SignalProcessing.hpp"
 #include"ChannelRemapping.hpp"
 
@@ -27,6 +28,13 @@ static void performDFT(std::vector<std::complex<float>>& signalData);
 static void doPostProcessing(std::vector<std::complex<float>> const& signalData,
                              std::vector<std::int16_t>& signalOut);
 
+// Simple function that checks the status of a MKL_LONG and outputs it to console
+// TODO: throw exception.
+static void handleMKLError(MKL_LONG status) {
+    if ( status && !DftiErrorClass(status, DFTI_NO_ERROR) ) {
+           std::cout << "Error: " << DftiErrorMessage(status) << std::endl;
+      }
+}
 
 std::vector<std::int16_t> processSignal(std::vector<std::complex<float>> const& signalData,
                                std::vector<std::complex<float>> const& coefficiantPFB,
@@ -37,10 +45,10 @@ std::vector<std::int16_t> processSignal(std::vector<std::complex<float>> const& 
     std::vector<std::complex<float>> convolvedData = std::vector<std::complex<float>>();
     std::vector<std::int16_t> outData = std::vector<std::int16_t>();
 
-    remapChannels(signalData, remappedData, remappingData);
-    performPFB(signalData, convolvedData, coefficiantPFB, remappingData.channelMap);
+    // remapChannels(signalData, remappedData, remappingData);
+    // performPFB(signalData, convolvedData, coefficiantPFB, remappingData.channelMap);
     performDFT(convolvedData);
-    doPostProcessing(signalData, outData);
+    // doPostProcessing(signalData, outData);
 
     return outData;
 }
@@ -59,11 +67,15 @@ static void performPFB(std::vector<std::complex<float>> const& signalData,
 }
 
 static void performDFT(std::vector<std::complex<float>>& signalData) {
-    std::cout << "performDFT() called" << std::endl;
+    DFTI_DESCRIPTOR_HANDLE hand;
+
+    handleMKLError(DftiCreateDescriptor(&hand, DFTI_SINGLE, DFTI_COMPLEX, 1, signalData.size()));
+    handleMKLError(DftiCommitDescriptor(hand));
+    handleMKLError(DftiComputeBackward(hand, signalData.data()));
+    handleMKLError(DftiFreeDescriptor(&hand));
 }
 
 static void doPostProcessing(std::vector<std::complex<float>> const& signalData,
                              std::vector<std::int16_t>& signalOut) {
     std::cout << "doPostProcessing() called" << std::endl;
 }
-
