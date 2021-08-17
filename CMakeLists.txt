@@ -35,7 +35,10 @@ set(LOCAL_TEST_SOURCE_FILES
 
 set(MPI_TEST_SOURCE_FILES
     "${TEST_SOURCE_DIR}/TestHelper.cpp"
+    "${MPI_TEST_SOURCE_DIR}/MPITestHelper.cpp"
     "${MPI_TEST_SOURCE_DIR}/Main.cpp"
+    "${MPI_TEST_SOURCE_DIR}/InternodeCommunicationTest.cpp"
+    "${MAIN_SOURCE_DIR}/InternodeCommunication.cpp"
 )
 
 # This must come before the add_executable(), otherwise they won't have any effect.
