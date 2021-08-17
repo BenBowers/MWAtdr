@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -27,26 +28,25 @@ struct TestModule {
 
 
 // Thrown when a test assertion does not pass.
-struct AssertionError {
+struct TestAssertionError {
     // A description of what assertion failed.
     std::string message;
 };
 
 
-// Creates a TestCase instance from a name and a statement.
-// E.g.:
-//   defTestCase("my test case", {
-//       foo();
-//       bar();
-//   })
-//   defTestCase("another test case", qux())
-#define defTestCase(name, statement) TestCase{(name), [&]() { statement; } }
-
-
 // Asserts that an expression is true.
-// If the expression is not true, an AssertionError is thrown.
-#define testAssert(expression) if (!(expression)) { throw AssertionError{"\"" #expression "\" is false. (" __FILE__ " : " + std::to_string(__LINE__) + ")"}; }
+// If the expression is not true, a TestAssertionError is thrown.
+#define testAssert(expression) if (!(expression)) { throw TestAssertionError{"\"" #expression "\" is false. (" __FILE__ " : " + std::to_string(__LINE__) + ")"}; }
+
+// Throws a TestAssertionError. Can be used to fail a test if execution reaches the call.
+#define failTest() throw TestAssertionError{"Didn't expect this execution path. (" __FILE__ " : " + std::to_string(__LINE__) + ")"}
 
 
 // Runs a set of test modules. Information on the tests is output to stdout.
 void runTests(std::vector<TestModule> const& testModules);
+
+
+// Pseudorandom number generator for testing.
+// It is seeded with a true random number generator, so results will not be reproducible.
+// Not thread safe.
+extern std::default_random_engine testRandomEngine;
