@@ -21,11 +21,11 @@ static ChannelRemapping::RemappedChannel aliasChannel(unsigned channel, unsigned
 
 
 ChannelRemapping computeChannelRemapping(unsigned samplingFreq, std::set<unsigned> const& channels) {
-    if (samplingFreq == 0) {
+    if (samplingFreq <= 0) {
         throw std::invalid_argument{"samplingFreq must be > 0"};
     }
-    else if (samplingFreq % 2 != 0) {
-        throw std::invalid_argument{"samplingFreq must be even"};
+    else if (!(samplingFreq % 2 == 0 || samplingFreq == 1)) {
+        throw std::invalid_argument{"samplingFreq must be even or 1"};
     }
     for (auto const channel : channels) {
         if (channel > samplingFreq / 2) {
@@ -39,9 +39,8 @@ ChannelRemapping computeChannelRemapping(unsigned samplingFreq, std::set<unsigne
     }
     else if (channels.size() == 1) {
         auto const channel = *channels.cbegin();
-        // TODO? If there is only channel 0, then what should the new sampling frequency be?
-        // Don't think it can be 0, and 1 is probably invalid because it's an odd number.
-        auto const newSamplingFreq = 2 * std::max(channel, 1u);
+        // Note: if there is only channel 0, new sampling frequency becomes 1 (not even!).
+        auto const newSamplingFreq = std::max<unsigned>(2 * channel, 1);
         return {newSamplingFreq, {{channel, {0, false}}}};
     }
     else {

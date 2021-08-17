@@ -22,7 +22,7 @@ ChannelRemappingTest::ChannelRemappingTest() : TestModule{"Frequency channel rem
     {"Just channel 0", []() {
         auto const actual = computeChannelRemapping(512, {0});
         ChannelRemapping const expected{
-            2,
+            1,
             {
                 {0, {0, false}}
             }
@@ -109,11 +109,6 @@ ChannelRemappingTest::ChannelRemappingTest() : TestModule{"Frequency channel rem
         }
         catch (std::invalid_argument const&) {}
         try {
-            computeChannelRemapping(1, {123, 45, 3, 89, 41, 6, 23});
-            failTest();
-        }
-        catch (std::invalid_argument const&) {}
-        try {
             computeChannelRemapping(73, {14, 54, 3, 87});
             failTest();
         }
@@ -142,7 +137,7 @@ ChannelRemappingTest::ChannelRemappingTest() : TestModule{"Frequency channel rem
 
         for (unsigned i = 0; i < 250; ++i) {
             // Generate a random valid sampling frequency and random valid channels.
-            unsigned const samplingFreq = ((testRandomEngine() % 300) + 1) * 2;
+            unsigned const samplingFreq = std::max<unsigned>((testRandomEngine() % 300) * 2, 1);
             unsigned const channelCount = testRandomEngine() % (1 + samplingFreq / 2);
             auto const channels = [&]() -> std::set<unsigned> {
                 std::vector<unsigned> allChannels(1 + samplingFreq / 2);
@@ -156,8 +151,8 @@ ChannelRemappingTest::ChannelRemappingTest() : TestModule{"Frequency channel rem
 
             // New sampling frequency can't be 0 or worse than original sampling frequency.
             testAssert(newSamplingFreq > 0 && newSamplingFreq <= samplingFreq);
-            // New sampling frequency must be even.
-            testAssert(newSamplingFreq % 2 == 0);
+            // New sampling frequency must be even or 1.
+            testAssert(newSamplingFreq % 2 == 0 || newSamplingFreq == 1);
             // New Nyquist frequency must be high enough to fit all channels.
             testAssert(1 + newSamplingFreq / 2 >= channels.size());
             // Must have remapped all channels.

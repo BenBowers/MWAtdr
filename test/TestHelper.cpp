@@ -21,7 +21,7 @@ void runTests(std::vector<TestModule> const& testModules) {
                 testCase.function();
                 passed = true;
             }
-            catch (AssertionError const& e) {
+            catch (TestAssertionError const& e) {
                 std::cout << " FAILED - assertion failed: " << e.message << std::endl;
             }
             catch (std::exception const& e) {

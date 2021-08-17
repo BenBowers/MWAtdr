@@ -28,18 +28,18 @@ struct TestModule {
 
 
 // Thrown when a test assertion does not pass.
-struct AssertionError {
+struct TestAssertionError {
     // A description of what assertion failed.
     std::string message;
 };
 
 
 // Asserts that an expression is true.
-// If the expression is not true, an AssertionError is thrown.
-#define testAssert(expression) if (!(expression)) { throw AssertionError{"\"" #expression "\" is false. (" __FILE__ " : " + std::to_string(__LINE__) + ")"}; }
+// If the expression is not true, a TestAssertionError is thrown.
+#define testAssert(expression) if (!(expression)) { throw TestAssertionError{"\"" #expression "\" is false. (" __FILE__ " : " + std::to_string(__LINE__) + ")"}; }
 
-// Throws an AssertionError. Can be used to fail a test if execution reaches the call.
-#define failTest() throw AssertionError{"Didn't expect this execution path. (" __FILE__ " : " + std::to_string(__LINE__) + ")"}
+// Throws a TestAssertionError. Can be used to fail a test if execution reaches the call.
+#define failTest() throw TestAssertionError{"Didn't expect this execution path. (" __FILE__ " : " + std::to_string(__LINE__) + ")"}
 
 
 // Runs a set of test modules. Information on the tests is output to stdout.
