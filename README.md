@@ -44,7 +44,7 @@ PowerShell:
 Alternatively, this can be run with the following command:
 
 ```bash
-docker build --target "$target" -t "mwa_time_data_reconstructor/$target" --build-arg DOCKER_BUILD=1 .
+docker build --target "$target" -t "mwa_time_data_reconstructor/$target" .
 ```
 
 Note: this can take some time to run on the first time. Subsequent builds will be quicker.
