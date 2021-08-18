@@ -15,3 +15,8 @@ std::vector<std::optional<AntennaInputRange>> assignNodeAntennaInputs(unsigned n
 
     return ranges;
 }
+
+
+bool operator==(AntennaInputRange const& lhs, AntennaInputRange const& rhs) {
+    return lhs.begin == rhs.begin && lhs.end == rhs.end;
+}

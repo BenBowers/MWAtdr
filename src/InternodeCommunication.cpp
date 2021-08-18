@@ -1,13 +1,13 @@
 #include "InternodeCommunication.hpp"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <cstddef>
 #include <map>
 #include <memory>
 #include <optional>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include <mpi.h>
@@ -21,11 +21,12 @@
 
 
 // Raises an exception if the MPI error code does not indicate success.
-static void assertMPISuccess(int mpiErrorCode) {
-    if (mpiErrorCode != MPI_SUCCESS) {
-        throw InternodeCommunicationError{"MPI call failed with code " + std::to_string(mpiErrorCode)};
+// Note that we don't expect this to ever happen, unless there is a logic error in our code.
+#define assertMPISuccess(mpiErrorCode) \
+    if ((mpiErrorCode) != MPI_SUCCESS) { \
+        throw InternodeCommunicationError{ \
+            "MPI call failed with code " + std::to_string(mpiErrorCode) + " (" __FILE__ " : " + std::to_string(__LINE__) + ")"}; \
     }
-}
 
 
 unsigned InternodeCommunicator::getNodeID() const {
@@ -109,14 +110,14 @@ void PrimaryNodeCommunicator::sendAppConfig(AppConfig const& appConfig) const {
     auto const& outputDirectoryPath = appConfig.outputDirectoryPath;
 
     // First we will send the fixed-size data, including sizes of the variable-size data (strings).
-    std::size_t part1Buffer[5] = {
+    std::array<unsigned long long, 5> part1Buffer{
         appConfig.observationID,
         appConfig.signalStartTime,
         inputDirectoryPath.size(),
         invPolyphaseFilterPath.size(),
         outputDirectoryPath.size()
     };
-    assertMPISuccess(MPI_Bcast(part1Buffer, 5, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD));
+    assertMPISuccess(MPI_Bcast(part1Buffer.data(), part1Buffer.size(), MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD));
 
     // Next we will put all the variable-size strings together and send them.
     std::vector<char> part2Buffer(inputDirectoryPath.size() + invPolyphaseFilterPath.size()
@@ -128,13 +129,45 @@ void PrimaryNodeCommunicator::sendAppConfig(AppConfig const& appConfig) const {
 }
 
 void PrimaryNodeCommunicator::sendAntennaConfig(AntennaConfig const& antennaConfig) const {
-    // TODO: real implementation
-    std::cout << "Node 0: sending antenna config to all secondary nodes" << std::endl;
+    // First we send the sizes of the antenna input and frequency channel arrays.
+    std::array<unsigned long long, 2> part1Buffer{
+        antennaConfig.antennaInputs.size(),
+        antennaConfig.frequencyChannels.size()
+    };
+    assertMPISuccess(MPI_Bcast(part1Buffer.data(), part1Buffer.size(), MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD));
+
+    // Next we send the antenna inputs and frequency channels.
+    // We can represent it all as an array of unsigned.
+    std::vector<unsigned> part2Buffer;
+    part2Buffer.reserve((2 * antennaConfig.antennaInputs.size() + antennaConfig.frequencyChannels.size()));
+    for (auto const& antennaInputID : antennaConfig.antennaInputs) {
+        part2Buffer.push_back(antennaInputID.tile);
+        part2Buffer.push_back(static_cast<char>(antennaInputID.signalChain));
+    }
+    for (auto const channel : antennaConfig.frequencyChannels) {
+        part2Buffer.push_back(channel);
+    }
+    assertMPISuccess(MPI_Bcast(part2Buffer.data(), part2Buffer.size(), MPI_UNSIGNED, 0, MPI_COMM_WORLD));
 }
 
 void PrimaryNodeCommunicator::sendChannelRemapping(ChannelRemapping const& channelRemapping) const {
-    // TODO: real implementation
-    std::cout << "Node 0: sending channel remapping to all secondary nodes" << std::endl;
+    // First we will send the fixed-size data, include the size of the channel map.
+    std::array<unsigned, 2> part1Buffer{
+        channelRemapping.newSamplingFreq,
+        static_cast<unsigned>(channelRemapping.channelMap.size())
+    };
+    assertMPISuccess(MPI_Bcast(part1Buffer.data(), part1Buffer.size(), MPI_UNSIGNED, 0, MPI_COMM_WORLD));
+
+    // Next we will send the variable-size channel map.
+    // We can represent single remapped channel as 3 unsigned ints.
+    std::vector<unsigned> part2Buffer;
+    part2Buffer.reserve(channelRemapping.channelMap.size() * 3);
+    for (auto const& [oldChannel, remappedChannel] : channelRemapping.channelMap) {
+        part2Buffer.push_back(oldChannel);
+        part2Buffer.push_back(remappedChannel.newChannel);
+        part2Buffer.push_back(remappedChannel.flipped);
+    }
+    assertMPISuccess(MPI_Bcast(part2Buffer.data(), part2Buffer.size(), MPI_UNSIGNED, 0, MPI_COMM_WORLD));
 }
 
 void PrimaryNodeCommunicator::sendAntennaInputAssignment(unsigned node,
@@ -144,18 +177,14 @@ void PrimaryNodeCommunicator::sendAntennaInputAssignment(unsigned node,
     }
     
     // Represent the assignment as one array so we can send it all with one MPI call.
-    unsigned buffer[3];
+    std::array<unsigned, 3> buffer;
     if (antennaInputAssignment) {
-        buffer[0] = true;
-        buffer[1] = antennaInputAssignment->begin;
-        buffer[2] = antennaInputAssignment->end;
+        buffer = {true, antennaInputAssignment.value().begin, antennaInputAssignment.value().end};
     }
     else {
-        buffer[0] = false;
-        buffer[1] = 0;
-        buffer[2] = 0;
+        buffer = {false, 0, 0};
     }
-    assertMPISuccess(MPI_Send(buffer, 3, MPI_UNSIGNED, node, 0, MPI_COMM_WORLD));
+    assertMPISuccess(MPI_Send(buffer.data(), buffer.size(), MPI_UNSIGNED, node, 0, MPI_COMM_WORLD));
 }
 
 std::map<unsigned, ObservationProcessingResults> PrimaryNodeCommunicator::receiveProcessingResults() const {
@@ -194,54 +223,80 @@ void SecondaryNodeCommunicator::sendNodeSetupStatus(bool status) const {
 
 AppConfig SecondaryNodeCommunicator::receiveAppConfig() const {
     // Receive the fixed-size data.
-    std::size_t part1Buffer[5] = {0};
-    assertMPISuccess(MPI_Bcast(part1Buffer, 5, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD));
-    unsigned const observationID = part1Buffer[0];
-    unsigned const signalStartTime = part1Buffer[1];
-    auto const inputDirectoryPathSize = part1Buffer[2];
-    auto const invPolyphaseFilterPathSize = part1Buffer[3];
-    auto const outputDirectoryPathSize = part1Buffer[4];
+    std::array<unsigned long long, 5> part1Buffer{};
+    assertMPISuccess(MPI_Bcast(part1Buffer.data(), part1Buffer.size(), MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD));
+    auto const [
+        observationID,
+        signalStartTime,
+        inputDirectoryPathSize,
+        invPolyphaseFilterPathSize,
+        outputDirectoryPathSize
+    ] = part1Buffer;
 
     // Allocate a buffer for the variable-size data.
     std::vector<char> part2Buffer(inputDirectoryPathSize + invPolyphaseFilterPathSize + outputDirectoryPathSize);
     assertMPISuccess(MPI_Bcast(part2Buffer.data(), part2Buffer.size(), MPI_CHAR, 0, MPI_COMM_WORLD));
-    std::string inputDirectoryPath{part2Buffer.data(), inputDirectoryPathSize};
-    std::string invPolyphaseFilterPath{part2Buffer.data() + inputDirectoryPathSize, invPolyphaseFilterPathSize};
-    std::string outputDirectoryPath{part2Buffer.data() + inputDirectoryPathSize + invPolyphaseFilterPathSize,
-        outputDirectoryPathSize};
 
     return {
-        std::move(inputDirectoryPath),
-        observationID, signalStartTime,
-        std::move(invPolyphaseFilterPath),
-        std::move(outputDirectoryPath)
+        {part2Buffer.data(), inputDirectoryPathSize},
+        static_cast<unsigned>(observationID),
+        static_cast<unsigned>(signalStartTime),
+        {part2Buffer.data() + inputDirectoryPathSize, invPolyphaseFilterPathSize},
+        {part2Buffer.data() + inputDirectoryPathSize + invPolyphaseFilterPathSize, outputDirectoryPathSize}
     };
 }
 
 AntennaConfig SecondaryNodeCommunicator::receiveAntennaConfig() const {
-    // TODO: real implementation
-    std::cout << "Node " << _internodeCommunicator->getNodeID() << ": receiving antenna config from primary node" << std::endl;
-    return {
-        {{0, 'X'}, {0, 'Y'}, {1, 'X'}, {1, 'Y'}, {2, 'X'}, {2, 'Y'}, {3, 'X'}, {3, 'Y'}, {4, 'X'}, {4, 'Y'}, {5, 'X'}, {5, 'Y'}},
-        {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-    };
+    // First we receive the sizes of the antenna input and frequency channel arrays.
+    std::array<unsigned long long, 2> part1Buffer{};
+    assertMPISuccess(MPI_Bcast(part1Buffer.data(), part1Buffer.size(), MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD));
+    auto const [antennaInputCount, channelCount] = part1Buffer;
+
+    // Then we receive the antenna input and frequency channel data.
+    std::vector<unsigned> part2Buffer(2 * antennaInputCount + channelCount);
+    assertMPISuccess(MPI_Bcast(part2Buffer.data(), part2Buffer.size(), MPI_UNSIGNED, 0, MPI_COMM_WORLD));
+
+    AntennaConfig result{};
+    result.antennaInputs.reserve(antennaInputCount);
+    for (std::size_t i = 0; i < antennaInputCount; ++i) {
+        auto const tile = part2Buffer.at(2 * i);
+        auto const signalChain = part2Buffer.at(2 * i + 1);
+        result.antennaInputs.push_back({tile, static_cast<char>(signalChain)});
+    }
+    for (std::size_t i = 0; i < channelCount; ++i) {
+        auto const channel = part2Buffer.at(2 * antennaInputCount + i);
+        result.frequencyChannels.insert(channel);
+    }
+    return result;
 }
 
 ChannelRemapping SecondaryNodeCommunicator::receiveChannelRemapping() const {
-    // TODO: real implementation
-    std::cout << "Node " << _internodeCommunicator->getNodeID() << ": receiving channel remapping from primary node" << std::endl;
-    return {
-        512,
-        {{0, {0, false}}, {1, {1, false}}, {2, {2, false}}, {3, {3, false}}, {4, {4, false}}, {5, {5, false}},
-            {6, {6, false}}, {7, {7, false}}, {8, {8, false}}, {9, {9, false}}}
-    };
+    // Receive the fixed-size data.
+    std::array<unsigned, 2> part1Buffer{};
+    assertMPISuccess(MPI_Bcast(part1Buffer.data(), part1Buffer.size(), MPI_UNSIGNED, 0, MPI_COMM_WORLD));
+    auto const [newSamplingFreq, channelMapSize] = part1Buffer;
+
+    // Receive the variable-size channel map.
+    std::vector<unsigned> part2Buffer(channelMapSize * 3);
+    assertMPISuccess(MPI_Bcast(part2Buffer.data(), part2Buffer.size(), MPI_UNSIGNED, 0, MPI_COMM_WORLD));
+
+    ChannelRemapping result{newSamplingFreq, {}};
+    for (std::size_t i = 0; i < channelMapSize; ++i) {
+        auto const oldChannel = part2Buffer.at(3 * i);
+        auto const newChannel = part2Buffer.at(3 * i + 1);
+        auto const flipped = part2Buffer.at(3 * i + 2);
+        result.channelMap.emplace(oldChannel, ChannelRemapping::RemappedChannel{newChannel, flipped});
+    }
+    return result;
 }
 
 std::optional<AntennaInputRange> SecondaryNodeCommunicator::receiveAntennaInputAssignment() const {
-    unsigned buffer[3] = {0};
-    assertMPISuccess(MPI_Recv(&buffer, 3, MPI_UNSIGNED, 0, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
-    if (buffer[0]) {
-        return AntennaInputRange{buffer[1], buffer[2]};
+    std::array<unsigned, 3> buffer{};
+    assertMPISuccess(
+        MPI_Recv(buffer.data(), buffer.size(), MPI_UNSIGNED, 0, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+    auto const [hasValue, begin, end] = buffer;
+    if (hasValue) {
+        return AntennaInputRange{begin, end};
     }
     else {
         return std::nullopt;

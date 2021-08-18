@@ -4,6 +4,7 @@
 #include <optional>
 #include <stdexcept>
 
+#include "../../src/ChannelRemapping.hpp"
 #include "../../src/Common.hpp"
 #include "../../src/InternodeCommunication.hpp"
 #include "../../src/NodeAntennaInputAssigner.hpp"
@@ -70,7 +71,30 @@ static TestModule primaryNodeTestModule(PrimaryNodeCommunicator const& communica
                     failTest();
                 }
                 catch (std::invalid_argument const&) {}
+            }},
+            {"sendChannelRemapping()", [communicator]() {
+                ChannelRemapping const channelRemapping{
+                    14,
+                    {
+                        {7, {7, false}},
+                        {18, {4, false}},
+                        {47, {5, false}},
+                        {53, {3, true}},
+                        {71, {1, false}}
+                    }
+                };
+                communicator.sendChannelRemapping(channelRemapping);
+            }},
+            {"sendAntennaConfig()", [communicator]() {
+                AntennaConfig const antennaConfig{
+                    {
+                        {0, 'X'}, {0, 'Y'}, {1, 'X'}, {1, 'Y'}, {2, 'X'}, {3, 'Y'}, {76, 'Y'}, {76, 'X'}
+                    },
+                    {0, 3, 7, 4, 87, 231}
+                };
+                communicator.sendAntennaConfig(antennaConfig);
             }}
+            // TODO: tests for rest of functionality
         }
     };
 }
@@ -117,11 +141,7 @@ static TestModule secondaryNodeTestModule(SecondaryNodeCommunicator const& commu
                     "/group/mwavcs/inversePolyphaseFilter.bin",
                     "/group/mwavcs/myProcessedObservation"
                 };
-                testAssert(actual.inputDirectoryPath == expected.inputDirectoryPath);
-                testAssert(actual.observationID == expected.observationID);
-                testAssert(actual.signalStartTime == expected.signalStartTime);
-                testAssert(actual.invPolyphaseFilterPath == expected.invPolyphaseFilterPath);
-                testAssert(actual.outputDirectoryPath == expected.outputDirectoryPath);
+                testAssert(actual == expected);
             }},
             {"receiveAntennaInputAssignment()", [communicator]() {
                 auto const nodeID = communicator.getBaseCommunicator()->getNodeID();
@@ -131,12 +151,33 @@ static TestModule secondaryNodeTestModule(SecondaryNodeCommunicator const& commu
                 if (nodeID <= nodeCount / 2) {
                     expected = {7 * nodeID, 7 * nodeID + 6};
                 }
-                testAssert(actual.has_value() == expected.has_value());
-                if (actual && expected) {
-                    testAssert(actual.value().begin == expected.value().begin);
-                    testAssert(actual.value().end == expected.value().end);
-                }
+                testAssert(actual == expected);
+            }},
+            {"receiveChannelRemapping()", [communicator]() {
+                auto const actual = communicator.receiveChannelRemapping();
+                ChannelRemapping const expected{
+                    14,
+                    {
+                        {7, {7, false}},
+                        {18, {4, false}},
+                        {47, {5, false}},
+                        {53, {3, true}},
+                        {71, {1, false}}
+                    }
+                };
+                testAssert(actual == expected);
+            }},
+            {"receiveAntennaConfig()", [communicator]() {
+                auto const actual = communicator.receiveAntennaConfig();
+                AntennaConfig const expected{
+                    {
+                        {0, 'X'}, {0, 'Y'}, {1, 'X'}, {1, 'Y'}, {2, 'X'}, {3, 'Y'}, {76, 'Y'}, {76, 'X'}
+                    },
+                    {0, 3, 7, 4, 87, 231}
+                };
+                testAssert(actual == expected);
             }}
+            // TODO: tests for rest of functionality
         }
     };
 }
