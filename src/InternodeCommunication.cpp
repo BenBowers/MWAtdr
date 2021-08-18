@@ -6,8 +6,10 @@
 #include <cstddef>
 #include <map>
 #include <memory>
+#include <numeric>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <mpi.h>
@@ -16,17 +18,15 @@
 #include "Common.hpp"
 #include "NodeAntennaInputAssigner.hpp"
 
-// TODO: remove
-#include <iostream>
-
 
 // Raises an exception if the MPI error code does not indicate success.
 // Note that we don't expect this to ever happen, unless there is a logic error in our code.
-#define assertMPISuccess(mpiErrorCode) \
-    if ((mpiErrorCode) != MPI_SUCCESS) { \
+#define assertMPISuccess(mpiErrorCode) { \
+    auto const evaldCode = (mpiErrorCode); \
+    if (evaldCode != MPI_SUCCESS) { \
         throw InternodeCommunicationError{ \
-            "MPI call failed with code " + std::to_string(mpiErrorCode) + " (" __FILE__ " : " + std::to_string(__LINE__) + ")"}; \
-    }
+            "MPI call failed with code " + std::to_string(evaldCode) + " (" __FILE__ " : " + std::to_string(__LINE__) + ")"}; \
+    }}
 
 
 unsigned InternodeCommunicator::getNodeID() const {
@@ -90,16 +90,15 @@ void PrimaryNodeCommunicator::sendAppStartupStatus(bool status) const {
 
 std::map<unsigned, bool> PrimaryNodeCommunicator::receiveNodeSetupStatus() const {
     auto const nodeCount = _internodeCommunicator->getNodeCount();
-    // Can't use std::vector<bool> due to specialisation.
-    auto const statusBuffer = std::make_unique<bool[]>(nodeCount);
+    std::vector<char> statuses(nodeCount);  // Can't use bool due to std::vector<bool> specialisation.
     // Note that the root node must send data, but actually we don't need anything from root, so we will discard it.
-    bool const dummyRootValue = true;
+    char const dummyRootValue = true;
     assertMPISuccess(
-        MPI_Gather(&dummyRootValue, 1, MPI_CXX_BOOL, statusBuffer.get(), 1, MPI_CXX_BOOL, 0, MPI_COMM_WORLD));
+        MPI_Gather(&dummyRootValue, 1, MPI_CHAR, statuses.data(), 1, MPI_CHAR, 0, MPI_COMM_WORLD));
     
     std::map<unsigned, bool> result;
-    for (std::size_t i = 1; i < nodeCount; ++i) {
-        result.emplace(i, statusBuffer[i]);
+    for (unsigned node = 1; node < nodeCount; ++node) {
+        result.emplace(node, static_cast<bool>(statuses.at(node)));
     }
     return result;
 }
@@ -189,13 +188,87 @@ void PrimaryNodeCommunicator::sendAntennaInputAssignment(unsigned node,
 
 std::map<unsigned, ObservationProcessingResults> PrimaryNodeCommunicator::receiveProcessingResults() const {
     auto const nodeCount = _internodeCommunicator->getNodeCount();
-    std::map<unsigned, ObservationProcessingResults> results;
-    // TODO: real implementation
-    for (unsigned i = 1; i < nodeCount; ++i) {
-        std::cout << "Node 0: Receiving processing results from secondary node " << i << std::endl;
-        results[i] = {};
+
+    // This code is pretty horrible because ObservationProcessingResults has multiple levels of nested variable-size
+    // data inside it :/
+
+    // First we will get the number of antenna inputs from each secondary node.
+    std::vector<int> antennaInputCounts(nodeCount);
+    // Note that the root node must send data, but actually we don't need anything from root.
+    int const dummyRootAntennaInputCount = 0;
+    assertMPISuccess(MPI_Gather(&dummyRootAntennaInputCount, 1, MPI_INT, antennaInputCounts.data(), 1, MPI_INT, 0,
+        MPI_COMM_WORLD));
+
+    // Next we will get the lists of antenna inputs from each secondary node.
+    std::vector<int> antennaInputDisplacements(nodeCount);
+    antennaInputDisplacements.at(0) = 0;
+    for (std::size_t node = 1; node < nodeCount; ++node) {
+        antennaInputDisplacements.at(node) = antennaInputDisplacements.at(node - 1) + antennaInputCounts.at(node - 1);
     }
-    return results;
+    auto const totalAntennaInputs = std::accumulate(antennaInputCounts.cbegin(), antennaInputCounts.cend(), 0ull);
+    std::vector<unsigned> antennaInputs(totalAntennaInputs);
+    // Note that the root node must send data, but actually we don't need anything from root.
+    unsigned const dummyRootAntennaInput = 0;
+    assertMPISuccess(MPI_Gatherv(&dummyRootAntennaInput, 0, MPI_UNSIGNED, antennaInputs.data(),
+        antennaInputCounts.data(), antennaInputDisplacements.data(), MPI_UNSIGNED, 0, MPI_COMM_WORLD));
+
+    // Next we will receive the success status for each antenna input from each secondary node.
+    std::vector<char> successes(totalAntennaInputs);    // Can't use bool due to std::vector<bool> specialisation.
+    // Note that the root node must send data, but actually we don't need anything from root.
+    char const dummyRootSuccess = true;
+    assertMPISuccess(MPI_Gatherv(&dummyRootSuccess, 0, MPI_CHAR, successes.data(), antennaInputCounts.data(),
+        antennaInputDisplacements.data(), MPI_CHAR, 0, MPI_COMM_WORLD));
+
+    // Next we will receive the number of used channels per antenna input from each secondary node.
+    std::vector<unsigned> usedChannelCounts(totalAntennaInputs);
+    unsigned const dummyRootUsedChannelCount = 0;
+    assertMPISuccess(MPI_Gatherv(&dummyRootUsedChannelCount, 0, MPI_UNSIGNED, usedChannelCounts.data(),
+        antennaInputCounts.data(), antennaInputDisplacements.data(), MPI_UNSIGNED, 0, MPI_COMM_WORLD));
+    
+    // Next we will receive the list of used channels per antenna input from each secondary node.
+    std::vector<int> perNodeUsedChannelCounts(nodeCount);
+    std::size_t totalUsedChannelCount = 0;
+    for (std::size_t node = 1; node < nodeCount; ++node) {
+        auto const displacement = antennaInputDisplacements.at(node);
+        auto const antennaInputCount = antennaInputCounts.at(node);
+        auto const channelCount = std::accumulate(
+            usedChannelCounts.cbegin() + displacement,
+            usedChannelCounts.cbegin() + displacement + antennaInputCount,
+            0u);
+        perNodeUsedChannelCounts.at(node) = channelCount;
+        totalUsedChannelCount += channelCount;
+    }
+    std::vector<int> usedChannelDisplacements(nodeCount);
+    usedChannelDisplacements.at(0) = 0;
+    for (std::size_t node = 1; node < nodeCount; ++node) {
+        usedChannelDisplacements.at(node) = usedChannelDisplacements.at(node - 1)
+            + perNodeUsedChannelCounts.at(node - 1);
+    }
+    std::vector<unsigned> usedChannels(totalUsedChannelCount);
+    unsigned const dummyRootUsedChannel = 0;
+    assertMPISuccess(MPI_Gatherv(&dummyRootUsedChannel, 0, MPI_UNSIGNED, usedChannels.data(),
+        perNodeUsedChannelCounts.data(), usedChannelDisplacements.data(), MPI_UNSIGNED, 0, MPI_COMM_WORLD));
+
+    // Finally we combine all the received data.
+    std::map<unsigned, ObservationProcessingResults> result;
+    auto usedChannelIt = usedChannels.cbegin();
+    for (unsigned node = 1; node < nodeCount; ++node) {
+        ObservationProcessingResults nodeResults{};
+        auto const antennaInputCount = antennaInputCounts.at(node);
+        auto const antennaInputDisplacement = antennaInputDisplacements.at(node);
+        for (std::size_t antennaInputIdx = 0; antennaInputIdx < antennaInputCount; ++antennaInputIdx) {
+            auto const antennaInput = antennaInputs.at(antennaInputDisplacement + antennaInputIdx);
+            auto const success = successes.at(antennaInputDisplacement + antennaInputIdx);
+            auto const usedChannelCount = usedChannelCounts.at(antennaInputDisplacement + antennaInputIdx);
+            nodeResults.results.emplace(
+                antennaInput,
+                AntennaInputProcessingResults{success, {usedChannelIt, usedChannelIt + usedChannelCount}});
+            usedChannelIt += usedChannelCount;
+        }
+        result.emplace(node, std::move(nodeResults));
+    }
+
+    return result;
 }
 
 PrimaryNodeCommunicator::PrimaryNodeCommunicator(std::shared_ptr<InternodeCommunicator const> internodeCommunicator) :
@@ -218,7 +291,8 @@ bool SecondaryNodeCommunicator::receiveAppStartupStatus() const {
 }
 
 void SecondaryNodeCommunicator::sendNodeSetupStatus(bool status) const {
-    assertMPISuccess(MPI_Gather(&status, 1, MPI_CXX_BOOL, nullptr, 1, MPI_CXX_BOOL, 0, MPI_COMM_WORLD));
+    char const statusBuffer = status;   // Can't use bool due to std::vector<bool> specialisation.
+    assertMPISuccess(MPI_Gather(&statusBuffer, 1, MPI_CHAR, nullptr, 1, MPI_CHAR, 0, MPI_COMM_WORLD));
 }
 
 AppConfig SecondaryNodeCommunicator::receiveAppConfig() const {
@@ -293,7 +367,7 @@ ChannelRemapping SecondaryNodeCommunicator::receiveChannelRemapping() const {
 std::optional<AntennaInputRange> SecondaryNodeCommunicator::receiveAntennaInputAssignment() const {
     std::array<unsigned, 3> buffer{};
     assertMPISuccess(
-        MPI_Recv(buffer.data(), buffer.size(), MPI_UNSIGNED, 0, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
+        MPI_Recv(buffer.data(), buffer.size(), MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE));
     auto const [hasValue, begin, end] = buffer;
     if (hasValue) {
         return AntennaInputRange{begin, end};
@@ -304,8 +378,42 @@ std::optional<AntennaInputRange> SecondaryNodeCommunicator::receiveAntennaInputA
 }
 
 void SecondaryNodeCommunicator::sendProcessingResults(ObservationProcessingResults const& results) const {
-    // TODO: real implementation
-    std::cout << "Node " << _internodeCommunicator->getNodeID() << ": sending processing results to primary node" << std::endl;
+    // First we will send the number of antenna inputs to the primary node.
+    int const antennaInputCount = results.results.size();
+    assertMPISuccess(MPI_Gather(&antennaInputCount, 1, MPI_INT, nullptr, 1, MPI_INT, 0, MPI_COMM_WORLD));
+
+    // Extract the result data into separate arrays that we can send individually.
+    std::vector<unsigned> antennaInputs;
+    antennaInputs.reserve(antennaInputCount);
+    std::vector<char> successes;        // Can't use bool due to std::vector<bool> specialisation.
+    successes.reserve(antennaInputCount);
+    std::vector<unsigned> usedChannelCounts;
+    usedChannelCounts.reserve(antennaInputCount);
+    std::vector<unsigned> usedChannels;
+    usedChannels.reserve(antennaInputCount * 24ull);        // Approxmiate based on max number of channels.
+    for (auto const& [antennaInput, antennaInputResult] : results.results) {
+        antennaInputs.push_back(antennaInput);
+        successes.push_back(static_cast<char>(antennaInputResult.success));
+        usedChannelCounts.push_back(static_cast<unsigned>(antennaInputResult.usedChannels.size()));
+        usedChannels.insert(usedChannels.cend(), antennaInputResult.usedChannels.cbegin(),
+            antennaInputResult.usedChannels.cend());
+    }
+
+    // Next we will send the list of antenna inputs to the primary node.
+    assertMPISuccess(MPI_Gatherv(antennaInputs.data(), antennaInputCount, MPI_UNSIGNED, nullptr, nullptr, nullptr,
+        MPI_UNSIGNED, 0, MPI_COMM_WORLD));
+    
+    // Next we will send the success status for each antenna input to the primary node.
+    assertMPISuccess(MPI_Gatherv(successes.data(), antennaInputCount, MPI_CHAR, nullptr, nullptr, nullptr, MPI_CHAR, 0,
+        MPI_COMM_WORLD));
+    
+    // Next we will send the number of used channels per antenna input to the primary node.
+    assertMPISuccess(MPI_Gatherv(usedChannelCounts.data(), antennaInputCount, MPI_UNSIGNED, nullptr, nullptr, nullptr,
+        MPI_CHAR, 0, MPI_COMM_WORLD));
+
+    // Finally we will send the list of used channels per antenna input to the primary node.
+    assertMPISuccess(MPI_Gatherv(usedChannels.data(), usedChannels.size(), MPI_UNSIGNED, nullptr, nullptr, nullptr,
+        MPI_UNSIGNED, 0, MPI_COMM_WORLD));
 }
 
 SecondaryNodeCommunicator::SecondaryNodeCommunicator(std::shared_ptr<InternodeCommunicator const> internodeCommunicator) :

@@ -3,6 +3,7 @@
 #include <map>
 #include <optional>
 #include <stdexcept>
+#include <utility>
 
 #include "../../src/ChannelRemapping.hpp"
 #include "../../src/Common.hpp"
@@ -15,7 +16,7 @@
 static TestModule primaryNodeTestModule(PrimaryNodeCommunicator const& communicator) {
     return {
         "Internode communication module unit test (primary node)",
-        {   // Very important that the order of test cases matches those in secondaryNodeTestModule().
+        {   // The order of test cases must match that of secondaryNodeTestModule(), other deadlock can occur.
             {"Repeat internode communication initialisation", []() {
                 try {
                     InternodeCommunicator::init();
@@ -59,8 +60,8 @@ static TestModule primaryNodeTestModule(PrimaryNodeCommunicator const& communica
                 auto const nodeCount = communicator.getBaseCommunicator()->getNodeCount();
                 for (unsigned node = 1; node < nodeCount; ++node) {
                     std::optional<AntennaInputRange> assignment;
-                    if (node <= nodeCount / 2) {
-                        assignment = {7 * node, 7 * node + 6};
+                    if (node % 4 != 1) {
+                        assignment = {7 * node, 7 * node + 4};
                     }
                     communicator.sendAntennaInputAssignment(node, assignment);
                 }
@@ -93,8 +94,35 @@ static TestModule primaryNodeTestModule(PrimaryNodeCommunicator const& communica
                     {0, 3, 7, 4, 87, 231}
                 };
                 communicator.sendAntennaConfig(antennaConfig);
+            }},
+            {"receiveProcessingResults()", [communicator]() {
+                auto const nodeCount = communicator.getBaseCommunicator()->getNodeCount();
+                auto const actual = communicator.receiveProcessingResults();
+                std::map<unsigned, ObservationProcessingResults> expected;
+                for (unsigned node = 1; node < nodeCount; ++node) {
+                    ObservationProcessingResults nodeResults;
+                    if (node % 4 != 1) {
+                        unsigned const antennaInputBegin = node * 17;
+                        unsigned const antennaInputEnd = node * 17 + 13;
+                        for (unsigned antennaInput = antennaInputBegin; antennaInput <= antennaInputEnd; ++antennaInput) {
+                            AntennaInputProcessingResults antennaInputResults{
+                                (node ^ antennaInput) % 3 == 2,
+                                {}
+                            };
+                            if (node % 4 != 2) {
+                                for (unsigned channel = 92; channel <= 120; ++channel) {
+                                    if ((node * antennaInput * channel) % 5 == 3) {
+                                        antennaInputResults.usedChannels.insert(channel);
+                                    }
+                                }
+                            }
+                            nodeResults.results.emplace(antennaInput, std::move(antennaInputResults));
+                        }
+                    }
+                    expected.emplace(node, std::move(nodeResults));
+                }
+                testAssert(actual == expected);
             }}
-            // TODO: tests for rest of functionality
         }
     };
 }
@@ -103,7 +131,7 @@ static TestModule primaryNodeTestModule(PrimaryNodeCommunicator const& communica
 static TestModule secondaryNodeTestModule(SecondaryNodeCommunicator const& communicator) {
     return {
         "Internode communication module unit test (secondary node)",
-        {   // Very important that the order of test cases matches those in primaryNodeTestModule().
+        {   // The order of test cases must match that of primaryNodeTestModule(), other deadlock can occur.
             {"Repeat internode communication initialisation", []() {
                 try {
                     InternodeCommunicator::init();
@@ -148,8 +176,8 @@ static TestModule secondaryNodeTestModule(SecondaryNodeCommunicator const& commu
                 auto const nodeCount = communicator.getBaseCommunicator()->getNodeCount();
                 auto const actual = communicator.receiveAntennaInputAssignment();
                 std::optional<AntennaInputRange> expected;
-                if (nodeID <= nodeCount / 2) {
-                    expected = {7 * nodeID, 7 * nodeID + 6};
+                if (nodeID % 4 != 1) {
+                    expected = {7 * nodeID, 7 * nodeID + 4};
                 }
                 testAssert(actual == expected);
             }},
@@ -176,8 +204,30 @@ static TestModule secondaryNodeTestModule(SecondaryNodeCommunicator const& commu
                     {0, 3, 7, 4, 87, 231}
                 };
                 testAssert(actual == expected);
+            }},
+            {"sendProcessingResults()", [communicator]() {
+                auto const nodeID = communicator.getBaseCommunicator()->getNodeID();
+                ObservationProcessingResults processingResults{};
+                if (nodeID % 4 != 1) {
+                    unsigned const antennaInputBegin = nodeID * 17;
+                    unsigned const antennaInputEnd = nodeID * 17 + 13;
+                    for (unsigned antennaInput = antennaInputBegin; antennaInput <= antennaInputEnd; ++antennaInput) {
+                        AntennaInputProcessingResults antennaInputResults{
+                            (nodeID ^ antennaInput) % 3 == 2,
+                            {}
+                        };
+                        if (nodeID % 4 != 2) {
+                            for (unsigned channel = 92; channel <= 120; ++channel) {
+                                if ((nodeID * antennaInput * channel) % 5 == 3) {
+                                    antennaInputResults.usedChannels.insert(channel);
+                                }
+                            }
+                        }
+                        processingResults.results.emplace(antennaInput, std::move(antennaInputResults));
+                    }
+                }
+                communicator.sendProcessingResults(processingResults);
             }}
-            // TODO: tests for rest of functionality
         }
     };
 }
