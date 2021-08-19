@@ -111,7 +111,9 @@ static void performDFT(std::vector<std::complex<float>>& signalData) {
 static void doPostProcessing(std::vector<std::complex<float>> const& signalData,
                              std::vector<std::int16_t>& signalOut) {
     // Using std::transform I should be able to multithread this using the execution policy
-    std::transform(signalData.begin(), signalData.end(), signalOut.begin(), [](std::complex<float> in) -> std::int16_t {
+    // TODO: Figure out how to get execution policies on the docker image or use intel tbb
+    std::transform(signalData.begin(), signalData.end(), signalOut.begin(),
+                   [](std::complex<float> in) -> std::int16_t {
         // Perform Clamping and typecasting
         if (in.real() > INT16_MAX) return INT16_MAX;
         if (in.real() < INT16_MIN) return INT16_MIN;
