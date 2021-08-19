@@ -29,6 +29,122 @@
     }}
 
 
+std::variant<PrimaryNodeCommunicator, SecondaryNodeCommunicator> InternodeCommunicationContext::getCommunicator() {
+    int nodeID = 0;
+    assertMPISuccess(MPI_Comm_rank(MPI_COMM_WORLD, &nodeID));
+    if (nodeID == 0) {
+        return PrimaryNodeCommunicator{shared_from_this()};
+    }
+    else {
+        return SecondaryNodeCommunicator{shared_from_this()};
+    }
+}
+
+std::shared_ptr<InternodeCommunicationContext> InternodeCommunicationContext::initialise() {
+    return {new InternodeCommunicationContext{}, std::default_delete<InternodeCommunicationContext>{}};
+}
+
+
+InternodeCommunicationContext::MPIContext::MPIContext() {
+    // MPI may only be initialised once.
+    if (_initialised.test_and_set()) {
+        throw std::logic_error{"Internode communication may only be initialised once."};
+    }
+    else {
+        int providedThreadSupport = 0;
+        // Need concurrent MPI usage for error status communication.
+        assertMPISuccess(MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &providedThreadSupport));
+        if (providedThreadSupport < MPI_THREAD_MULTIPLE) {
+            throw InternodeCommunicationError{"MPI failed to provide required thread support."};
+        }
+    }
+}
+
+InternodeCommunicationContext::MPIContext::~MPIContext() {
+    MPI_Finalize();
+}
+
+std::atomic_flag InternodeCommunicationContext::MPIContext::_initialised = ATOMIC_FLAG_INIT;
+
+
+InternodeCommunicationContext::ErrorCommunicator::ErrorCommunicator() :
+    _communicator{_createCommunicator()}, _errorStatus{false}, _thread{&ErrorCommunicator::_threadFunc, this}
+{}
+
+InternodeCommunicationContext::ErrorCommunicator::~ErrorCommunicator() {
+    // Barrier just to make sure no nodes are in the process of sending an error status message.
+    assertMPISuccess(MPI_Barrier(_communicator));
+
+    int nodeID = 0;
+    assertMPISuccess(MPI_Comm_rank(_communicator, &nodeID));
+
+    // Tell our background thread to exit.
+    auto const message = static_cast<unsigned>(Message::EXIT_THREAD);
+    assertMPISuccess(MPI_Send(&message, 1, MPI_UNSIGNED, nodeID, 0, _communicator));
+
+    _thread.join();
+
+    MPI_Comm_free(&_communicator);
+}
+
+bool InternodeCommunicationContext::ErrorCommunicator::getErrorStatus() const {
+    return _errorStatus;
+}
+
+void InternodeCommunicationContext::ErrorCommunicator::indicateError() {
+    // Only need to do anything if no error has occurred yet.
+    bool errorStatus = false;
+    if (_errorStatus.compare_exchange_strong(errorStatus, true)) {
+        // Tell all the other nodes that an error has occurred.
+        int nodeCount = 0;
+        assertMPISuccess(MPI_Comm_size(_communicator, &nodeCount));
+        int thisNode = 0;
+        assertMPISuccess(MPI_Comm_rank(_communicator, &thisNode));
+        for (unsigned node = 0; node < nodeCount; ++node) {
+            if (node != thisNode) {
+                auto const message = static_cast<unsigned>(Message::ERROR_OCCURRED);
+                assertMPISuccess(MPI_Send(&message, 1, MPI_UNSIGNED, node, 0, _communicator));
+            }
+        }
+    }
+}
+
+void InternodeCommunicationContext::ErrorCommunicator::_threadFunc() {
+    while (true) {
+        Message message{};
+        assertMPISuccess(MPI_Recv(&message, 1, MPI_UNSIGNED, MPI_ANY_SOURCE, 0, _communicator, MPI_STATUS_IGNORE));
+        if (message == Message::EXIT_THREAD) {
+            // The main thread has told us to exit.
+            break;
+        }
+        else if (message == Message::ERROR_OCCURRED) {
+            // Some node has told us an error has occurred.
+            _errorStatus = true;
+        }
+    }
+}
+
+MPI_Comm InternodeCommunicationContext::ErrorCommunicator::_createCommunicator() {
+    MPI_Comm communicator;
+    assertMPISuccess(MPI_Comm_dup(MPI_COMM_WORLD, &communicator));
+    return communicator;
+}
+
+
+InternodeCommunicationContext::~InternodeCommunicationContext() {
+    // Do a barrier just to make sure everything else is probably done.
+    assertMPISuccess(MPI_Barrier(MPI_COMM_WORLD));
+}
+
+
+InternodeCommunicator::InternodeCommunicator(std::shared_ptr<InternodeCommunicationContext> context) :
+    _context{context}
+{}
+
+std::shared_ptr<InternodeCommunicationContext> const& InternodeCommunicator::getContext() const {
+    return _context;
+}
+
 unsigned InternodeCommunicator::getNodeID() const {
     int id = 0;
     assertMPISuccess(MPI_Comm_rank(MPI_COMM_WORLD, &id));
@@ -41,37 +157,17 @@ unsigned InternodeCommunicator::getNodeCount() const {
     return count;
 }
 
-PrimaryNodeCommunicator InternodeCommunicator::getPrimaryNodeCommunicator() const {
-    return PrimaryNodeCommunicator{shared_from_this()};
-}
-
-SecondaryNodeCommunicator InternodeCommunicator::getSecondaryNodeCommunicator() const {
-    return SecondaryNodeCommunicator{shared_from_this()};
-}
-
-std::shared_ptr<InternodeCommunicator> InternodeCommunicator::init() {
-    return {new InternodeCommunicator{}, std::default_delete<InternodeCommunicator>{}};
-}
-
-void InternodeCommunicator::sync() const {
+void InternodeCommunicator::synchronise() const {
     assertMPISuccess(MPI_Barrier(MPI_COMM_WORLD));
 }
 
-InternodeCommunicator::InternodeCommunicator() {
-    // MPI may only be initialised once.
-    if (_initialised.test_and_set()) {
-        throw std::logic_error{"Internode communication may only be initialised once."};
-    }
-    else {
-        assertMPISuccess(MPI_Init(nullptr, nullptr));
-    }
+bool InternodeCommunicator::getErrorStatus() const {
+    return _context->_errorCommunicator.getErrorStatus();
 }
 
-InternodeCommunicator::~InternodeCommunicator() {
-    MPI_Finalize();
+void InternodeCommunicator::indicateError() {
+    _context->_errorCommunicator.indicateError();
 }
-
-std::atomic_flag InternodeCommunicator::_initialised = ATOMIC_FLAG_INIT;
 
 
 // For the following communication functions, I will note that I am not an MPI expert.
@@ -80,8 +176,12 @@ std::atomic_flag InternodeCommunicator::_initialised = ATOMIC_FLAG_INIT;
 // Apologies in advance.
 
 
-std::shared_ptr<InternodeCommunicator const> const& PrimaryNodeCommunicator::getBaseCommunicator() const {
-    return _internodeCommunicator;
+PrimaryNodeCommunicator::PrimaryNodeCommunicator(std::shared_ptr<InternodeCommunicationContext> context) :
+    InternodeCommunicator{context}
+{
+    if (getNodeID() != 0) {
+        throw std::logic_error{"PrimaryNodeCommunicator must only be used with node 0."};
+    }
 }
 
 void PrimaryNodeCommunicator::sendAppStartupStatus(bool status) const {
@@ -89,7 +189,7 @@ void PrimaryNodeCommunicator::sendAppStartupStatus(bool status) const {
 }
 
 std::map<unsigned, bool> PrimaryNodeCommunicator::receiveNodeSetupStatus() const {
-    auto const nodeCount = _internodeCommunicator->getNodeCount();
+    auto const nodeCount = getNodeCount();
     std::vector<char> statuses(nodeCount);  // Can't use bool due to std::vector<bool> specialisation.
     // Note that the root node must send data, but actually we don't need anything from root, so we will discard it.
     char const dummyRootValue = true;
@@ -187,10 +287,16 @@ void PrimaryNodeCommunicator::sendAntennaInputAssignment(unsigned node,
 }
 
 std::map<unsigned, ObservationProcessingResults> PrimaryNodeCommunicator::receiveProcessingResults() const {
-    auto const nodeCount = _internodeCommunicator->getNodeCount();
+    auto const nodeCount = getNodeCount();
 
-    // This code is pretty horrible because ObservationProcessingResults has multiple levels of nested variable-size
-    // data inside it :/
+    // We use a series of gathers to get each part of the results from the secondary nodes at once, rather than getting
+    // the data from one secondary node at a time.
+    // The result data includes multiple levels of nested variable-size data, which makes this code rather complex.
+    // Before getting any actual data from the nodes, we have to first get the sizes of the variable-size data. These
+    // sizes can vary on a per-node basis, thus we have to use MPI_Gatherv, and calculate displacements for storing the
+    // collated data here.
+    // Unfortunately this code is on the border of being too complex to reason about. However, it does work, as shown by
+    // the unit tests.
 
     // First we will get the number of antenna inputs from each secondary node.
     std::vector<int> antennaInputCounts(nodeCount);
@@ -271,17 +377,13 @@ std::map<unsigned, ObservationProcessingResults> PrimaryNodeCommunicator::receiv
     return result;
 }
 
-PrimaryNodeCommunicator::PrimaryNodeCommunicator(std::shared_ptr<InternodeCommunicator const> internodeCommunicator) :
-    _internodeCommunicator{internodeCommunicator}
+
+SecondaryNodeCommunicator::SecondaryNodeCommunicator(std::shared_ptr<InternodeCommunicationContext> context) :
+    InternodeCommunicator{context}
 {
-    if (_internodeCommunicator->getNodeID() != 0) {
-        throw std::logic_error{"PrimaryNodeCommunicator must only be used with node 0."};
+    if (getNodeID() == 0) {
+        throw std::logic_error{"SecondaryNodeCommunicator cannot be used with node 0."};
     }
-}
-
-
-std::shared_ptr<InternodeCommunicator const> const& SecondaryNodeCommunicator::getBaseCommunicator() const {
-    return _internodeCommunicator;
 }
 
 bool SecondaryNodeCommunicator::receiveAppStartupStatus() const {
@@ -414,12 +516,4 @@ void SecondaryNodeCommunicator::sendProcessingResults(ObservationProcessingResul
     // Finally we will send the list of used channels per antenna input to the primary node.
     assertMPISuccess(MPI_Gatherv(usedChannels.data(), usedChannels.size(), MPI_UNSIGNED, nullptr, nullptr, nullptr,
         MPI_UNSIGNED, 0, MPI_COMM_WORLD));
-}
-
-SecondaryNodeCommunicator::SecondaryNodeCommunicator(std::shared_ptr<InternodeCommunicator const> internodeCommunicator) :
-    _internodeCommunicator{internodeCommunicator}
-{
-    if (_internodeCommunicator->getNodeID() == 0) {
-        throw std::logic_error{"SecondaryNodeCommunicator cannot be used with node 0."};
-    }
 }

@@ -21,7 +21,7 @@ void runMPITests(InternodeCommunicator const& internodeCommunicator, std::vector
     auto const nodePrefix = std::string{"Node "} + std::to_string(nodeID) + " | ";
 
     for (auto const& testModule : testModules) {
-        internodeCommunicator.sync();
+        internodeCommunicator.synchronise();
 
         auto const modulePrefix = nodePrefix + '"' + testModule.name + "\" | ";
 
@@ -54,7 +54,7 @@ void runMPITests(InternodeCommunicator const& internodeCommunicator, std::vector
         }
     }
 
-    internodeCommunicator.sync();
+    internodeCommunicator.synchronise();
     // Really dodgy sleep just to wait for all output to stdout from all nodes to be written.
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
 

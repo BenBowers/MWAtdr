@@ -72,7 +72,7 @@ RUN mkdir build && \
 	cmake .. && \
 	cmake --build . --target mpi_test
 
-ENTRYPOINT ["mpirun", "./build/mpi_test"]
+ENTRYPOINT ["./test/mpi/run.sh"]
 
 
 # Image for main application executable.
