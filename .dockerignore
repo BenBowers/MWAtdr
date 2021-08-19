@@ -1,0 +1,9 @@
+.dockerignore
+.git
+.gitattributes
+.gitignore
+.vscode
+/docker_build.*
+/docker_run.*
+/LICENSE
+/README.md

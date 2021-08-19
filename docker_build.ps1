@@ -3,4 +3,4 @@ param(
     [String] $target
 )
 
-docker build --target "$target" -t "mwa_time_data_reconstructor/$target" --build-arg DOCKER_BUILD=1 .
+docker build --target "$target" -t "mwa_time_data_reconstructor/$target" .
