@@ -2,6 +2,7 @@
 #include<iostream>
 #include<map>
 #include<mkl.h>
+#include<tbb/tbb.h>
 #include"SignalProcessing.hpp"
 #include"ChannelRemapping.hpp"
 
@@ -132,15 +133,18 @@ static void performDFT(std::vector<std::complex<float>>& signalData) {
     handleMKLError(DftiFreeDescriptor(&hand));
 }
 
+static inline std::int16_t clamp(float n) {
+    if (n > INT16_MAX) return INT16_MAX;
+    if (n < INT16_MIN) return INT16_MIN;
+    return static_cast<std::int16_t>(n);
+}
+
 static void doPostProcessing(std::vector<std::complex<float>> const& signalData,
                              std::vector<std::int16_t>& signalOut) {
-    // Using std::transform I should be able to multithread this using the execution policy
-    // TODO: Figure out how to get execution policies on the docker image or use intel tbb
-    std::transform(signalData.begin(), signalData.end(), signalOut.begin(),
-                   [](std::complex<float> in) -> std::int16_t {
-        // Perform Clamping and typecasting
-        if (in.real() > INT16_MAX) return INT16_MAX;
-        if (in.real() < INT16_MIN) return INT16_MIN;
-        return static_cast<std::int16_t>(in.real());
-    });
+    signalOut.reserve(signalData.size());
+    // This is the only way to get the parallel for to work for some reason
+    std::int16_t* out = signalOut.data();
+    tbb::parallel_for(size_t(0), signalData.size(), [=](size_t ii) {
+            out[ii] = clamp(signalData[ii].real());
+     });
 }
