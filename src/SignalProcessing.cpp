@@ -11,7 +11,9 @@
 // The signalOut will have the same amount of samples as signalData but with the same or different number of channels
 static void remapChannels(std::vector<std::complex<float>> const& signalData,
                           std::vector<std::complex<float>>& signalOut,
-                          ChannelRemapping const& remappingData);
+                          std::map<unsigned, ChannelRemapping::RemappedChannel> const& mapping,
+                          unsigned const numberOfSamples,
+                          unsigned const newNumChannels);
 
 // Performs an inverse polyphase filter bank (PFB) on the signal data, the mapping is required
 // for this function so the convolution only goes over the appropriate channels. This mapping
@@ -19,7 +21,9 @@ static void remapChannels(std::vector<std::complex<float>> const& signalData,
 static void performPFB(std::vector<std::complex<float>> const& signalData,
                        std::vector<std::complex<float>>& signalOut,
                        std::vector<std::complex<float>> const& coefficantPFB,
-                       std::map<unsigned, ChannelRemapping::RemappedChannel> const& mapping);
+                       std::map<unsigned, ChannelRemapping::RemappedChannel> const& mapping,
+                       unsigned const numberOfSamples,
+                       unsigned const numOfChannels);
 
 // Performs an inverse discrete fourier transorm on the signal data, changing the frequency
 // data into a time domain signal this is done in place! DO NOT use imaginary conmpenent of the data
@@ -43,9 +47,14 @@ std::vector<std::int16_t> processSignal(std::vector<std::complex<float>> const& 
                                ChannelRemapping const& remappingData) {
     std::cout << "ProcessSignal Called" << std::endl;
 
+    unsigned const IN_NUM_SAMPLES = signalData.size() / remappingData.channelMap.size();
+    unsigned const OUT_NUM_CHANNELS = remappingData.newSamplingFreq / 2;
+
     std::vector<std::complex<float>> remappedData = std::vector<std::complex<float>>();
     std::vector<std::complex<float>> convolvedData = std::vector<std::complex<float>>();
     std::vector<std::int16_t> outData = std::vector<std::int16_t>();
+
+
 
     // remapChannels(signalData, remappedData, remappingData);
     // performPFB(signalData, convolvedData, coefficiantPFB, remappingData.channelMap);
@@ -57,35 +66,29 @@ std::vector<std::int16_t> processSignal(std::vector<std::complex<float>> const& 
 
 static void remapChannels(std::vector<std::complex<float>> const& signalData,
                           std::vector<std::complex<float>>& signalOut,
-                          ChannelRemapping const& remappingData) {
-
-    // Calculate the new number of channels, this will be the highest channel in the mapping
-    // Which will always be half of the sampling frequency due to the nyquist sampling
-    unsigned newNumOfChannels = remappingData.newSamplingFreq / 2;
-
-    // Calculate how many samples are in the original signalData
-    unsigned numberOfSamples = signalData.size() / remappingData.channelMap.size();
-
+                          std::map<unsigned, ChannelRemapping::RemappedChannel> const& mapping,
+                          unsigned const numberOfSamples,
+                          unsigned const newNumOfChannels) {
     // Tell the vector it's size
     signalOut.reserve(newNumOfChannels * numberOfSamples);
 
     // Work over each element of the mapping
-    for (auto mapping : remappingData.channelMap) {
+    for (auto map : mapping) {
         // Assign better names to iterator variables
-        unsigned oldChannel = mapping.first;
-        unsigned newChannel = mapping.second.newChannel;
-        bool flipped = mapping.second.flipped;
+        unsigned oldChannel = map.first;
+        unsigned newChannel = map.second.newChannel;
+        bool flipped = map.second.flipped;
 
         if (flipped) {
             // Do a strided conjugated copy over it
             vcConjI(numberOfSamples,
-                    (MKL_Complex8*)&signalData.data()[oldChannel], remappingData.channelMap.size(),
+                    (MKL_Complex8*)&signalData.data()[oldChannel], mapping.size(),
                     (MKL_Complex8*)&signalOut.data()[newChannel], newNumOfChannels);
         }
         else {
             // Do a strided copy over it
             cblas_ccopy(numberOfSamples,
-                        &signalData.data()[oldChannel], remappingData.channelMap.size(),
+                        &signalData.data()[oldChannel], mapping.size(),
                         &signalOut.data()[newChannel], newNumOfChannels);
         }
     }
@@ -95,8 +98,29 @@ static void remapChannels(std::vector<std::complex<float>> const& signalData,
 static void performPFB(std::vector<std::complex<float>> const& signalData,
                        std::vector<std::complex<float>>& outSignal,
                        std::vector<std::complex<float>> const& coefficantPFB,
-                       std::map<unsigned, ChannelRemapping::RemappedChannel> const& mapping) {
-    std::cout << "performPFB() called" << std::endl;
+                       std::map<unsigned, ChannelRemapping::RemappedChannel> const& mapping,
+                       unsigned const numberOfSamples,
+                       unsigned const numOfChannels) {
+    VSLConvTaskPtr convolutionTask = nullptr;
+
+    // TODO: handle the error cases for this function
+    vslcConvNewTask1D(&convolutionTask,
+                      VSL_CORR_MODE_AUTO,
+                      numberOfSamples,
+                      coefficantPFB.size() / numOfChannels,
+                      numberOfSamples);
+
+    // Only work over the channels that actually have something in them
+    for(auto map : mapping) {
+        unsigned const oldChannel = map.first;
+        unsigned const newChannel = map.second.newChannel;
+        // TODO: handle error cases for this function call
+        // NOTE: Stride over coefficantPFB data is using the original channel data as it didn't get remapped
+        vslcConvExec1D(convolutionTask,
+                       (MKL_Complex8*)&signalData.data()[newChannel], numOfChannels,
+                       (MKL_Complex8*)&outSignal.data()[newChannel], numOfChannels,
+                       (MKL_Complex8*)&coefficantPFB.data()[oldChannel], mapping.size());
+    }
 }
 
 static void performDFT(std::vector<std::complex<float>>& signalData) {
