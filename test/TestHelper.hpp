@@ -47,6 +47,8 @@ void runTests(std::vector<TestModule> const& testModules);
 
 
 // Pseudorandom number generator for testing.
-// It is seeded with a true random number generator, so results will not be reproducible.
-// Not thread safe.
 extern std::default_random_engine testRandomEngine;
+
+
+// Seeds testRandomEngine from a given value or from a true random number source.
+unsigned long long seedTestRandomEngine(unsigned long long seed = std::random_device{}());

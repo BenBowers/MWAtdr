@@ -1,7 +1,6 @@
 #include "TestHelper.hpp"
 
 #include <iostream>
-#include <random>
 
 
 void runTests(std::vector<TestModule> const& testModules) {
@@ -55,8 +54,10 @@ void runTests(std::vector<TestModule> const& testModules) {
 }
 
 
-std::default_random_engine testRandomEngine = []() {
-    auto const seed = std::random_device{}();
-    std::cout << "Test random number generator seed: " << seed << '\n' << std::endl;
-    return std::default_random_engine{seed};
-}();
+std::default_random_engine testRandomEngine{};
+
+
+unsigned long long seedTestRandomEngine(unsigned long long seed) {
+    testRandomEngine.seed(seed);
+    return seed;
+}
