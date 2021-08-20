@@ -44,14 +44,20 @@ COPY --chown=app:app CMakeLists.txt ./
 COPY --chown=app:app src/ src/
 COPY --chown=app:app test/ test/
 
+# The type of build to do with CMake.
+ARG BUILD_TYPE=Release
+
+# Just configure the CMake build at this stage.
+RUN mkdir build && \
+	cd build && \
+	cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ..
+
 
 # Image for non-MPI tests.
 FROM base AS local_test
 
 # Build "local_test" CMake target only.
-RUN mkdir build && \
-	cd build && \
-	cmake .. && \
+RUN cd build && \
 	cmake --build . --target local_test
 
 ENTRYPOINT ["./build/local_test"]
@@ -61,9 +67,7 @@ ENTRYPOINT ["./build/local_test"]
 FROM base AS mpi_test
 
 # Build "mpi_test" CMake target only.
-RUN mkdir build && \
-	cd build && \
-	cmake .. && \
+RUN cd build && \
 	cmake --build . --target mpi_test
 
 ENTRYPOINT ["mpirun", "./build/mpi_test"]
@@ -73,9 +77,7 @@ ENTRYPOINT ["mpirun", "./build/mpi_test"]
 FROM base AS main
 
 # Build "main" CMake target only.
-RUN mkdir build && \
-	cd build && \
-	cmake .. && \
+RUN cd build && \
 	cmake --build . --target main
 
 ENTRYPOINT ["mpirun", "./build/main"]

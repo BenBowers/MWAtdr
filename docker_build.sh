@@ -2,11 +2,12 @@
 
 set -e
 
-if [[ $# -ne 1 ]] ; then
-    echo "Usage: docker_build.sh <target>"
+if [[ $# -ne 2 ]] ; then
+    echo "Usage: docker_build.sh <target> <buildType>"
     exit 1
 fi
 
 target=$1
+buildType=$2
 
-docker build --target "$target" -t "mwa_time_data_reconstructor/$target" .
+docker build --target "$target" -t "mwa_time_data_reconstructor/$target" --build-arg "BUILD_TYPE=$buildType" .
