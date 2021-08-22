@@ -1,5 +1,5 @@
 # Base image for all the executables.
-FROM debian:buster-slim AS base
+FROM debian:bullseye-slim AS base
 
 WORKDIR /tmp
 
