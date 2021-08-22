@@ -1,5 +1,7 @@
 #include "NodeAntennaInputAssigner.hpp"
 
+#include <stdexcept>
+
 // Creates a vector of size numNodes,
 // with each AntennaInputRange entry covering a near equal distribution of antenna inputs.
 // Returned vector contains AntennaInputRange or null entries.

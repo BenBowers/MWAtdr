@@ -8,6 +8,21 @@
 #include <vector>
 
 NodeAntennaInputAssignerTest::NodeAntennaInputAssignerTest() : TestModule{"Node antenna input assigner unit test", {
+    {"Comparing vectors: Equal vectors (with values and null)", []() {
+		std::vector<std::optional<AntennaInputRange>> const lhs{{{0, 1}}, {{2, 3}}, {}};
+		std::vector<std::optional<AntennaInputRange>> const rhs{{{0, 1}}, {{2, 3}}, {}};
+		testAssert(lhs == rhs);
+	}},
+    {"Comparing vectors: Different vectors", []() {
+		std::vector<std::optional<AntennaInputRange>> const lhs{{{1, 4}}, {{3, 6}}, {}};
+		std::vector<std::optional<AntennaInputRange>> const rhs{{{0, 1}}, {}, {}};
+		testAssert(!(lhs == rhs));
+	}},
+    {"Comparing vectors: Different size vectors", []() {
+		std::vector<std::optional<AntennaInputRange>> const lhs{{{0, 1}}};
+		std::vector<std::optional<AntennaInputRange>> const rhs{{{0, 1}}, {{2, 3}}};
+		testAssert(!(lhs == rhs));
+	}},
 	{"One node, multiple inputs", []() {
 		auto const actual = assignNodeAntennaInputs(1, 256);
 		std::vector<std::optional<AntennaInputRange>> const expected{{{0, 255}}};
