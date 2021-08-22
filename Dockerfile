@@ -72,6 +72,7 @@ RUN mkdir build && \
 	cmake .. && \
 	cmake --build . --target mpi_test
 
+RUN chmod +x ./test/mpi/run.sh
 ENTRYPOINT ["./test/mpi/run.sh"]
 
 
