@@ -13,17 +13,14 @@ std::vector<std::optional<AntennaInputRange>> assignNodeAntennaInputs(unsigned n
     }
 
     std::vector<std::optional<AntennaInputRange>> ranges;
-    AntennaInputRange temp;
-
     // Calculate average number (rounded down) of antenna inputs per node
     unsigned averageInputsToProcess = numAntennaInputs / numNodes;
 
     if (averageInputsToProcess >= 1) {
-        // Assign the average number of antenna inputs to all nodes
+        // Assign average number of antenna inputs to all nodes
         for (unsigned i = 0; i < numNodes; i++) {
-            temp.begin = i * averageInputsToProcess;
-            temp.end = temp.begin + averageInputsToProcess - 1;
-            ranges.push_back(temp);
+            ranges.push_back({{i * averageInputsToProcess,
+                              (i * averageInputsToProcess) + averageInputsToProcess - 1}});
         }
         // Assign one additional antenna input to each node until all (inputs) have been assigned
         unsigned index = 0;
@@ -40,8 +37,7 @@ std::vector<std::optional<AntennaInputRange>> assignNodeAntennaInputs(unsigned n
     else {
         // Assign one antenna input to each node until all (inputs) have been assigned
         for (unsigned i = 0; i < numAntennaInputs; i++) {
-            temp = {i, i};
-            ranges.push_back(temp);
+            ranges.push_back({{i, i}});
         }
         // Assign null to the remaining nodes
         while (ranges.size() < numNodes) {
@@ -51,7 +47,7 @@ std::vector<std::optional<AntennaInputRange>> assignNodeAntennaInputs(unsigned n
     return ranges;
 }
 
-// Compare that two AntennaInputRange structs are not equal
-bool operator!=(AntennaInputRange const& lhs, AntennaInputRange const& rhs) {
-    return lhs.begin != rhs.begin || lhs.end != rhs.end;
+// Compare that two AntennaInputRange structs are equal
+bool operator==(AntennaInputRange const& lhs, AntennaInputRange const& rhs) {
+    return lhs.begin == rhs.begin && lhs.end == rhs.end;
 }

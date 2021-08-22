@@ -9,4 +9,4 @@ struct AntennaInputRange {
 };
 
 std::vector<std::optional<AntennaInputRange>> assignNodeAntennaInputs(unsigned numNodes, unsigned numAntennaInputs);
-bool operator!=(AntennaInputRange const& lhs, AntennaInputRange const& rhs);
+bool operator==(AntennaInputRange const& lhs, AntennaInputRange const& rhs);
