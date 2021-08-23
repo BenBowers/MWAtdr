@@ -7,6 +7,7 @@
 #include <array>
 #include <string>
 #include <cstdint>
+#include <filesystem>
 
 //note c++ dose not allow for the return of an array from a function as such vecotrs will be used for simpicity.
 
@@ -35,7 +36,7 @@ std::vector<std::complex<float>> readCoeData(std::string fileName){
     //Error Handling / data validation
     // The exact resoning for 1+filterLength*256*4 can be found in section 7.2 of the SRS please see this link:https://docs.google.com/document/d/1qc3NF6r_EMKG8y9WnR1iwhQcniS3oQovhhOCTZz7YXE/edit?usp=sharing
     
-    int realFileSize = infile.tellg();
+    const auto realFileSize = std::filesystem::file_size(fileName);
     if(realFileSize != 1+filterLength*256*4){
         throw std::runtime_error("File size did not match expected");
     }
