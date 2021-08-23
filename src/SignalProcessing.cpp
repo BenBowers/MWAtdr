@@ -1,5 +1,6 @@
 #include<algorithm>
 #include<iostream>
+#include<limits>
 #include<map>
 #include<mkl.h>
 #include<tbb/tbb.h>
@@ -133,9 +134,9 @@ void performDFT(std::vector<std::complex<float>>& signalData) {
     handleMKLError(DftiFreeDescriptor(&hand));
 }
 
-static inline std::int16_t clamp(float n) {
-    if (n > INT16_MAX) return INT16_MAX;
-    if (n < INT16_MIN) return INT16_MIN;
+constexpr std::int16_t clamp(float n) {
+    if (n > std::numeric_limits<std::int16_t>::max()) { return std::numeric_limits<std::int16_t>::max(); }
+    if (n < std::numeric_limits<std::int16_t>::min()) { return std::numeric_limits<std::int16_t>::min(); }
     return static_cast<std::int16_t>(n);
 }
 
@@ -143,9 +144,7 @@ void doPostProcessing(std::vector<std::complex<float>> const& signalData,
                              std::vector<std::int16_t>& signalOut) {
     signalOut.resize(signalData.size());
 
-    std::int16_t* out = signalOut.data();
-
-    tbb::parallel_for(size_t(0), signalData.size(), [=](size_t ii) {
-        out[ii] = clamp(signalData[ii].real());
+    tbb::parallel_for(size_t{0}, signalData.size(), [&signalData, &signalOut](size_t ii) {
+        signalOut[ii] = clamp(signalData[ii].real());
     });
 }

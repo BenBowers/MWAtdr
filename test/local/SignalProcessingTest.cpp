@@ -4,10 +4,16 @@
 #include<vector>
 #include<cstdint>
 #include<iostream>
+#include<limits>
 
 #include "../../src/SignalProcessing.hpp"
 #include "../TestHelper.hpp"
 #include "../../src/ChannelRemapping.hpp"
+
+
+// Use std::numeric_limits as it is more modern the INT16_MAX macros
+constexpr std::int16_t MAX_INT16 = std::numeric_limits<std::int16_t>::max();
+constexpr std::int16_t MIN_INT16 = std::numeric_limits<std::int16_t>::min();
 
 // These Function declarations as I don't want them to be publically avalible
 // as they are internal, I've made them non static so I can unit test  them
@@ -105,7 +111,7 @@ SignalProcessingTest::SignalProcessingTest() : TestModule{"Signal Processing uni
             {0.0f, 0.0f}};
 
         std::vector<std::int16_t> const expected {
-            {-421, 67, INT16_MAX, 43, -34, INT16_MAX, 1, INT16_MIN, 23, -6343, 476, INT16_MIN, 0}};
+            {-421, 67, MAX_INT16, 43, -34, MAX_INT16, 1, MIN_INT16, 23, -6343, 476, MIN_INT16, 0}};
 
         std::vector<std::int16_t> actual {};
 
@@ -116,15 +122,15 @@ SignalProcessingTest::SignalProcessingTest() : TestModule{"Signal Processing uni
 
     {"doPostProcessing() extreme edge case clamping input", []() {
         std::vector<std::complex<float>> const inData {
-            {INT16_MAX + 1, 0.0f},
-            {INT16_MIN - 1, 0.0f},
-            {INT16_MAX - 1, 0.0f},
-            {INT16_MIN + 1, 0.0f},
-            {INT16_MAX, 0.0f},
-            {INT16_MIN, 0.0f}};
+            {MAX_INT16 + 1, 0.0f},
+            {MIN_INT16 - 1, 0.0f},
+            {MAX_INT16 - 1, 0.0f},
+            {MIN_INT16 + 1, 0.0f},
+            {MAX_INT16, 0.0f},
+            {MIN_INT16, 0.0f}};
 
         std::vector<std::int16_t> expected {
-            {INT16_MAX, INT16_MIN, INT16_MAX - 1, INT16_MIN + 1, INT16_MAX, INT16_MIN}};
+            {MAX_INT16, MIN_INT16, MAX_INT16 - 1, MIN_INT16 + 1, MAX_INT16, MIN_INT16}};
 
         std::vector<std::int16_t> actual {};
 
