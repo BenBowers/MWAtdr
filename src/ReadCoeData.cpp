@@ -33,15 +33,18 @@ std::vector<std::complex<float>> readCoeData(std::string fileName){
     std::clog << "Completed filter length reading" <<std::endl;    
     
     //creating buffer to hold coeficent data as it is read befor pushing it onto the vector
-    float buffer;
+    float rbuffer;
+    float ibuffer;
     std::clog << "Reading data values from file" <<std::endl;        
     while(!infile.eof()){
-    infile.read(reinterpret_cast<char *>(&buffer),sizeof(buffer));//second read get the float data from the file
-    result.push_back(buffer);
+    infile.read(reinterpret_cast<char *>(&rbuffer),sizeof(rbuffer));//second read get the float data from the file
+    infile.read(reinterpret_cast<char *>(&ibuffer),sizeof(ibuffer));
+    result.push_back({rbuffer,ibuffer});
 
     }
     std::clog << "Completed reading data values total values read"+result.size() <<std::endl;        
-
+    //closing the data file
     infile.close();
+    //returning the full vector
     return result;
 }
