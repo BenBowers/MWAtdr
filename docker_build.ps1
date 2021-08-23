@@ -12,4 +12,5 @@ docker build `
     -t "mwa_time_data_reconstructor/$target" `
     --build-arg "BUILD_TYPE=$buildType" `
     --build-arg "CONTAINER_RUNTIME=$containerRuntime" `
+    --progress plain `
     .
