@@ -2,6 +2,7 @@
 
 #include <map>
 #include <set>
+#include <string>
 #include <vector>
 
 // Contains the observation details, and input and output file directories
