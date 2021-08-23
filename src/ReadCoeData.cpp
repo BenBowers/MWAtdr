@@ -32,14 +32,15 @@ std::vector<std::complex<float>> readCoeData(std::string fileName){
     infile.read(reinterpret_cast<char *>(&filterLength),sizeof(filterLength));//first read get the size of the filter exactly 8 bits 
     //TODO error handeling with the filter size infomation
     std::clog << "Completed filter length reading" <<std::endl;    
-    
-    //Error Handling / data validation
-    std::filesystem::path p = std::filesystem::current_path() / fileName;
-    int realFileSize = std::filesystem::file_size(p);
 
+    //Error Handling / data validation
+    // The exact resoning for 1+filterLength*256*4 can be found in section 7.2 of the SRS please see this link:https://docs.google.com/document/d/1qc3NF6r_EMKG8y9WnR1iwhQcniS3oQovhhOCTZz7YXE/edit?usp=sharing
+    
+    int realFileSize = infile.tellg();
     if(realFileSize != 1+filterLength*256*4){
-        throw "File size did not match expected size";
+        throw std::runtime_error("File size did not match expected");
     }
+
 
     //creating buffer to hold coeficent data as it is read befor pushing it onto the vector
     float rbuffer;
