@@ -44,13 +44,17 @@ COPY --chown=app:app CMakeLists.txt ./
 COPY --chown=app:app src/ src/
 COPY --chown=app:app test/ test/
 
-# The type of build to do with CMake.
+# The type of build to do with CMake. See here: https://cmake.org/cmake/help/v3.10/variable/CMAKE_BUILD_TYPE.html
 ARG BUILD_TYPE=Release
 
 # Just configure the CMake build at this stage.
 RUN mkdir build && \
 	cd build && \
 	cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ..
+
+# Indicates what container we are in at runtime. Options are 'docker' or 'singularity'.
+ARG CONTAINER_RUNTIME=singularity
+ENV CONTAINER_RUNTIME=${CONTAINER_RUNTIME}
 
 
 # Image for non-MPI tests.
@@ -70,7 +74,8 @@ FROM base AS mpi_test
 RUN cd build && \
 	cmake --build . --target mpi_test
 
-ENTRYPOINT ["mpirun", "./build/mpi_test"]
+RUN chmod +x ./test/mpi/run.sh
+ENTRYPOINT ["./test/mpi/run.sh"]
 
 
 # Image for main application executable.
