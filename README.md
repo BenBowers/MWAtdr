@@ -33,19 +33,21 @@ Building a project target is as simple as building the corresponding Docker stag
 
 Bash:
 ```bash
-./docker_build.sh <target>
+./docker_build.sh <target> <buildType>
 ```
 
 PowerShell:
 ```powershell
-./docker_build.ps1 <target>
+./docker_build.ps1 <target> <buildType>
 ```
 
 Alternatively, this can be run with the following command:
 
 ```bash
-docker build --target "$target" -t "mwa_time_data_reconstructor/$target" --build-arg DOCKER_BUILD=1 .
+docker build --target "$target" -t "mwa_time_data_reconstructor/$target" --build-arg BUILD_TYPE=$buildType .
 ```
+
+`<buildType>` is the [CMake build type](https://cmake.org/cmake/help/v3.10/variable/CMAKE_BUILD_TYPE.html). If not specified, defaults to `Release`, which is an optimised build suitable for real-world use.
 
 Note: this can take some time to run on the first time. Subsequent builds will be quicker.
 
