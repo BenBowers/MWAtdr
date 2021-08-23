@@ -7,6 +7,7 @@
 #include <array>
 #include <string>
 #include <cstdint>
+#include <filesystem>
 
 //note c++ dose not allow for the return of an array from a function as such vecotrs will be used for simpicity.
 
@@ -32,6 +33,14 @@ std::vector<std::complex<float>> readCoeData(std::string fileName){
     //TODO error handeling with the filter size infomation
     std::clog << "Completed filter length reading" <<std::endl;    
     
+    //Error Handling / data validation
+    std::filesystem::path p = std::filesystem::current_path() / fileName;
+    int realFileSize = std::filesystem::file_size(p);
+
+    if(realFileSize != 1+filterLength*256*4){
+        throw "File size did not match expected size";
+    }
+
     //creating buffer to hold coeficent data as it is read befor pushing it onto the vector
     float rbuffer;
     float ibuffer;
