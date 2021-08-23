@@ -1,7 +1,6 @@
 #include "../../src/OutSignalWriter.hpp"
 #include "../TestHelper.hpp"
 
-#include <optinal>
 #include <stdexcept>
 #include <vector>
 
@@ -24,11 +23,9 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
     {"Invalid inputs (incorect formatting)", []() {
 
 		try {
-
-			outSignalWriter(2,0,0,0);
+			outSignalWriter(2,0,0,);
 
 			failTest();
-
 		}
 
 		catch (std::invalid_argument const&) {}
