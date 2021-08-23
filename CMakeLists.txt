@@ -31,6 +31,8 @@ set(LOCAL_TEST_SOURCE_FILES
     "${LOCAL_TEST_SOURCE_DIR}/Main.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/ChannelRemappingTest.cpp"
     "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/NodeAntennaInputAssignerTest.cpp"
+    "${MAIN_SOURCE_DIR}/NodeAntennaInputAssigner.cpp"
 )
 
 set(MPI_TEST_SOURCE_FILES
