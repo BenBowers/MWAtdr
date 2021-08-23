@@ -17,16 +17,15 @@ void outSignalWriter(const std::vector<std::int16_t> &inputData, const AppConfig
     std::string outDir = observation.outputDirectoryPath;
 
     //creating the output file with the correct name and in the correct directory
-    std::ofstream myfile(outDir + sObsID + "_" + sStartTime + + "_signalchain.bin",std::ios::out | std::ios::binary);
+    std::ofstream outfile(outDir + "/" + sObsID + "_" + sStartTime + + "_signalchain.bin",std::ios::out | std::ios::binary);
     //if the file is unable to be created and opened then an error is made will be handled later
-    if(!myfile){
+    if(!outfile){
         //TODO error hanndling
         std::cout << "cannot create file" << std::endl;
+
     }
-
     //dump the whole vector into a file
-    myfile.write(reinterpret_cast<const char*>(inputData.data()), sizeof(std::int16_t) * inputData.size());
-    myfile.close();
-
+    outfile.write(reinterpret_cast<const char*>(inputData.data()), sizeof(std::int16_t) * inputData.size());
+    outfile.close();
 
 }
