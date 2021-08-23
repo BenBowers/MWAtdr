@@ -1,47 +1,42 @@
 #include "ReadCoeData.hpp"
+#include <exception>
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <complex>
 #include <array>
 #include <string>
+#include <cstdint>
+
 //note c++ dose not allow for the return of an array from a function as such vecotrs will be used for simpicity.
 
 //main function for reading in the coeficent data  will return a vector of those coeficents.
 
 //takes a file name as its only input and will return an intager array of the coeficents
 std::vector<std::complex<float>> readCoeData(std::string fileName){
-    
-    //realy messay way of reading a file most likly to change the internals of this function in the future.
-    fileName = "test.txt";
-    std::ifstream infile(fileName);
+    //final vector that will contain all of the coeficent data
     std::vector<std::complex<float>> result;
-    //checking to see if the file is open
+    //opening the file
+    std::ifstream infile;
+    infile.open(fileName);
+    if(!infile){
+        throw std::system_error(errno, std::generic_category(), "unable to open"+fileName);
+    }
+    std::clog << "Opened" << fileName <<std::endl;
+
    
-    if(infile.is_open()){
-        while(true){
-            int data;
-            infile >> data;
-            //dont like now this exits right now will be changed in the future ugly use of a break
-            if(infile.eof()){
-                break;
-            }
-            result.push_back(data);
-        }
-        infile.close();
+   //obtaining the filter length
+    std::uint8_t filterLength;
+    infile.read(reinterpret_cast<char *>(&filterLength),sizeof(filterLength));//first read get the size of the filter exactly 8 bits 
+    //TODO error handeling with the filter size infomation
+    
+    float buffer;
+    while(!infile.eof()){
+    infile.read(reinterpret_cast<char *>(&buffer),sizeof(buffer));//second read get the float data from the file
+    result.push_back(buffer);
+
     }
-    else{
-        //TODO pass errors to the error handler
-        //remove cosole log
-        std::cout << "unable to open file";
-    }
-    //closing the file once all the reading is compleated.
+
     infile.close();
-    //creating and filling an array of 1's for testing and produce knowen resaults
-
-    for (int i = 0; i = 256;i++){
-        result.push_back(1);
-    }
-
     return result;
 }
