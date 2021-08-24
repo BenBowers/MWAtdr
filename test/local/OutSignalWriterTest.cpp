@@ -1,16 +1,24 @@
 #include "../../src/OutSignalWriter.hpp"
+#include "OutSignalWriterTest.hpp"
 #include "../TestHelper.hpp"
+#include "../../src/Common.hpp"
 
 #include <stdexcept>
+#include <cstdint>
 #include <vector>
 
-OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit test",{
+
+std::vector<std::int16_t> testData;
+AppConfig invalidTestConfig = {"123456789",123456789,123456789,"",""};
+AppConfig validTestConfig = {"",123456789,123456789,"/","/"}; //input and output directories are listed 
+
+
+OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit test", {
     
-    {"Invalid Inputs (Unexpected Data types)", []() {
+    {"Verify output Data", []() {
 
 		try {
-
-			outSignalWriter(0,0,0);
+			outSignalWriter(testData,invalidTestConfig,);
 
 		    failTest();
 
@@ -23,7 +31,7 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
     {"Invalid inputs (incorect formatting)", []() {
 
 		try {
-			outSignalWriter(2,0,0,);
+			outSignalWriter();
 
 			failTest();
 		}
