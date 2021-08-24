@@ -37,6 +37,104 @@ void doPostProcessing(std::vector<std::complex<float>> const& signalData,
                       std::vector<std::int16_t>& signalOut);
 
 SignalProcessingTest::SignalProcessingTest() : TestModule{"Signal Processing unit test", {
+    // This test should do nothing to the data as the mapping is exactly the same
+    {"remapChannels() contiguous input ( No Conjagation )", []() {
+        std::vector<std::complex<float>> const signalData{
+            { 0.0f, 0.0f }, { 0.1f, 0.1f }, { 0.2f, 0.2f }, { 0.3f, 0.3f }, { 0.4f, 0.4f },
+            { 1.0f, 1.0f }, { 1.1f, 1.1f }, { 1.2f, 1.2f }, { 1.3f, 1.3f }, { 1.4f, 1.4f },
+            { 2.0f, 2.0f }, { 2.1f, 2.1f }, { 2.2f, 2.2f }, { 2.3f, 2.3f }, { 2.4f, 2.4f },
+            { 3.0f, 3.0f }, { 3.1f, 3.1f }, { 3.2f, 3.2f }, { 3.3f, 3.3f }, { 3.4f, 3.4f },
+            { 4.0f, 4.0f }, { 4.1f, 4.1f }, { 4.2f, 4.2f }, { 4.3f, 4.3f }, { 4.4f, 4.4f },
+            { 5.0f, 5.0f }, { 5.1f, 5.1f }, { 5.2f, 5.2f }, { 5.3f, 5.3f }, { 5.4f, 5.4f },
+            { 6.0f, 6.0f }, { 6.1f, 6.1f }, { 6.2f, 6.2f }, { 6.3f, 6.3f }, { 6.4f, 6.4f },
+            { 7.0f, 7.0f }, { 7.1f, 7.1f }, { 7.2f, 7.2f }, { 7.3f, 7.3f }, { 7.4f, 7.4f } };
+
+        std::map<unsigned, ChannelRemapping::RemappedChannel> const mapping{
+                {0, {0, false}},
+                {1, {1, false}},
+                {2, {2, false}},
+                {3, {3, false}},
+                {4, {4, false}}
+        };
+
+        std::vector<std::complex<float>> actual{};
+
+        remapChannels(signalData, actual, mapping, 8, 5);
+
+        testAssert(signalData == actual);
+    }},
+    {"remapChannels() contiguous input ( All Conjagation )", []() {
+        std::vector<std::complex<float>> const signalData{
+            { 0.0f, 0.0f }, { 0.1f, 0.1f }, { 0.2f, 0.2f }, { 0.3f, 0.3f }, { 0.4f, 0.4f },
+            { 1.0f, 1.0f }, { 1.1f, 1.1f }, { 1.2f, 1.2f }, { 1.3f, 1.3f }, { 1.4f, 1.4f },
+            { 2.0f, 2.0f }, { 2.1f, 2.1f }, { 2.2f, 2.2f }, { 2.3f, 2.3f }, { 2.4f, 2.4f },
+            { 3.0f, 3.0f }, { 3.1f, 3.1f }, { 3.2f, 3.2f }, { 3.3f, 3.3f }, { 3.4f, 3.4f },
+            { 4.0f, 4.0f }, { 4.1f, 4.1f }, { 4.2f, 4.2f }, { 4.3f, 4.3f }, { 4.4f, 4.4f },
+            { 5.0f, 5.0f }, { 5.1f, 5.1f }, { 5.2f, 5.2f }, { 5.3f, 5.3f }, { 5.4f, 5.4f },
+            { 6.0f, 6.0f }, { 6.1f, 6.1f }, { 6.2f, 6.2f }, { 6.3f, 6.3f }, { 6.4f, 6.4f },
+            { 7.0f, 7.0f }, { 7.1f, 7.1f }, { 7.2f, 7.2f }, { 7.3f, 7.3f }, { 7.4f, 7.4f } };
+
+        std::map<unsigned, ChannelRemapping::RemappedChannel> const mapping{
+                {0, {0, true}},
+                {1, {1, true}},
+                {2, {2, true}},
+                {3, {3, true}},
+                {4, {4, true}}
+        };
+
+        std::vector<std::complex<float>> const expected{
+            { 0.0f, -0.0f }, { 0.1f, -0.1f }, { 0.2f, -0.2f }, { 0.3f, -0.3f }, { 0.4f, -0.4f },
+            { 1.0f, -1.0f }, { 1.1f, -1.1f }, { 1.2f, -1.2f }, { 1.3f, -1.3f }, { 1.4f, -1.4f },
+            { 2.0f, -2.0f }, { 2.1f, -2.1f }, { 2.2f, -2.2f }, { 2.3f, -2.3f }, { 2.4f, -2.4f },
+            { 3.0f, -3.0f }, { 3.1f, -3.1f }, { 3.2f, -3.2f }, { 3.3f, -3.3f }, { 3.4f, -3.4f },
+            { 4.0f, -4.0f }, { 4.1f, -4.1f }, { 4.2f, -4.2f }, { 4.3f, -4.3f }, { 4.4f, -4.4f },
+            { 5.0f, -5.0f }, { 5.1f, -5.1f }, { 5.2f, -5.2f }, { 5.3f, -5.3f }, { 5.4f, -5.4f },
+            { 6.0f, -6.0f }, { 6.1f, -6.1f }, { 6.2f, -6.2f }, { 6.3f, -6.3f }, { 6.4f, -6.4f },
+            { 7.0f, -7.0f }, { 7.1f, -7.1f }, { 7.2f, -7.2f }, { 7.3f, -7.3f }, { 7.4f, -7.4f } };
+
+        std::vector<std::complex<float>> actual{};
+
+        remapChannels(signalData, actual, mapping, 8, 5);
+
+        testAssert(actual == expected);
+    }},
+
+    {"remapChannels() contiguous input ( Some Conjagation )", []() {
+        std::vector<std::complex<float>> const signalData{
+            { 0.0f, 0.0f }, { 0.1f, 0.1f }, { 0.2f, 0.2f }, { 0.3f, 0.3f }, { 0.4f, 0.4f },
+            { 1.0f, 1.0f }, { 1.1f, 1.1f }, { 1.2f, 1.2f }, { 1.3f, 1.3f }, { 1.4f, 1.4f },
+            { 2.0f, 2.0f }, { 2.1f, 2.1f }, { 2.2f, 2.2f }, { 2.3f, 2.3f }, { 2.4f, 2.4f },
+            { 3.0f, 3.0f }, { 3.1f, 3.1f }, { 3.2f, 3.2f }, { 3.3f, 3.3f }, { 3.4f, 3.4f },
+            { 4.0f, 4.0f }, { 4.1f, 4.1f }, { 4.2f, 4.2f }, { 4.3f, 4.3f }, { 4.4f, 4.4f },
+            { 5.0f, 5.0f }, { 5.1f, 5.1f }, { 5.2f, 5.2f }, { 5.3f, 5.3f }, { 5.4f, 5.4f },
+            { 6.0f, 6.0f }, { 6.1f, 6.1f }, { 6.2f, 6.2f }, { 6.3f, 6.3f }, { 6.4f, 6.4f },
+            { 7.0f, 7.0f }, { 7.1f, 7.1f }, { 7.2f, 7.2f }, { 7.3f, 7.3f }, { 7.4f, 7.4f } };
+
+        std::map<unsigned, ChannelRemapping::RemappedChannel> const mapping{
+                {0, {0, true}},
+                {1, {1, false}},
+                {2, {2, true}},
+                {3, {3, false}},
+                {4, {4, true}}
+        };
+
+        std::vector<std::complex<float>> const expected{
+            { 0.0f, -0.0f }, { 0.1f, 0.1f }, { 0.2f, -0.2f }, { 0.3f, 0.3f }, { 0.4f, -0.4f },
+            { 1.0f, -1.0f }, { 1.1f, 1.1f }, { 1.2f, -1.2f }, { 1.3f, 1.3f }, { 1.4f, -1.4f },
+            { 2.0f, -2.0f }, { 2.1f, 2.1f }, { 2.2f, -2.2f }, { 2.3f, 2.3f }, { 2.4f, -2.4f },
+            { 3.0f, -3.0f }, { 3.1f, 3.1f }, { 3.2f, -3.2f }, { 3.3f, 3.3f }, { 3.4f, -3.4f },
+            { 4.0f, -4.0f }, { 4.1f, 4.1f }, { 4.2f, -4.2f }, { 4.3f, 4.3f }, { 4.4f, -4.4f },
+            { 5.0f, -5.0f }, { 5.1f, 5.1f }, { 5.2f, -5.2f }, { 5.3f, 5.3f }, { 5.4f, -5.4f },
+            { 6.0f, -6.0f }, { 6.1f, 6.1f }, { 6.2f, -6.2f }, { 6.3f, 6.3f }, { 6.4f, -6.4f },
+            { 7.0f, -7.0f }, { 7.1f, 7.1f }, { 7.2f, -7.2f }, { 7.3f, 7.3f }, { 7.4f, -7.4f } };
+
+        std::vector<std::complex<float>> actual{};
+
+        remapChannels(signalData, actual, mapping, 8, 5);
+
+        testAssert(actual == expected);
+    }},
+
     {"doPostProcessing() regular positive input", []() {
         std::vector<std::complex<float>> const inData {
             {1.0f, 0.0f},

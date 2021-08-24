@@ -72,7 +72,7 @@ void remapChannels(std::vector<std::complex<float>> const& signalData,
                           unsigned const numberOfSamples,
                           unsigned const newNumOfChannels) {
     // Tell the vector it's size
-    signalOut.reserve(newNumOfChannels * numberOfSamples);
+    signalOut.resize(newNumOfChannels * numberOfSamples);
 
     // Work over each element of the mapping
     for (auto map : mapping) {
