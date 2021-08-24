@@ -8,9 +8,12 @@
 #include <vector>
 
 
-std::vector<std::int16_t> testData;
+std::vector<std::int16_t> testData = {1,2,3,4,5,6,7,8,9};
+//input path, obs id, signal start time, poly path, output dir
 AppConfig invalidTestConfig = {"123456789",123456789,123456789,"",""};
-AppConfig validTestConfig = {"",123456789,123456789,"/","/"}; //input and output directories are listed 
+AppConfig validTestConfig = {"",123456789,123456789,"",""}; //input and output directories are listed 
+//Antena input Physical ID the two components of that struct is the first physical id the second is the char representing what signal chain that id is for 
+AntennaInputPhysID testAntenaPhysID = {1,'x'};
 
 
 OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit test", {
@@ -18,7 +21,7 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
     {"Verify output Data", []() {
 
 		try {
-			outSignalWriter(testData,invalidTestConfig,);
+			outSignalWriter(testData,validTestConfig,testAntenaPhysID);
 
 		    failTest();
 
@@ -28,10 +31,10 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
 
 	}},
 
-    {"Invalid inputs (incorect formatting)", []() {
+    {"Invalid inputs (incorrect output directory)", []() {
 
 		try {
-			outSignalWriter();
+			outSignalWriter(testData,invalidTestConfig,testAntenaPhysID);
 
 			failTest();
 		}
@@ -40,7 +43,7 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
 
 	}},
     
-    {"Invalid output directory",[](){
+    {"Invalid ",[](){
         
         try {
             outSignalWriter();
