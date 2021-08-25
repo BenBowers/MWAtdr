@@ -138,10 +138,14 @@ void performPFB(std::vector<std::complex<float>> const& signalData,
     }
 }
 
-void performDFT(std::vector<std::complex<float>>& signalData) {
+void performDFT(std::vector<std::complex<float>>& signalData,
+                unsigned const numberOfSamples,
+                unsigned const numOfChannels) {
     DFTI_DESCRIPTOR_HANDLE hand;
+    MKL_LONG dims[] = {static_cast<MKL_LONG>(numOfChannels), static_cast<MKL_LONG>(numberOfSamples)};
 
-    handleMKLError(DftiCreateDescriptor(&hand, DFTI_SINGLE, DFTI_COMPLEX, 1, signalData.size()));
+    handleMKLError(DftiCreateDescriptor(&hand, DFTI_SINGLE, DFTI_COMPLEX, 2, dims));
+    handleMKLError(DftiSetValue(hand, DFTI_BACKWARD_SCALE, 1.0f / static_cast<float>(numberOfSamples)));
     handleMKLError(DftiCommitDescriptor(hand));
     handleMKLError(DftiComputeBackward(hand, signalData.data()));
     handleMKLError(DftiFreeDescriptor(&hand));
