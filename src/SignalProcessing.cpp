@@ -59,6 +59,7 @@ std::vector<std::int16_t> processSignal(std::vector<std::complex<float>> const& 
                                ChannelRemapping const& remappingData) {
     std::cout << "ProcessSignal Called" << std::endl;
 
+    unsigned const IN_NUM_CHANNELS = remappingData.channelMap.rbegin()->first + 1;
     unsigned const IN_NUM_SAMPLES = signalData.size() / remappingData.channelMap.size();
     unsigned const OUT_NUM_CHANNELS = remappingData.newSamplingFreq / 2;
 
@@ -80,6 +81,7 @@ void remapChannels(std::vector<std::complex<float>> const& signalData,
                           std::vector<std::complex<float>>& signalOut,
                           std::map<unsigned, ChannelRemapping::RemappedChannel> const& mapping,
                           unsigned const numberOfSamples,
+                          unsigned const origNumOfChannels,
                           unsigned const newNumOfChannels) {
     // Tell the vector it's size
     signalOut.resize(newNumOfChannels * numberOfSamples);
@@ -94,13 +96,13 @@ void remapChannels(std::vector<std::complex<float>> const& signalData,
         if (flipped) {
             // Do a strided conjugated copy over it
             vcConjI(numberOfSamples,
-                    reinterpret_cast<const MKL_Complex8*>(&signalData.data()[oldChannel]), mapping.size(),
+                    reinterpret_cast<const MKL_Complex8*>(&signalData.data()[oldChannel]), origNumOfChannels,
                     reinterpret_cast<MKL_Complex8*>(&signalOut.data()[newChannel]), newNumOfChannels);
         }
         else {
             // Do a strided copy over it
             cblas_ccopy(numberOfSamples,
-                        &signalData.data()[oldChannel], mapping.size(),
+                        &signalData.data()[oldChannel], origNumOfChannels,
                         &signalOut.data()[newChannel], newNumOfChannels);
         }
     }
@@ -112,6 +114,7 @@ void performPFB(std::vector<std::complex<float>> const& signalData,
                        std::vector<std::complex<float>> const& coefficantPFB,
                        std::map<unsigned, ChannelRemapping::RemappedChannel> const& mapping,
                        unsigned const numberOfSamples,
+                       unsigned const origNumOfChannels,
                        unsigned const numOfChannels) {
     VSLConvTaskPtr convolutionTask = nullptr;
 
