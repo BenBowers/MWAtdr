@@ -48,8 +48,7 @@ std::vector<std::complex<float>> readCoeData(std::string fileName){
     std::clog << "Reading data values from file" <<std::endl;        
     while(!infile.eof()){
     infile.read(reinterpret_cast<char *>(&rbuffer),sizeof(rbuffer));//second read get the float data from the file
-    infile.read(reinterpret_cast<char *>(&ibuffer),sizeof(ibuffer));
-    result.push_back({rbuffer,ibuffer});
+    result.push_back({rbuffer,0});
 
     }
     std::clog << "Completed reading data values total values read"+result.size() <<std::endl;        
