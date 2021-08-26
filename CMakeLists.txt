@@ -30,6 +30,7 @@ set(LOCAL_TEST_SOURCE_FILES
     "${TEST_SOURCE_DIR}/TestHelper.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/Main.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/OutSignalWriterTest.cpp"
+    "${MAIN_SOURCE_DIR}/OutSignalWriter.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/ChannelRemappingTest.cpp"
     "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"
 )
