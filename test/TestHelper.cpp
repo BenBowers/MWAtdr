@@ -13,14 +13,14 @@ void runTests(std::vector<TestModule> const& testModules) {
 
         bool hasFailure = false;
         for (auto const& testCase : testModule.testCases) {
-            std::cout << "  Test case \"" << testCase.name << "\"...";
+            std::cout << "  Test case \"" << testCase.name << "\"..." << std::flush;
 
             bool passed = false;
             try {
                 testCase.function();
                 passed = true;
             }
-            catch (AssertionError const& e) {
+            catch (TestAssertionError const& e) {
                 std::cout << " FAILED - assertion failed: " << e.message << std::endl;
             }
             catch (std::exception const& e) {
@@ -50,5 +50,14 @@ void runTests(std::vector<TestModule> const& testModules) {
     auto const totalCases = casesPassed + casesFailed;
     std::cout << totalCases << " total test cases." << std::endl;
     std::cout << casesPassed << " test cases passed." << std::endl;
-    std::cout << casesFailed << " test cases failed, across " << modulesWithFailure << " test modules" << std::endl;
+    std::cout << casesFailed << " test cases failed, across " << modulesWithFailure << " test modules." << std::endl;
+}
+
+
+std::default_random_engine testRandomEngine{};
+
+
+unsigned long long seedTestRandomEngine(unsigned long long seed) {
+    testRandomEngine.seed(seed);
+    return seed;
 }

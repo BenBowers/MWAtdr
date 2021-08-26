@@ -14,12 +14,12 @@
 
 std::vector<std::complex<float>> readCoeData(std::string fileName);
 
-std::string filename = "coeficentdataFile";
+std::string filename = "coeficentdataFile.bin";
 
 ReadCoeDataTest::ReadCoeDataTest() : TestModule{"Read Coeficent data Test", {
     
     {"Valid InputFile", []() {
-       auto actual = readCoeData(filename);
+       std::vector<std::complex<float>> actual = readCoeData("coeficentdataFile.bin");
 
         testAssert(actual.size() % 256 == 0);
 	}},
