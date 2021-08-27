@@ -68,3 +68,6 @@ target_link_directories("${LOCAL_TEST_EXECUTABLE}" PRIVATE "$ENV{MKLROOT}/lib/in
 target_link_libraries("${MAIN_EXECUTABLE}" PRIVATE MPI::MPI_C mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb)
 target_link_libraries("${LOCAL_TEST_EXECUTABLE}" PRIVATE mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb)
 target_link_libraries("${MPI_TEST_EXECUTABLE}" PRIVATE MPI::MPI_C)
+
+target_link_libraries("${MAIN_EXECUTABLE}" PRIVATE "mwalib")
+target_link_libraries("${LOCAL_TEST_EXECUTABLE}" PRIVATE "mwalib")

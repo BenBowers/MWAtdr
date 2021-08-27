@@ -14,7 +14,7 @@ int main() {
 	auto communicator = InternodeCommunicator::init();
 	
     if (communicator->getNodeID() == 0) {
-	    AppConfig appConfig = {"/app", 1294797712, 1294797712,
+	    AppConfig appConfig = {"/app/signals/", 1294797712, 1294797712,
 	                           "./inverse_polyphase_filter.bin", "./reconstructed_observation"};
 
    	    // Read in metadata
