@@ -61,12 +61,3 @@ unsigned long long seedTestRandomEngine(unsigned long long seed) {
     testRandomEngine.seed(seed);
     return seed;
 }
-
-
-std::default_random_engine testRandomEngine{};
-
-
-unsigned long long seedTestRandomEngine(unsigned long long seed) {
-    testRandomEngine.seed(seed);
-    return seed;
-}
