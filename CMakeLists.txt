@@ -23,7 +23,8 @@ set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/NodeAntennaInputAssigner.cpp"
     "${MAIN_SOURCE_DIR}/MetadataFileReader.cpp"
     "${MAIN_SOURCE_DIR}/OutputLogFileWriter.cpp"
-    "${MAIN_SOURCE_DIR}/ReadCoeData.cpp"    
+    "${MAIN_SOURCE_DIR}/ReadCoeData.cpp"
+    "${MAIN_SOURCE_DIR}/Common.cpp"
 )
 
 set(LOCAL_TEST_SOURCE_FILES
@@ -31,11 +32,21 @@ set(LOCAL_TEST_SOURCE_FILES
     "${LOCAL_TEST_SOURCE_DIR}/Main.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/ReadCoeDataTest.cpp"
     "${MAIN_SOURCE_DIR}/ReadCoeData.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/ChannelRemappingTest.cpp"
+    "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/NodeAntennaInputAssignerTest.cpp"
+    "${MAIN_SOURCE_DIR}/NodeAntennaInputAssigner.cpp"
 )
 
 set(MPI_TEST_SOURCE_FILES
     "${TEST_SOURCE_DIR}/TestHelper.cpp"
+    "${MPI_TEST_SOURCE_DIR}/MPITestHelper.cpp"
     "${MPI_TEST_SOURCE_DIR}/Main.cpp"
+    "${MPI_TEST_SOURCE_DIR}/InternodeCommunicationTest.cpp"
+    "${MAIN_SOURCE_DIR}/InternodeCommunication.cpp"
+    "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"
+    "${MAIN_SOURCE_DIR}/Common.cpp"
+    "${MAIN_SOURCE_DIR}/NodeAntennaInputAssigner.cpp"
 )
 
 # This must come before the add_executable(), otherwise they won't have any effect.
@@ -52,6 +63,7 @@ add_executable("${MPI_TEST_EXECUTABLE}" ${MPI_TEST_SOURCE_FILES})
 
 target_compile_options("${MAIN_EXECUTABLE}" PRIVATE -m64)
 target_compile_options("${LOCAL_TEST_EXECUTABLE}" PRIVATE -m64)
+target_compile_options("${MPI_TEST_EXECUTABLE}" PRIVATE -m64)
 
 target_link_options("${MAIN_EXECUTABLE}" PRIVATE "LINKER:--no-as-needed")
 target_link_options("${LOCAL_TEST_EXECUTABLE}" PRIVATE "LINKER:--no-as-needed")
