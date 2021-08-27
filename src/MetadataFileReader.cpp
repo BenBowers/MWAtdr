@@ -1,6 +1,42 @@
 #include "MetadataFileReader.hpp"
 
-// TODO: Add constructor to build VoltageContext
+#include <filesystem>
+#include <regex>
+#include <string>
+#include <vector>
+
+// TODO: delete
+#include <iostream>
+
+namespace fs = std::filesystem;
+
+// Constructor which creates internal VoltageContext
+MetadataFileReader::MetadataFileReader(AppConfig const appConfig) {
+	auto metafitsFilename = appConfig.observationID + ".metafits";
+	auto voltageFiles = findVoltageFiles(appConfig);
+}
+
+std::vector<std::string> MetadataFileReader::findVoltageFiles(AppConfig const appConfig) {
+	std::vector<std::string> voltageFilenames;
+	std::string target = appConfig.inputDirectoryPath + "/" +
+	                     std::to_string(appConfig.observationID) + "_" +
+	                     std::to_string(appConfig.signalStartTime) + "_";
+    std::regex channel ("[0-9]+");
+	std::string fileType = ".sub";
+    // Detect and store voltage data file paths
+    for (auto const& file : fs::directory_iterator(appConfig.inputDirectoryPath)) {
+		auto path = std::string(file.path());
+		// Add paths that match the file format (observationID_signalStartTime_channel.sub)
+		if (path.length() > target.length()) {
+		    if (target.compare(path.substr(0, target.length())) == 0 &&
+			    std::regex_search(path.substr(target.length()), channel) &&
+				fileType.compare(path.substr(path.length() - fileType.length())) == 0) {
+			    voltageFilenames.push_back(path);
+		    }
+		}
+    }
+	return voltageFilenames;
+}
 
 AntennaConfig MetadataFileReader::getAntennaConfig() {
     AntennaConfig config;

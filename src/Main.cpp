@@ -14,11 +14,11 @@ int main() {
 	auto communicator = InternodeCommunicator::init();
 	
     if (communicator->getNodeID() == 0) {
-	    AppConfig appConfig = {"./myobservation", 1000000, 1000008,
+	    AppConfig appConfig = {"/app", 1294797712, 1294797712,
 	                           "./inverse_polyphase_filter.bin", "./reconstructed_observation"};
 
    	    // Read in metadata
-        MetadataFileReader mfr;
+        MetadataFileReader mfr = MetadataFileReader(appConfig);
 	    AntennaConfig antennaConfig = mfr.getAntennaConfig();
 
         // Create primary node communicator
