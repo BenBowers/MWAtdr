@@ -36,3 +36,11 @@ struct AntennaInputProcessingResults {
 struct ObservationProcessingResults {
 	std::map<unsigned, AntennaInputProcessingResults> results;
 };
+
+
+// Struct comparisons mainly for testing purposes.
+bool operator==(AppConfig const& lhs, AppConfig const& rhs);
+bool operator==(AntennaInputPhysID const& lhs, AntennaInputPhysID const& rhs);
+bool operator==(AntennaConfig const& lhs, AntennaConfig const& rhs);
+bool operator==(AntennaInputProcessingResults const& lhs, AntennaInputProcessingResults const& rhs);
+bool operator==(ObservationProcessingResults const& lhs, ObservationProcessingResults const& rhs);
