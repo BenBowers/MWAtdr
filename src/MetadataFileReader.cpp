@@ -5,11 +5,12 @@
 #include <regex>
 #include <set>
 #include <stdexcept>
-#include <string>
 #include <vector>
 
 // Used in VoltageContext and MetafitsMetadata creation
 #define ERROR_MESSAGE_LENGTH 1024
+// Used to check if voltage files are valid
+#define VOLTAGE_FILE_SIZE 5275652096
 
 namespace fs = std::filesystem;
 
@@ -19,35 +20,38 @@ namespace fs = std::filesystem;
 
 // Constructor which creates internal MetafitsMetadata (based on VoltageContext)
 MetadataFileReader::MetadataFileReader(AppConfig const appConfig) {
-	auto const metafitsFilename = appConfig.inputDirectoryPath +
-	                              std::to_string(appConfig.observationID) + ".metafits";
+	// Verify metafits file exists at specified input directory path
+	if (!validMetafits(appConfig)) {
+		throw std::runtime_error("Invalid/no metafits file at specified path");
+	}
+	// Verify voltage files exist at specified input directory path
 	auto const voltageFiles = findVoltageFiles(appConfig);
 	unsigned const numFiles = voltageFiles.size();
-
+	if (numFiles == 0) {
+		throw std::runtime_error("Invalid/no voltage files at specified path");
+	}
 	// Copy filenames vector to char* array to create VoltageContext
 	const char* filenamesArray[numFiles];
 	for (unsigned i = 0; i < numFiles; i++) {
 		filenamesArray[i] = voltageFiles.at(i).c_str();
 	}
 	// Create VoltageContext for use in MetafitsMetadata creation
+	std::string metafitsFilename = appConfig.inputDirectoryPath +
+	                               std::to_string(appConfig.observationID) + ".metafits";
 	const char* errorMessage;
 	const char* metafits = metafitsFilename.c_str();
-	if (mwalib_voltage_context_new(metafits, filenamesArray, numFiles,
-	    &voltageContext, errorMessage, ERROR_MESSAGE_LENGTH) != EXIT_SUCCESS) {
-		// TODO: throw Metadata exception
-		std::cout << "Error creating voltage context: " << errorMessage;
+	if (mwalib_voltage_context_new(metafits, filenamesArray, numFiles, &voltageContext,
+	                               errorMessage, ERROR_MESSAGE_LENGTH) != EXIT_SUCCESS) {
+		// Error creating VoltageContext
+		throw MetadataException();
 	}
-	// Create MetafitsMetadata
-	// WARNING: Doesn't compile when the if statement uses != EXIT_SUCCESS
+	// Create MetafitsMetadata from VoltageContext
 	if (mwalib_metafits_metadata_get(nullptr, nullptr, voltageContext, &metafitsMetadata,
-	                                 errorMessage, ERROR_MESSAGE_LENGTH) == EXIT_SUCCESS) {
-        std::cout << "Metadata loaded successfully" << std::endl;
+	                                 errorMessage, ERROR_MESSAGE_LENGTH) != EXIT_SUCCESS) {
+		// Error loading metadata
+		throw MetadataException();
     }
-	else {
-		// TODO: throw Metadata exception
-	}
 }
-
 // Finds all of the observation signal files within the specified directory
 std::vector<std::string> MetadataFileReader::findVoltageFiles(AppConfig const appConfig) {
 	std::vector<std::string> voltageFilenames;
@@ -62,14 +66,31 @@ std::vector<std::string> MetadataFileReader::findVoltageFiles(AppConfig const ap
 		if (path.length() > target.length()) {
 		    if (target == path.substr(0, target.length()) &&
 			    std::regex_match(path.substr(target.length()), channelAndFileType)) {
-			    voltageFilenames.push_back(path);
+				// Check if voltage file is valid
+				if (fs::file_size(file) == VOLTAGE_FILE_SIZE) {
+			        voltageFilenames.push_back(path);
+				}
 		    }
 		}
     }
 	return voltageFilenames;
 }
+// Checks if metafits file exists and is not empty
+bool MetadataFileReader::validMetafits(AppConfig const appConfig) {
+    for (auto const& file : fs::directory_iterator(appConfig.inputDirectoryPath)) {
+		auto path = std::string(file.path());
+		if (path.compare(appConfig.inputDirectoryPath +
+		                 std::to_string(appConfig.observationID) + ".metafits") == 0) {
+			if (!fs::is_empty(file)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
 
 
+// Gathers antenna configuration from the metadata
 AntennaConfig MetadataFileReader::getAntennaConfig() {
     AntennaConfig config;
 	// Storing the logical to physical antenna mappings

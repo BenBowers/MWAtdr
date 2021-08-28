@@ -23,7 +23,7 @@ set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/NodeAntennaInputAssigner.cpp"
     "${MAIN_SOURCE_DIR}/MetadataFileReader.cpp"
     "${MAIN_SOURCE_DIR}/OutputLogFileWriter.cpp"
-    "${MAIN_SOURCE_DIR}/ReadCoeData.cpp"    
+    "${MAIN_SOURCE_DIR}/ReadCoeData.cpp"
 )
 
 set(LOCAL_TEST_SOURCE_FILES
@@ -31,6 +31,9 @@ set(LOCAL_TEST_SOURCE_FILES
     "${LOCAL_TEST_SOURCE_DIR}/Main.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/ChannelRemappingTest.cpp"
     "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/MetadataFileReaderTest.cpp"
+    "${MAIN_SOURCE_DIR}/MetadataFileReader.cpp"
+    "${MAIN_SOURCE_DIR}/Common.cpp"
 )
 
 set(MPI_TEST_SOURCE_FILES
