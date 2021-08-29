@@ -40,8 +40,8 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
             outSignalWriter(testData,invalidTestConfig,testAntenaPhysID);
             testAssert(std::filesystem::exists(emptydir) == true);
         }
-        catch (std::ios::failure const&){} 
-        catch(std::filesystem::filesystem_error const&){} 
+        catch(std::ios_base::failure const&){} 
+        catch(std::system_error::runtime_error const&){}
 
         std::filesystem::remove(emptydir);      
 	}},
@@ -56,13 +56,21 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
 	}},
     
     {"File already exists (double call to writer function)", []() {
+        std::vector<std::int16_t> testData = {1,2,3,4,5,6,7,8,9};
         try {
-            std::vector<std::int16_t> testData = {1,2,3,4,5,6,7,8,9};
             outSignalWriter(testData,validTestConfig,testAntenaPhysID);
-            outSignalWriter(testData,validTestConfig,testAntenaPhysID);
+        }
+        catch (std::ios_base::failure const&) {}
+
+        if(std::filesystem::exists(filename)){
+            try{
+                outSignalWriter(testData,validTestConfig,testAntenaPhysID);
+            }
+            catch(std::ios_base::failure const&){}
+        }
+        else{
             failTest();
         }
-        catch (std::ios::failure const&) {}
         std::filesystem::remove(filename);        
 	}}            
 
