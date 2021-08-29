@@ -13,7 +13,6 @@
 
 
 std::vector<std::complex<float>> readCoeData(std::string fileName);
-
 std::string filename = "coeficentdataFile.bin";
 std::string incorectDataFile = "badDatacoeficentdataFile";
 
@@ -59,8 +58,7 @@ void buildTestData(){
 
         for(int i = 1; i <= filterSize*128; i++){
             myfile.write(reinterpret_cast<const char*>(&testcoeficent),sizeof(float));
-        }
-        myfile.close();    
+        }   
     }
 
     std::ofstream badfile("badDatacoeficentdataFile.bin",std::ios::out | std::ios::binary);
@@ -70,8 +68,7 @@ void buildTestData(){
 
         for(int i = 1; i <= filterSize*30; i++){
             badfile.write(reinterpret_cast<const char*>(&testcoeficent),sizeof(float));
-        }
-        badfile.close();    
+        }   
     } 
     
 }

@@ -18,19 +18,18 @@
 std::vector<std::complex<float>> readCoeData(std::string fileName){
     //final vector that will contain all of the coeficent data
     std::vector<std::complex<float>> result;
-    //filter length definded as the first 8 bits of the file or first float that is contained in the file that will represent low long long the filter length is
-    uint8_t filterLength;
     //creating file stream
     std::ifstream infile(fileName, std::ios::binary);
     //main error handling statment
     if(infile.is_open()){
+        //filter length definded as the first 8 bits of the file or first float that is contained in the file that will represent low long long the filter length is
+        uint8_t filterLength;
         //obtaining the filter length  
         infile.read(reinterpret_cast<char *>(&filterLength),sizeof(filterLength));//first read get the size of the filter exactly 8 bits         
-        //error checking 
-        if(std::filesystem::file_size(fileName) != 4+filterSize*filterLength*4){
-            std::ios::failure("file was incoreect size based on filter length");
+        //error checking 4 representing the  
+        if(std::filesystem::file_size(fileName) != 1+filterSize*filterLength*4){
+            std::ios::failure("file was incorrect size based on filter length");
         }
-
         // buffer for holding the real data read in from the file
         float rbuffer;
         //it is garenteed that the there is 256 enterys for each int of a filter 
