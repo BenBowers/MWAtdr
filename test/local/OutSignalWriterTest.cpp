@@ -33,14 +33,17 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
         std::filesystem::remove(filename);
 	}},     
     
-    {"Invalid Appconfig", []() {
+    {"Empty File directory string", []() {
+        std::filesystem::path emptydir = generateFilePath(invalidTestConfig,testAntenaPhysID);
         try {
             std::vector<std::int16_t> testData = {1,2,3,4,5,6,7,8,9};
             outSignalWriter(testData,invalidTestConfig,testAntenaPhysID);
-            failTest();
+            testAssert(std::filesystem::exists(emptydir) == true);
         }
         catch (std::ios::failure const&){} 
-        catch(std::filesystem::filesystem_error const&){}       
+        catch(std::filesystem::filesystem_error const&){} 
+
+        std::filesystem::remove(emptydir);      
 	}},
     
     {"Empty Data input", []() {
@@ -55,8 +58,8 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
     {"File already exists (double call to writer function)", []() {
         try {
             std::vector<std::int16_t> testData = {1,2,3,4,5,6,7,8,9};
-            outSignalWriter(testData,invalidTestConfig,testAntenaPhysID);
-            outSignalWriter(testData,invalidTestConfig,testAntenaPhysID);
+            outSignalWriter(testData,validTestConfig,testAntenaPhysID);
+            outSignalWriter(testData,validTestConfig,testAntenaPhysID);
             failTest();
         }
         catch (std::ios::failure const&) {}
