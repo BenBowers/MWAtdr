@@ -39,7 +39,7 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
             outSignalWriter(testData,invalidTestConfig,testAntenaPhysID);
             failTest();
         }
-        catch (std::ios::failure const&) {} 
+        catch (std::ios::failure const&){} 
         catch(std::filesystem::filesystem_error const&){}       
 	}},
     
