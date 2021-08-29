@@ -11,11 +11,6 @@
 #include <filesystem>
 #include <iostream>
 
-void outSignalWriter(const std::vector<std::int16_t> &inputData, 
-                     const AppConfig &observation, 
-                     const AntennaInputPhysID &physID);
-
-
 //input path, obs id, signal start time, poly path, output dir
 AppConfig invalidTestConfig = {"123456789",123456789,123456789,"",""};
 AppConfig validTestConfig = {"",123456789,123456789,"","/app/test"}; //input and output directories are listed 
