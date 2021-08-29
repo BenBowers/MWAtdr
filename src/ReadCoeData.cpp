@@ -31,19 +31,10 @@ std::vector<std::complex<float>> readCoeData(std::string fileName){
             std::ios::failure("file was incorrect size based on filter length");
         }
 
-      /*
-        //it is garenteed that the there is 256 enterys for each int of a filter 
-        for(int i =1; i<= filterSize*filterLength; i++){
-            // buffer for holding the real data read in from the file
-            float rbuffer;
-            infile.read(reinterpret_cast<char *>(&rbuffer),sizeof(rbuffer));
-            result.push_back({rbuffer,0.0f});
-            infile.seekg(32, std::ios::cur); 
-        }
-        */
+        //reading in the data into the array
        float rbuffer;
-        while(infile.read(reinterpret_cast<char*>(&rbuffer), sizeof(float)))
-            result.push_back({rbuffer,0.0f}); 
+       while(infile.read(reinterpret_cast<char*>(&rbuffer), sizeof(float)))
+       result.push_back({rbuffer,0.0f}); 
 
 
     }
