@@ -34,12 +34,10 @@ std::vector<std::complex<float>> readCoeData(std::string fileName){
         // buffer for holding the real data read in from the file
         float rbuffer;
         //it is garenteed that the there is 256 enterys for each int of a filter 
-        for(int i =1; i<= 256*filterLength; i++){
+        for(int i =1; i<= filterSize*filterLength; i++){
             infile.read(reinterpret_cast<char *>(&rbuffer),sizeof(rbuffer));
             result.push_back({rbuffer,0.0f});
         }     
-        //closing the data file
-        infile.close();
     }
     else{
         throw std::ios::failure("Unable to Open file");

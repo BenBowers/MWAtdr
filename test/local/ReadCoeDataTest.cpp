@@ -21,7 +21,6 @@ ReadCoeDataTest::ReadCoeDataTest() : TestModule{"Read Coeficent data Test", {
     
     {"Valid InputFile", []() {
        std::vector<std::complex<float>> actual = readCoeData("coeficentdataFile.bin");
-
         testAssert(actual.size() % filterSize == 0);
 	}},
 
@@ -51,12 +50,12 @@ ReadCoeDataTest::ReadCoeDataTest() : TestModule{"Read Coeficent data Test", {
 void buildTestData(){
     
     uint8_t filterlength = 128;
-    uint8_t testcoeficent = 1;
+    float testcoeficent = 1.0;
 
     std::ofstream myfile("coeficentdataFile.bin",std::ios::out | std::ios::binary);
     if(myfile.is_open()){
 
-        myfile.write(reinterpret_cast<const char*>(&filterlength),sizeof(float));
+        myfile.write(reinterpret_cast<const char*>(&filterlength),sizeof(uint8_t));
 
         for(int i = 1; i <= filterSize*128; i++){
             myfile.write(reinterpret_cast<const char*>(&testcoeficent),sizeof(float));
@@ -67,7 +66,7 @@ void buildTestData(){
     std::ofstream badfile("badDatacoeficentdataFile.bin",std::ios::out | std::ios::binary);
     if(badfile.is_open()){
 
-        badfile.write(reinterpret_cast<const char*>(&filterlength),sizeof(float));
+        badfile.write(reinterpret_cast<const char*>(&filterlength),sizeof(uint8_t));
 
         for(int i = 1; i <= filterSize*30; i++){
             badfile.write(reinterpret_cast<const char*>(&testcoeficent),sizeof(float));
