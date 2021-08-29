@@ -34,7 +34,20 @@ ReadCoeDataTest::ReadCoeDataTest() : TestModule{"Read Coeficent data Test", {
     {"Valid InputFile(Data Integrity Check)", []() {
        std::vector<std::complex<float>> actual = readCoeData("coeficentdataFile.bin");
        testAssert(std::adjacent_find(actual.begin(), actual.end(), std::not_equal_to<>() ) == actual.end() == true);
-	}},    
+	}},
+
+    {"Valid InputFile(Data Integrity Check Different coeficents)", []() {
+       std::vector<std::complex<float>> actual = readCoeData("multiNumber.bin");
+       std::vector<std::complex<float>> expected; 
+       
+       float coeficent =1.0;
+       for(int i = 0; i < filterSize*128; i++){
+            expected.push_back({coeficent+i,0.0f});
+        }        
+        
+        testAssert(actual == expected); 
+
+	}},        
 
     {"No Data File", []() {
        try{
@@ -56,7 +69,7 @@ void buildTestData(){
 
         myfile.write(reinterpret_cast<const char*>(&filterlength),sizeof(uint8_t));
 
-        for(int i = 1; i <= filterSize*128; i++){
+        for(int i = 0; i < filterSize*128; i++){
             myfile.write(reinterpret_cast<const char*>(&testcoeficent),sizeof(float));
         }   
     }
@@ -66,9 +79,20 @@ void buildTestData(){
 
         badfile.write(reinterpret_cast<const char*>(&filterlength),sizeof(uint8_t));
 
-        for(int i = 1; i <= filterSize*30; i++){
+        for(int i = 0; i < filterSize*30; i++){
             badfile.write(reinterpret_cast<const char*>(&testcoeficent),sizeof(float));
         }   
-    } 
+    }
+
+    std::ofstream multiNumber("multiNumber.bin",std::ios::out | std::ios::binary);
+    if(multiNumber.is_open()){
+
+        multiNumber.write(reinterpret_cast<const char*>(&filterlength),sizeof(uint8_t));
+
+        for(int i = 0; i < filterSize*128; i++){
+            float newtest = testcoeficent+(float)i;
+            multiNumber.write(reinterpret_cast<const char*>(&newtest),sizeof(float));
+        }   
+    }     
     
 }
