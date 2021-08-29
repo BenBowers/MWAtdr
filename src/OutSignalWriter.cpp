@@ -12,8 +12,8 @@ void outSignalWriter(const std::vector<std::int16_t> &inputData, const AppConfig
     std::filesystem::path newpath = generateFilePath(observation,physID);
     
     //error checking to make sure the file dosnt already exist
-    if(std::filesystem::exists(newpath) == true){
-        throw std::ios::failure("file already exists");
+    if(std::filesystem::exists(newpath)){
+        throw std::ios_base::failure("file already exists");
     }
     //creating the output file with the correct name and in the correct directory
     std::ofstream outfile(newpath,std::ios::out | std::ios::binary);
@@ -24,10 +24,14 @@ void outSignalWriter(const std::vector<std::int16_t> &inputData, const AppConfig
         outfile.close();        
     }
     else{
-        throw std::ios::failure("Error creating file");
+        throw std::ios_base::failure("Error creating file");
     }
-
-
+    // error checking after file has been writen to confirm that the data inside is correct
+    if(std::filesystem::exists(newpath)){
+        if(std::filesystem::file_size(newpath) != sizeof(std::int16_t)*inputData.size()){
+            throw std::ios_base::failure("An error has occured when writing to the data file");
+        }
+    }
 }
 
 std::filesystem::path generateFilePath(const AppConfig &observation, const AntennaInputPhysID &physID){
@@ -55,6 +59,6 @@ std::filesystem::path generateFilePath(const AppConfig &observation, const Anten
     return full_path;
     }    
     else{  
-        throw std::ios::failure("Error in creating file name");
+        throw std::system_error::runtime_error("Error in creating file name");
     }
 }
