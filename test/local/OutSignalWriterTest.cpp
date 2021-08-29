@@ -13,10 +13,11 @@
 
 //input path, obs id, signal start time, poly path, output dir
 AppConfig invalidTestConfig = {"123456789",123456789,123456789,"",""};
-AppConfig validTestConfig = {"",123456789,123456789,"","/app/test"}; //input and output directories are listed 
+AppConfig validTestConfig = {"",123456789,123456789,"","/app/test/"}; //input and output directories are listed 
 //Antena input Physical ID the two components of that struct is the first physical id the second is the char representing what signal chain that id is for 
 AntennaInputPhysID testAntenaPhysID = {1,'x'};
-std::string filename = validTestConfig.outputDirectoryPath + "/" + std::to_string(validTestConfig.observationID) + "_" + std::to_string(validTestConfig.signalStartTime) + "_" + std::to_string(testAntenaPhysID.tile) + "_signalchain.bin";
+
+std::filesystem::path filename = generateFilePath(validTestConfig,testAntenaPhysID);
 
 
 OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit test", {
@@ -38,7 +39,8 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
             outSignalWriter(testData,invalidTestConfig,testAntenaPhysID);
             failTest();
         }
-        catch (std::ios::failure const&) {}        
+        catch (std::ios::failure const&) {} 
+        catch(std::filesystem::filesystem_error const&){}       
 	}},
     
     {"Empty Data input", []() {

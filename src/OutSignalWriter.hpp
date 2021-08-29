@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <filesystem>
 
 struct AppConfig;
 struct AntennaInputPhysID;
@@ -11,3 +12,5 @@ struct AntennaInputPhysID;
 
 
 void outSignalWriter(const std::vector<std::int16_t> &inputData, const AppConfig &observation, const AntennaInputPhysID &physID);
+
+std::filesystem::path generateFilePath(const AppConfig &observation, const AntennaInputPhysID &physID);
