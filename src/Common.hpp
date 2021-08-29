@@ -44,3 +44,6 @@ bool operator==(AntennaInputPhysID const& lhs, AntennaInputPhysID const& rhs);
 bool operator==(AntennaConfig const& lhs, AntennaConfig const& rhs);
 bool operator==(AntennaInputProcessingResults const& lhs, AntennaInputProcessingResults const& rhs);
 bool operator==(ObservationProcessingResults const& lhs, ObservationProcessingResults const& rhs);
+
+//constant the indicates the amount of coeficents for each filter
+extern const uint8_t filterSize = 256;

@@ -7,3 +7,5 @@ class ReadCoeDataTest : public TestModule {
 public:
     ReadCoeDataTest();
 };
+
+void buildTestData();
