@@ -28,7 +28,7 @@ std::vector<std::complex<float>> readCoeData(std::string fileName){
         infile.read(reinterpret_cast<char *>(&filterLength),sizeof(filterLength));//first read get the size of the filter exactly 8 bits         
         //error checking 4 representing the  
         if(std::filesystem::file_size(fileName) != 1+filterSize*filterLength*4){
-            std::ios::failure("file was incorrect size based on filter length");
+            throw readCoeDataException();
         }
 
         //reading in the data into the array
@@ -39,7 +39,7 @@ std::vector<std::complex<float>> readCoeData(std::string fileName){
 
     }
     else{
-        throw std::ios::failure("Unable to Open file");
+        throw readCoeDataException();
     }
 
     //returning the full vectore holding the filter length by 256 coefficents

@@ -28,7 +28,7 @@ ReadCoeDataTest::ReadCoeDataTest() : TestModule{"Read Coeficent data Test", {
            readCoeData(incorectDataFile);
            failTest();
        }
-       catch(std::ios::failure const&){}
+       catch(readCoeDataException const&){}
 	}},
     
     {"Valid InputFile(Data Integrity Check)", []() {
@@ -54,7 +54,7 @@ ReadCoeDataTest::ReadCoeDataTest() : TestModule{"Read Coeficent data Test", {
            readCoeData("11");
            failTest();
        }
-       catch(std::ios::failure const&){}
+       catch(readCoeDataException const&){}
 	}}
 
 }} {}
