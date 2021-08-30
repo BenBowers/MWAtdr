@@ -9,10 +9,11 @@
 // Entered as command line arguments
 struct AppConfig {
 	std::string inputDirectoryPath;
-	unsigned observationID;
-	unsigned signalStartTime;
+	unsigned long long observationID;
+	unsigned long long signalStartTime;
 	std::string invPolyphaseFilterPath;
 	std::string outputDirectoryPath;
+	bool ignoreErrors;
 };
 
 

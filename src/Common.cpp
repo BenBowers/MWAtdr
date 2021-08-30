@@ -6,7 +6,8 @@ bool operator==(AppConfig const& lhs, AppConfig const& rhs) {
         && lhs.signalStartTime == rhs.signalStartTime
         && lhs.inputDirectoryPath == rhs.inputDirectoryPath
         && lhs.invPolyphaseFilterPath == rhs.invPolyphaseFilterPath
-        && lhs.outputDirectoryPath == rhs.outputDirectoryPath;
+        && lhs.outputDirectoryPath == rhs.outputDirectoryPath
+        && rhs.ignoreErrors == lhs.ignoreErrors;
 }
 
 bool operator==(AntennaInputPhysID const& lhs, AntennaInputPhysID const& rhs) {
