@@ -72,6 +72,11 @@ InternodeCommunicationContext::ErrorCommunicator::ErrorCommunicator() :
 {}
 
 InternodeCommunicationContext::ErrorCommunicator::~ErrorCommunicator() {
+    // Disable the warning about throwing exceptions in destructors causing program termination.
+    // That's exactly the behaviour we want (we cannot recover from an MPI error, which should never occur anyway).
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wterminate"
+
     // Barrier just to make sure no nodes are in the process of sending an error status message.
     assertMPISuccess(MPI_Barrier(_communicator));
 
@@ -81,6 +86,8 @@ InternodeCommunicationContext::ErrorCommunicator::~ErrorCommunicator() {
     // Tell our background thread to exit.
     auto const message = static_cast<unsigned>(Message::EXIT_THREAD);
     assertMPISuccess(MPI_Send(&message, 1, MPI_UNSIGNED, nodeID, 0, _communicator));
+
+#pragma GCC diagnostic pop
 
     _thread.join();
 
@@ -132,8 +139,15 @@ MPI_Comm InternodeCommunicationContext::ErrorCommunicator::_createCommunicator()
 
 
 InternodeCommunicationContext::~InternodeCommunicationContext() {
+    // Disable the warning about throwing exceptions in destructors causing program termination.
+    // That's exactly the behaviour we want (we cannot recover from an MPI error, which should never occur anyway).
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wterminate"
+
     // Do a barrier just to make sure everything else is probably done.
     assertMPISuccess(MPI_Barrier(MPI_COMM_WORLD));
+
+#pragma GCC diagnostic pop
 }
 
 
