@@ -62,7 +62,8 @@ InternodeCommunicationTest::InternodeCommunicationTest(PrimaryNodeCommunicator c
                 1000000000,
                 1000000016,
                 "/group/mwavcs/inversePolyphaseFilter.bin",
-                "/group/mwavcs/myProcessedObservation"
+                "/group/mwavcs/myProcessedObservation",
+                true
             };
             communicator.sendAppConfig(appConfig);
         }},
@@ -249,7 +250,8 @@ InternodeCommunicationTest::InternodeCommunicationTest(SecondaryNodeCommunicator
                 1000000000,
                 1000000016,
                 "/group/mwavcs/inversePolyphaseFilter.bin",
-                "/group/mwavcs/myProcessedObservation"
+                "/group/mwavcs/myProcessedObservation",
+                true
             };
             testAssert(actual == expected);
         }},
