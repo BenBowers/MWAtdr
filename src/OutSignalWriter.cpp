@@ -6,7 +6,8 @@
 #include <filesystem>
 #include "Common.hpp"
 #include "OutSignalWriter.hpp"
-std::filesystem::path generateFilePath(const AppConfig &observation, const AntennaInputPhysID &physID);
+
+static std::filesystem::path generateFilePath(const AppConfig &observation, const AntennaInputPhysID &physID);
 void outSignalWriter(const std::vector<std::int16_t> &inputData, const AppConfig &observation, const AntennaInputPhysID &physID){
 
     std::filesystem::path newpath = generateFilePath(observation,physID);

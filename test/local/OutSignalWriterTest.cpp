@@ -17,7 +17,7 @@ AppConfig validTestConfig = {"",123456789,123456789,"","/app/test/"}; //input an
 //Antena input Physical ID the two components of that struct is the first physical id the second is the char representing what signal chain that id is for 
 AntennaInputPhysID testAntenaPhysID = {1,'x'};
 
-std::filesystem::path filename = generateFilePath(validTestConfig,testAntenaPhysID);
+std::filesystem::path filename = validTestConfig.outputDirectoryPath + std::to_string(validTestConfig.observationID) + "_" + std::to_string(validTestConfig.signalStartTime) + "_" + std::to_string(testAntenaPhysID.tile) +"_signalchain.bin";
 
 
 OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit test", {
@@ -34,7 +34,7 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
 	}},     
     
     {"Empty File directory string", []() {
-        std::filesystem::path emptydir = generateFilePath(invalidTestConfig,testAntenaPhysID);
+        std::filesystem::path emptydir = invalidTestConfig.outputDirectoryPath + std::to_string(invalidTestConfig.observationID) + "_" + std::to_string(invalidTestConfig.signalStartTime) + "_" + std::to_string(testAntenaPhysID.tile) +"_signalchain.bin";
         try {
             std::vector<std::int16_t> testData = {1,2,3,4,5,6,7,8,9};
             outSignalWriter(testData,invalidTestConfig,testAntenaPhysID);
