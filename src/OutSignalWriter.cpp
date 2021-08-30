@@ -13,7 +13,7 @@ void outSignalWriter(const std::vector<std::int16_t> &inputData, const AppConfig
     
     //error checking to make sure the file dosnt already exist
     if(std::filesystem::exists(newpath)){
-        throw std::ios_base::failure("file already exists");
+        throw outSignalException();
     }
     //creating the output file with the correct name and in the correct directory
     std::ofstream outfile(newpath,std::ios::out | std::ios::binary);
@@ -24,17 +24,17 @@ void outSignalWriter(const std::vector<std::int16_t> &inputData, const AppConfig
         outfile.close();        
     }
     else{
-        throw std::ios_base::failure("Error creating file");
+        throw outSignalException();
     }
     // error checking after file has been writen to confirm that the data inside is correct
     if(std::filesystem::exists(newpath)){
         if(std::filesystem::file_size(newpath) != sizeof(std::int16_t)*inputData.size()){
-            throw std::ios_base::failure("An error has occured when writing to the data file");
+            throw outSignalException();
         }
     }
 }
 
-std::filesystem::path generateFilePath(const AppConfig &observation, const AntennaInputPhysID &physID){
+static std::filesystem::path generateFilePath(const AppConfig &observation, const AntennaInputPhysID &physID){
     std::string sObsID = std::to_string(observation.observationID);
     std::string sStartTime = std::to_string(observation.signalStartTime);
     std::string sPhysID = std::to_string(physID.tile);
@@ -59,6 +59,6 @@ std::filesystem::path generateFilePath(const AppConfig &observation, const Anten
     return full_path;
     }    
     else{  
-        throw std::system_error::runtime_error("Error in creating file name");
+        throw outSignalException();
     }
 }

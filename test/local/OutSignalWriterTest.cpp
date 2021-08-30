@@ -40,8 +40,7 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
             outSignalWriter(testData,invalidTestConfig,testAntenaPhysID);
             testAssert(std::filesystem::exists(emptydir) == true);
         }
-        catch(std::ios_base::failure const&){} 
-        catch(std::system_error::runtime_error const&){}
+        catch(outSignalException const&){} 
 
         std::filesystem::remove(emptydir);      
 	}},
@@ -60,13 +59,13 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
         try {
             outSignalWriter(testData,validTestConfig,testAntenaPhysID);
         }
-        catch (std::ios_base::failure const&) {}
+        catch (outSignalException const&) {}
 
         if(std::filesystem::exists(filename)){
             try{
                 outSignalWriter(testData,validTestConfig,testAntenaPhysID);
             }
-            catch(std::ios_base::failure const&){}
+            catch(outSignalException const&){}
         }
         else{
             failTest();
