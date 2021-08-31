@@ -13,31 +13,32 @@
 
 
 std::vector<std::complex<float>> readCoeData(std::string fileName);
-std::string filename = "coeficentdataFile.bin";
-std::string incorectDataFile = "badDatacoeficentdataFile";
+const std::string FILENAME = "coefficientdataFile.bin";
+const std::string INCORRECTDATAFILE = "badDatacoefficientdataFile";
+const std::string MULTIDATAFILE = "multiNumber.bin";
 
-ReadCoeDataTest::ReadCoeDataTest() : TestModule{"Read Coeficent data Test", {
+ReadCoeDataTest::ReadCoeDataTest() : TestModule{"Read Coefficient data Test", {
     
     {"Valid InputFile", []() {
-       std::vector<std::complex<float>> actual = readCoeData("coeficentdataFile.bin");
+       std::vector<std::complex<float>> actual = readCoeData(FILENAME);
         testAssert(actual.size() % filterSize == 0);
 	}},
 
     {"Invalid InputFile(wrong size of data inside the file)", []() {
        try{
-           readCoeData(incorectDataFile);
+           readCoeData(INCORRECTDATAFILE);
            failTest();
        }
        catch(readCoeDataException const&){}
 	}},
     
     {"Valid InputFile(Data Integrity Check)", []() {
-       std::vector<std::complex<float>> actual = readCoeData("coeficentdataFile.bin");
+       std::vector<std::complex<float>> actual = readCoeData(FILENAME);
        testAssert(std::adjacent_find(actual.begin(), actual.end(), std::not_equal_to<>() ) == actual.end() == true);
 	}},
 
-    {"Valid InputFile(Data Integrity Check Different coeficents)", []() {
-       std::vector<std::complex<float>> actual = readCoeData("multiNumber.bin");
+    {"Valid InputFile(Data Integrity Check Different Coefficients)", []() {
+       std::vector<std::complex<float>> actual = readCoeData(MULTIDATAFILE);
        std::vector<std::complex<float>> expected; 
        
        float coeficent =1.0;
@@ -64,7 +65,7 @@ void buildTestData(){
     uint8_t filterlength = 128;
     float testcoeficent = 1.0;
 
-    std::ofstream myfile("coeficentdataFile.bin",std::ios::out | std::ios::binary);
+    std::ofstream myfile(FILENAME,std::ios::out | std::ios::binary);
     if(myfile.is_open()){
 
         myfile.write(reinterpret_cast<const char*>(&filterlength),sizeof(uint8_t));
@@ -74,7 +75,7 @@ void buildTestData(){
         }   
     }
 
-    std::ofstream badfile("badDatacoeficentdataFile.bin",std::ios::out | std::ios::binary);
+    std::ofstream badfile(INCORRECTDATAFILE,std::ios::out | std::ios::binary);
     if(badfile.is_open()){
 
         badfile.write(reinterpret_cast<const char*>(&filterlength),sizeof(uint8_t));
@@ -84,7 +85,7 @@ void buildTestData(){
         }   
     }
 
-    std::ofstream multiNumber("multiNumber.bin",std::ios::out | std::ios::binary);
+    std::ofstream multiNumber(MULTIDATAFILE,std::ios::out | std::ios::binary);
     if(multiNumber.is_open()){
 
         multiNumber.write(reinterpret_cast<const char*>(&filterlength),sizeof(uint8_t));
