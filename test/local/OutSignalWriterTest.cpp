@@ -71,6 +71,23 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
             failTest();
         }
         std::filesystem::remove(filename);        
-	}}            
+	}},
+    
+    {"Validate Output data is correct", []() {
+        std::vector<std::int16_t> testData = {1,2,3,4,5,6,7,8,9};
+        std::vector<std::int16_t> actual;
+        std::int16_t data;
+        try {
+            outSignalWriter(testData,validTestConfig,testAntenaPhysID);
+        }
+        catch (outSignalException const& e){}
+         std::ifstream validatefile(filename);
+
+        while(validatefile.read(reinterpret_cast<char*>(&data), sizeof(int16_t)))
+        actual.push_back(data);
+        
+        testAssert(testData == actual);
+        std::filesystem::remove(filename);        
+	}}                
 
 }} {}
