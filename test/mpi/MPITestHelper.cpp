@@ -58,6 +58,6 @@ void runMPITests(InternodeCommunicator const& internodeCommunicator, std::vector
     // Really dodgy sleep just to wait for all output to stdout from all nodes to be written.
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
 
-    std::cout << nodePrefix << casesPassed << " total test cases passed, " << casesFailed << " total test cases failed."
+    std::cout << nodePrefix << casesPassed << " test cases passed, " << casesFailed << " test cases failed."
         << std::endl;
 }
