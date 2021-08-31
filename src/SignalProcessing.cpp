@@ -40,12 +40,14 @@ void performPFB(std::vector<std::complex<float>> const& signalData,
 // data into a time domain signal this is done in place! DO NOT use imaginary conmpenent of the data
 // this is done to save a copy.
 void performDFT(std::vector<std::complex<float>>& signalData,
+                std::vector<float>& outData,
                 unsigned const samplingFreq,
-                unsigned const numberOfChannels);
+                unsigned const numOfBlocks,
+                unsigned const numOfChannels);
 
 // Converts the downsampled time domain array into a 16bit signed int with clamping
-void doPostProcessing(std::vector<std::complex<float>> const& signalData,
-                             std::vector<std::int16_t>& signalDataOut);
+void doPostProcessing(std::vector<float> const& signalData,
+                      std::vector<std::int16_t>& signalDataOut);
 
 // Simple function that checks the status of a MKL_LONG and outputs it to console
 static inline void handleMKLError(MKL_LONG status) {
@@ -88,16 +90,18 @@ void processSignal(std::vector<std::vector<std::complex<float>>> const& signalDa
                 + std::to_string(PFB_COE_CHANNELS));
     }
 
-    std::vector<std::complex<float>> convolvedData{};
-
-    // Scope these two function calls as remappedData doesn't need to be used outside it
+    std::vector<float> timeDomain {};
     {
-        std::vector<std::complex<float>> remappedData{};
-        remapChannels(signalDataIn, signalDataInMapping, remappedData, remappingData.channelMap, OUT_NUM_CHANNELS);
-        performPFB(remappedData, convolvedData, coefficiantPFB, remappingData.channelMap, IN_NUM_BLOCKS, OUT_NUM_CHANNELS);
+        std::vector<std::complex<float>> convolvedData{};
+        // Scope these two function calls as remappedData doesn't need to be used outside it
+        {
+            std::vector<std::complex<float>> remappedData{};
+            remapChannels(signalDataIn, signalDataInMapping, remappedData, remappingData.channelMap, OUT_NUM_CHANNELS);
+            performPFB(remappedData, convolvedData, coefficiantPFB, remappingData.channelMap, IN_NUM_BLOCKS, OUT_NUM_CHANNELS);
+        }
+        performDFT(convolvedData, timeDomain, remappingData.newSamplingFreq, IN_NUM_BLOCKS, OUT_NUM_CHANNELS);
     }
-    performDFT(convolvedData, remappingData.newSamplingFreq, OUT_NUM_CHANNELS);
-    doPostProcessing(convolvedData, signalDataOut);
+    doPostProcessing(timeDomain, signalDataOut);
 }
 
 void remapChannels(std::vector<std::vector<std::complex<float>>> const& signalDataIn,
@@ -164,16 +168,22 @@ void performPFB(std::vector<std::complex<float>> const& signalData,
 }
 
 void performDFT(std::vector<std::complex<float>>& signalData,
+                std::vector<float>& outData,
                 unsigned const samplingFreq,
+                unsigned const numOfBlocks,
                 unsigned const numOfChannels) {
     DFTI_DESCRIPTOR_HANDLE hand;
-
-    handleMKLError(DftiCreateDescriptor(&hand, DFTI_SINGLE, DFTI_COMPLEX, 1, numOfChannels));
+    outData.resize(samplingFreq * numOfBlocks);
+    handleMKLError(DftiCreateDescriptor(&hand, DFTI_SINGLE, DFTI_REAL, 1, samplingFreq));
+    handleMKLError(DftiSetValue(hand, DFTI_PACKED_FORMAT, DFTI_CCE_FORMAT));
+    handleMKLError(DftiSetValue(hand, DFTI_PLACEMENT, DFTI_NOT_INPLACE));
+    handleMKLError(DftiSetValue(hand, DFTI_CONJUGATE_EVEN_STORAGE,  DFTI_COMPLEX_COMPLEX));
     handleMKLError(DftiSetValue(hand, DFTI_BACKWARD_SCALE, 1.0f / static_cast<float>(samplingFreq)));
-    handleMKLError(DftiSetValue(hand, DFTI_NUMBER_OF_TRANSFORMS, static_cast<MKL_LONG>(samplingFreq)));
+    handleMKLError(DftiSetValue(hand, DFTI_NUMBER_OF_TRANSFORMS, static_cast<MKL_LONG>(numOfBlocks)));
     handleMKLError(DftiSetValue(hand, DFTI_INPUT_DISTANCE, numOfChannels));
+    handleMKLError(DftiSetValue(hand, DFTI_OUTPUT_DISTANCE, samplingFreq));
     handleMKLError(DftiCommitDescriptor(hand));
-    handleMKLError(DftiComputeBackward(hand, signalData.data()));
+    handleMKLError(DftiComputeBackward(hand, signalData.data(), outData.data()));
     handleMKLError(DftiFreeDescriptor(&hand));
 }
 
@@ -183,11 +193,11 @@ constexpr std::int16_t clamp(float n) {
     return static_cast<std::int16_t>(n);
 }
 
-void doPostProcessing(std::vector<std::complex<float>> const& signalData,
+void doPostProcessing(std::vector<float> const& signalData,
                              std::vector<std::int16_t>& signalDataOut) {
     signalDataOut.resize(signalData.size());
 
     tbb::parallel_for(size_t{0}, signalData.size(), [&signalData, &signalDataOut](size_t ii) {
-        signalDataOut[ii] = clamp(signalData[ii].real());
+        signalDataOut[ii] = clamp(signalData[ii]);
     });
 }
