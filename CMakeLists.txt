@@ -32,6 +32,8 @@ set(LOCAL_TEST_SOURCE_FILES
     "${LOCAL_TEST_SOURCE_DIR}/Main.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/OutSignalWriterTest.cpp"
     "${MAIN_SOURCE_DIR}/OutSignalWriter.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/ReadCoeDataTest.cpp"
+    "${MAIN_SOURCE_DIR}/ReadCoeData.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/ChannelRemappingTest.cpp"
     "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/NodeAntennaInputAssignerTest.cpp"
@@ -77,6 +79,6 @@ target_include_directories("${LOCAL_TEST_EXECUTABLE}" PRIVATE "$ENV{MKLROOT}/inc
 target_link_directories("${MAIN_EXECUTABLE}" PRIVATE "$ENV{MKLROOT}/lib/intel64" "$ENV{TBBROOT}/lib/intel64/gcc4.8")
 target_link_directories("${LOCAL_TEST_EXECUTABLE}" PRIVATE "$ENV{MKLROOT}/lib/intel64" "$ENV{TBBROOT}/lib/intel64/gcc4.8")
 
-target_link_libraries("${MAIN_EXECUTABLE}" PRIVATE MPI::MPI_C mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb)
-target_link_libraries("${LOCAL_TEST_EXECUTABLE}" PRIVATE mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb)
+target_link_libraries("${MAIN_EXECUTABLE}" PRIVATE MPI::MPI_C mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb stdc++fs)
+target_link_libraries("${LOCAL_TEST_EXECUTABLE}" PRIVATE mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb stdc++fs)
 target_link_libraries("${MPI_TEST_EXECUTABLE}" PRIVATE MPI::MPI_C)

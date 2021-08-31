@@ -72,6 +72,11 @@ InternodeCommunicationContext::ErrorCommunicator::ErrorCommunicator() :
 {}
 
 InternodeCommunicationContext::ErrorCommunicator::~ErrorCommunicator() {
+    // Disable the warning about throwing exceptions in destructors causing program termination.
+    // That's exactly the behaviour we want (we cannot recover from an MPI error, which should never occur anyway).
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wterminate"
+
     // Barrier just to make sure no nodes are in the process of sending an error status message.
     assertMPISuccess(MPI_Barrier(_communicator));
 
@@ -81,6 +86,8 @@ InternodeCommunicationContext::ErrorCommunicator::~ErrorCommunicator() {
     // Tell our background thread to exit.
     auto const message = static_cast<unsigned>(Message::EXIT_THREAD);
     assertMPISuccess(MPI_Send(&message, 1, MPI_UNSIGNED, nodeID, 0, _communicator));
+
+#pragma GCC diagnostic pop
 
     _thread.join();
 
@@ -132,8 +139,15 @@ MPI_Comm InternodeCommunicationContext::ErrorCommunicator::_createCommunicator()
 
 
 InternodeCommunicationContext::~InternodeCommunicationContext() {
+    // Disable the warning about throwing exceptions in destructors causing program termination.
+    // That's exactly the behaviour we want (we cannot recover from an MPI error, which should never occur anyway).
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wterminate"
+
     // Do a barrier just to make sure everything else is probably done.
     assertMPISuccess(MPI_Barrier(MPI_COMM_WORLD));
+
+#pragma GCC diagnostic pop
 }
 
 
@@ -209,9 +223,10 @@ void PrimaryNodeCommunicator::sendAppConfig(AppConfig const& appConfig) const {
     auto const& outputDirectoryPath = appConfig.outputDirectoryPath;
 
     // First we will send the fixed-size data, including sizes of the variable-size data (strings).
-    std::array<unsigned long long, 5> part1Buffer{
+    std::array<unsigned long long, 6> part1Buffer{
         appConfig.observationID,
         appConfig.signalStartTime,
+        appConfig.ignoreErrors,
         inputDirectoryPath.size(),
         invPolyphaseFilterPath.size(),
         outputDirectoryPath.size()
@@ -368,7 +383,10 @@ std::map<unsigned, ObservationProcessingResults> PrimaryNodeCommunicator::receiv
             auto const usedChannelCount = usedChannelCounts.at(antennaInputDisplacement + antennaInputIdx);
             nodeResults.results.emplace(
                 antennaInput,
-                AntennaInputProcessingResults{success, {usedChannelIt, usedChannelIt + usedChannelCount}});
+                AntennaInputProcessingResults{
+                    static_cast<bool>(success),
+                    {usedChannelIt, usedChannelIt + usedChannelCount}
+                });
             usedChannelIt += usedChannelCount;
         }
         result.emplace(node, std::move(nodeResults));
@@ -399,11 +417,12 @@ void SecondaryNodeCommunicator::sendNodeSetupStatus(bool status) const {
 
 AppConfig SecondaryNodeCommunicator::receiveAppConfig() const {
     // Receive the fixed-size data.
-    std::array<unsigned long long, 5> part1Buffer{};
+    std::array<unsigned long long, 6> part1Buffer{};
     assertMPISuccess(MPI_Bcast(part1Buffer.data(), part1Buffer.size(), MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD));
     auto const [
         observationID,
         signalStartTime,
+        ignoreErrors,
         inputDirectoryPathSize,
         invPolyphaseFilterPathSize,
         outputDirectoryPathSize
@@ -418,7 +437,8 @@ AppConfig SecondaryNodeCommunicator::receiveAppConfig() const {
         static_cast<unsigned>(observationID),
         static_cast<unsigned>(signalStartTime),
         {part2Buffer.data() + inputDirectoryPathSize, invPolyphaseFilterPathSize},
-        {part2Buffer.data() + inputDirectoryPathSize + invPolyphaseFilterPathSize, outputDirectoryPathSize}
+        {part2Buffer.data() + inputDirectoryPathSize + invPolyphaseFilterPathSize, outputDirectoryPathSize},
+        static_cast<bool>(ignoreErrors)
     };
 }
 
@@ -460,7 +480,7 @@ ChannelRemapping SecondaryNodeCommunicator::receiveChannelRemapping() const {
     for (std::size_t i = 0; i < channelMapSize; ++i) {
         auto const oldChannel = part2Buffer.at(3 * i);
         auto const newChannel = part2Buffer.at(3 * i + 1);
-        auto const flipped = part2Buffer.at(3 * i + 2);
+        bool const flipped = part2Buffer.at(3 * i + 2);
         result.channelMap.emplace(oldChannel, ChannelRemapping::RemappedChannel{newChannel, flipped});
     }
     return result;
