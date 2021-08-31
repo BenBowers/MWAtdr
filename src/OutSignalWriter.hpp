@@ -13,10 +13,13 @@ struct AntennaInputPhysID;
 
 void outSignalWriter(const std::vector<std::int16_t> &inputData, const AppConfig &observation, const AntennaInputPhysID &physID);
 
-class outSignalException : public std::exception{  
-    public:  
-        const char * what() const throw()  
-        {  
-            return "Output File Error";  
-        }  
-};  
+//Custom Exception
+class outSignalException {
+public:
+   outSignalException(const std::string& msg) : msg_(msg) {}
+  ~outSignalException() {}
+
+   std::string getMessage() const {return(msg_);}
+private:
+   std::string msg_;
+};

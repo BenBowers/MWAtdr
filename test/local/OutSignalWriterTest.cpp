@@ -59,13 +59,13 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
         try {
             outSignalWriter(testData,validTestConfig,testAntenaPhysID);
         }
-        catch (outSignalException const&) {}
+        catch (outSignalException const& e){}
 
         if(std::filesystem::exists(filename)){
             try{
                 outSignalWriter(testData,validTestConfig,testAntenaPhysID);
             }
-            catch(outSignalException const&){}
+            catch(outSignalException const& e){}
         }
         else{
             failTest();
