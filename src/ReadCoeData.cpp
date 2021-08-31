@@ -10,31 +10,31 @@
 #include <cstdint>
 #include <filesystem>
 
-//note c++ dose not allow for the return of an array from a function as such vecotrs will be used for simpicity.
+// note c++ does not allow for the return of an array from a function as such vectors will be used for simplicity.
 
-//main function for reading in the coeficent data  will return a vector of those coeficents.
+// main function for reading in the coeficent data  will return a vector of those coefficients.
 
-//takes a file name as its only input and will return an float vector of the coeficents that will always be filter length * 256 long
+// takes a file name as it's only input and will return a float vector of the coefficients that will always be filter length * 256 long
 std::vector<std::complex<float>> readCoeData(std::string fileName){
-    //final vector that will contain all of the coeficent data
+    // final vector that will contain all of the coefficient data
     std::vector<std::complex<float>> result;
-    //creating file stream
+    // creating file stream
     std::ifstream infile(fileName, std::ios::binary);
-    //main error handling statment
+    // main error handling statement
     if(infile.is_open()){
-        //filter length definded as the first 8 bits of the file or first float that is contained in the file that will represent low long long the filter length is
+        // filter length defined as the first 8 bits of the file or first float that is contained in the file that will represent how long the filter length is
         uint8_t filterLength;
-        //obtaining the filter length  
-        infile.read(reinterpret_cast<char *>(&filterLength),sizeof(filterLength));//first read get the size of the filter exactly 8 bits         
-        //error checking 4 representing the  
+        // obtaining the filter length
+        infile.read(reinterpret_cast<char *>(&filterLength),sizeof(filterLength)); // first read to get the size of the filter exactly 8 bits
+        // error checking 4 representing the
         if(std::filesystem::file_size(fileName) != 1+filterSize*filterLength*4){
             throw readCoeDataException();
         }
 
-        //reading in the data into the array
+        // reading the data into the array
        float rbuffer;
        while(infile.read(reinterpret_cast<char*>(&rbuffer), sizeof(float)))
-       result.push_back({rbuffer,0.0f}); 
+       result.push_back({rbuffer,0.0f});
 
 
     }
@@ -42,6 +42,6 @@ std::vector<std::complex<float>> readCoeData(std::string fileName){
         throw readCoeDataException();
     }
 
-    //returning the full vectore holding the filter length by 256 coefficents
+    //returning the full vector holding the filter length by 256 coefficients
     return result;
 }
