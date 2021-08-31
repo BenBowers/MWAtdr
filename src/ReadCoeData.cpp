@@ -33,6 +33,7 @@ std::vector<std::complex<float>> readCoeData(std::string fileName){
 
         //reading in the data into the array
        float rbuffer;
+       result.reserve(filterLength*filterSize);
        while(infile.read(reinterpret_cast<char*>(&rbuffer), sizeof(float)))
        result.push_back({rbuffer,0.0f}); 
     }
