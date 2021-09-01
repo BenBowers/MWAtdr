@@ -54,7 +54,6 @@ ChannelRemapping computeChannelRemapping(unsigned samplingFreq, std::set<unsigne
             bool valid = true;
             for (auto const channel : channels) {
                 auto const alias = aliasChannel(channel, newNyquistFreq);
-                // TODO: handle remapping to 0 or Nyquist frequency, which seems to be broken? Follow up with Clancy.
                 if (newChannels.count(alias.newChannel) > 0) {
                     // Alias is already filled by another channel.
                     valid = false;

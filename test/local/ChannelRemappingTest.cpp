@@ -4,6 +4,7 @@
 #include <numeric>
 #include <set>
 #include <stdexcept>
+#include <tuple>
 #include <vector>
 
 #include "../../src/ChannelRemapping.hpp"
@@ -11,6 +12,33 @@
 
 
 ChannelRemappingTest::ChannelRemappingTest() : TestModule{"Frequency channel remapper unit test", {
+    {"RemappedChannel equality", []() {
+        std::vector<std::tuple<ChannelRemapping::RemappedChannel, ChannelRemapping::RemappedChannel, bool>> data{
+            {{54, true}, {54, true}, true},
+            {{83, false}, {83, false}, true},
+            {{3, true}, {71, true}, false},
+            {{796, false}, {796, true}, false}
+        };
+
+        for (auto const [lhs, rhs, expected] : data) {
+            auto const actual = lhs == rhs;
+            testAssert(actual == expected);
+        }
+    }},
+    {"ChannelRemapping equality", []() {
+        std::vector<std::tuple<ChannelRemapping, ChannelRemapping, bool>> data{
+            {{456, {}}, {456, {}}, true},
+            {{203, {{6, {6, false}}, {10, {2, true}}}}, {203, {{6, {6, false}}, {10, {2, true}}}}, true},
+            {{544, {}}, {10, {}}, false},
+            {{59, {{43, {32, true}}}}, {59, {{79, {32, true}}}}, false},
+            {{361, {{43, {32, true}}}}, {12, {{43, {32, false}}}}, false}
+        };
+
+        for (auto const [lhs, rhs, expected] : data) {
+            auto const actual = lhs == rhs;
+            testAssert(actual == expected);
+        }
+    }},
     {"Empty set of channels", []() {
         auto const actual = computeChannelRemapping(512, {});
         ChannelRemapping const expected{
