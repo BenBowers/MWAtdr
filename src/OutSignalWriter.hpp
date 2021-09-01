@@ -8,7 +8,7 @@
 struct AppConfig;
 struct AntennaInputPhysID;
 
-//This function throws the following eception outSignalExcpetion that can be caught and ther error string being used with e.getMessage() to get the error message from the exception object
+//This function throws the following exception outSignalExcpetion that can be caught and ther error string being used with e.getMessage() to get the error message from the exception object
 
 void outSignalWriter(const std::vector<std::int16_t> &inputData, const AppConfig &observation, const AntennaInputPhysID &physID);
 
