@@ -4,7 +4,4 @@
 
 
 // Unit test for the frequency channel remapper module (ChannelRemapping.hpp and ChannelRemapping.cpp).
-class ChannelRemappingTest : public TestModule {
-public:
-    ChannelRemappingTest();
-};
+TestModule channelRemappingTest();

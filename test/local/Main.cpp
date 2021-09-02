@@ -11,13 +11,10 @@
 int main(){
     std::cout << "Test random number generator seed: " << seedTestRandomEngine() << '\n' << std::endl;
 
-    buildTestData();
-
     runTests({
-        ReadCoeDataTest{},
-        ChannelRemappingTest{},
-        OutSignalWriterTest{},
-        NodeAntennaInputAssignerTest{}
+        readCoeDataTest(),
+        channelRemappingTest(),
+        outSignalWriterTest(),
+        nodeAntennaInputAssignerTest()
     });
-
 }
