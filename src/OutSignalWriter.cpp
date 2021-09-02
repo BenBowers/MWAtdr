@@ -49,16 +49,7 @@ static std::filesystem::path generateFilePath(const AppConfig &observation, cons
     std::filesystem::path file ("_signalchain.bin");
     std::filesystem::path full_path = dir / obsID += obstime += fphysID += file;
     return full_path;
-    }
-    if(observation.outputDirectoryPath.empty()){
-    std::filesystem::path dir ("app");
-    std::filesystem::path obsID (sObsID+"_");
-    std::filesystem::path obstime (sStartTime+"_");
-    std::filesystem::path fphysID (sPhysID);
-    std::filesystem::path file ("_signalchain.bin");
-    std::filesystem::path full_path = dir / obsID += obstime += fphysID += file;
-    return full_path;
-    }    
+    }   
     else{  
         throw outSignalException(("Error generating file path"));
     }
