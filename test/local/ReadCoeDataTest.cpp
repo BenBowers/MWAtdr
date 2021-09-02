@@ -13,9 +13,9 @@
 
 
 std::vector<std::complex<float>> readCoeData(std::string fileName);
-const std::string FILENAME = "coefficientdataFile.bin";
-const std::string INCORRECTDATAFILE = "badDatacoefficientdataFile";
-const std::string MULTIDATAFILE = "multiNumber.bin";
+const std::string FILENAME = "/tmp/coefficientdataFile.bin";
+const std::string INCORRECTDATAFILE = "/tmp/badDatacoefficientdataFile";
+const std::string MULTIDATAFILE = "/tmp/multiNumber.bin";
 
 ReadCoeDataTest::ReadCoeDataTest() : TestModule{"Read Coefficient data Test", {
     
@@ -29,7 +29,7 @@ ReadCoeDataTest::ReadCoeDataTest() : TestModule{"Read Coefficient data Test", {
            readCoeData(INCORRECTDATAFILE);
            failTest();
        }
-       catch(readCoeDataException const&){}
+       catch(ReadCoeDataException const& e){}
 	}},
     
     {"Valid InputFile(Data Integrity Check)", []() {
@@ -55,7 +55,7 @@ ReadCoeDataTest::ReadCoeDataTest() : TestModule{"Read Coefficient data Test", {
            readCoeData("11");
            failTest();
        }
-       catch(readCoeDataException const&){}
+       catch(ReadCoeDataException const& e){}
 	}}
 
 }} {}
