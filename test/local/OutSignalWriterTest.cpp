@@ -39,7 +39,7 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
             outSignalWriter(testData,invalidTestConfig,testAntenaPhysID);
             failTest();
         }
-        catch(outSignalException const&){}     
+        catch(OutSignalException const&){}     
 	}},
     
     {"Empty Data input", []() {
@@ -56,13 +56,13 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
         try {
             outSignalWriter(testData,validTestConfig,testAntenaPhysID);
         }
-        catch (outSignalException const& e){}
+        catch (OutSignalException const& e){}
 
         if(std::filesystem::exists(filename)){
             try{
                 outSignalWriter(testData,validTestConfig,testAntenaPhysID);
             }
-            catch(outSignalException const& e){}
+            catch(OutSignalException const& e){}
         }
         else{
             failTest();
@@ -77,7 +77,7 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
         try {
             outSignalWriter(testData,validTestConfig,testAntenaPhysID);
         }
-        catch (outSignalException const& e){}
+        catch (OutSignalException const& e){}
          std::ifstream validatefile(filename);
 
         while(validatefile.read(reinterpret_cast<char*>(&data), sizeof(int16_t)))

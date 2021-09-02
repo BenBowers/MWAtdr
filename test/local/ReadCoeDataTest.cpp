@@ -29,7 +29,7 @@ ReadCoeDataTest::ReadCoeDataTest() : TestModule{"Read Coefficient data Test", {
            readCoeData(INCORRECTDATAFILE);
            failTest();
        }
-       catch(readCoeDataException const&){}
+       catch(ReadCoeDataException const& e){}
 	}},
     
     {"Valid InputFile(Data Integrity Check)", []() {
@@ -55,7 +55,7 @@ ReadCoeDataTest::ReadCoeDataTest() : TestModule{"Read Coefficient data Test", {
            readCoeData("11");
            failTest();
        }
-       catch(readCoeDataException const&){}
+       catch(ReadCoeDataException const& e){}
 	}}
 
 }} {}
