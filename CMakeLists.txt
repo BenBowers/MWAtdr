@@ -9,8 +9,9 @@ set(LOCAL_TEST_EXECUTABLE "local_test")
 set(MPI_TEST_EXECUTABLE "mpi_test")
 
 set(MAIN_SOURCE_DIR "src")
-set(LOCAL_TEST_SOURCE_DIR "local_test")
-set(MPI_TEST_SOURCE_DIR "mpi_test")
+set(TEST_SOURCE_DIR "test")
+set(LOCAL_TEST_SOURCE_DIR "${TEST_SOURCE_DIR}/local")
+set(MPI_TEST_SOURCE_DIR "${TEST_SOURCE_DIR}/mpi")
 
 set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/Main.cpp"
@@ -22,15 +23,32 @@ set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/NodeAntennaInputAssigner.cpp"
     "${MAIN_SOURCE_DIR}/MetadataFileReader.cpp"
     "${MAIN_SOURCE_DIR}/OutputLogFileWriter.cpp"
-    "${MAIN_SOURCE_DIR}/ReadCoeData.cpp"    
+    "${MAIN_SOURCE_DIR}/ReadCoeData.cpp"
+    "${MAIN_SOURCE_DIR}/Common.cpp"
 )
 
 set(LOCAL_TEST_SOURCE_FILES
-    "${LOCAL_TEST_SOURCE_DIR}/main.cpp"
+    "${TEST_SOURCE_DIR}/TestHelper.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/Main.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/OutSignalWriterTest.cpp"
+    "${MAIN_SOURCE_DIR}/OutSignalWriter.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/ReadCoeDataTest.cpp"
+    "${MAIN_SOURCE_DIR}/ReadCoeData.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/ChannelRemappingTest.cpp"
+    "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/NodeAntennaInputAssignerTest.cpp"
+    "${MAIN_SOURCE_DIR}/NodeAntennaInputAssigner.cpp"
 )
 
 set(MPI_TEST_SOURCE_FILES
-    "${MPI_TEST_SOURCE_DIR}/main.cpp"
+    "${TEST_SOURCE_DIR}/TestHelper.cpp"
+    "${MPI_TEST_SOURCE_DIR}/MPITestHelper.cpp"
+    "${MPI_TEST_SOURCE_DIR}/Main.cpp"
+    "${MPI_TEST_SOURCE_DIR}/InternodeCommunicationTest.cpp"
+    "${MAIN_SOURCE_DIR}/InternodeCommunication.cpp"
+    "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"
+    "${MAIN_SOURCE_DIR}/Common.cpp"
+    "${MAIN_SOURCE_DIR}/NodeAntennaInputAssigner.cpp"
 )
 
 # This must come before the add_executable(), otherwise they won't have any effect.
@@ -47,6 +65,7 @@ add_executable("${MPI_TEST_EXECUTABLE}" ${MPI_TEST_SOURCE_FILES})
 
 target_compile_options("${MAIN_EXECUTABLE}" PRIVATE -m64)
 target_compile_options("${LOCAL_TEST_EXECUTABLE}" PRIVATE -m64)
+target_compile_options("${MPI_TEST_EXECUTABLE}" PRIVATE -m64)
 
 target_link_options("${MAIN_EXECUTABLE}" PRIVATE "LINKER:--no-as-needed")
 target_link_options("${LOCAL_TEST_EXECUTABLE}" PRIVATE "LINKER:--no-as-needed")
@@ -60,6 +79,6 @@ target_include_directories("${LOCAL_TEST_EXECUTABLE}" PRIVATE "$ENV{MKLROOT}/inc
 target_link_directories("${MAIN_EXECUTABLE}" PRIVATE "$ENV{MKLROOT}/lib/intel64" "$ENV{TBBROOT}/lib/intel64/gcc4.8")
 target_link_directories("${LOCAL_TEST_EXECUTABLE}" PRIVATE "$ENV{MKLROOT}/lib/intel64" "$ENV{TBBROOT}/lib/intel64/gcc4.8")
 
-target_link_libraries("${MAIN_EXECUTABLE}" PRIVATE MPI::MPI_C mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb)
-target_link_libraries("${LOCAL_TEST_EXECUTABLE}" PRIVATE mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb)
+target_link_libraries("${MAIN_EXECUTABLE}" PRIVATE MPI::MPI_C mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb stdc++fs)
+target_link_libraries("${LOCAL_TEST_EXECUTABLE}" PRIVATE mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb stdc++fs)
 target_link_libraries("${MPI_TEST_EXECUTABLE}" PRIVATE MPI::MPI_C)

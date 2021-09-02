@@ -14,8 +14,9 @@ Multiple Docker build stages are used to create appropriate environments for the
 The source code is structured as follows:
 
 - `src/` - Main application source code.
-- `local_test/` - Source code for the `local_test` target.
-- `mpi_test/` - Source code for the `mpi_test` target.
+- `test/` - Test code.
+  - `local/` - Test code specific to the `local_test` target.
+  - `mpi/` - Test code specific to the `mpi_test` target.
 
 The executables are built with CMake.
 
@@ -28,42 +29,48 @@ details.
 
 ## Building
 
-Building a project target is as simple as building the corresponding Docker stage. Convenience scripts are provided for this.
+Building a project target is as simple as building the corresponding Docker stage:
+
+```bash
+docker build --target "$target" -t "mwa_time_data_reconstructor/$target" --build-arg BUILD_TYPE=$buildType --build-arg CONTAINER_RUNTIME=$containerRuntime .
+```
+
+`$buildType` is the [CMake build type](https://cmake.org/cmake/help/v3.10/variable/CMAKE_BUILD_TYPE.html).
+If not specified, defaults to `Release`, which is an optimised build suitable for real-world use.
+
+`$containerRuntime` indicates what containerisation environment will be used to run the build. Options are `docker` or `singularity`.
+If not specified, defaults to `singularity`.
+
+Convenience scripts are provided for building:
 
 Bash:
 ```bash
-./docker_build.sh <target>
+./docker_build.sh $target $buildType $containerRuntime
 ```
 
 PowerShell:
 ```powershell
-./docker_build.ps1 <target>
-```
-
-Alternatively, this can be run with the following command:
-
-```bash
-docker build --target "$target" -t "mwa_time_data_reconstructor/$target" --build-arg DOCKER_BUILD=1 .
+./docker_build.ps1 $target $buildType $containerRuntime
 ```
 
 Note: this can take some time to run on the first time. Subsequent builds will be quicker.
 
 ## Running
 
-Running a project target is as simple as running the corresponding Docker stage. Convenience scripts are provided for this.
+Running a project target is as simple as running the corresponding Docker stage:
+
+```bash
+docker run -t mwa_time_data_reconstructor/$target
+```
+
+Convenience scripts are provided for running:
 
 Bash:
 ```bash
-./docker_run.sh <target>
+./docker_run.sh $target
 ```
 
 PowerShell:
 ```powershell
-./docker_run.ps1 <target>
-```
-
-Alternatively, this can be run with the following command:
-
-```bash
-docker run -t mwa_time_data_reconstructor/$target
+./docker_run.ps1 $target
 ```
