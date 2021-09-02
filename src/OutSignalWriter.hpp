@@ -13,10 +13,10 @@ struct AntennaInputPhysID;
 void outSignalWriter(const std::vector<std::int16_t> &inputData, const AppConfig &observation, const AntennaInputPhysID &physID);
 
 //Custom Exception
-class outSignalException {
+class OutSignalException : public std::exception {
 public:
-   outSignalException(const std::string& msg) : msg_(msg) {}
-  ~outSignalException() {}
+   OutSignalException(const std::string& msg) : msg_(msg) {}
+  ~OutSignalException() {}
 
    std::string getMessage() const {return(msg_);}
 private:
