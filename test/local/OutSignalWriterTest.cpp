@@ -37,6 +37,7 @@ OutSignalWriterTest::OutSignalWriterTest() : TestModule{"Output File Writer unit
         try {
             std::vector<std::int16_t> testData = {1,2,3,4,5,6,7,8,9};
             outSignalWriter(testData,invalidTestConfig,testAntenaPhysID);
+            failTest();
         }
         catch(outSignalException const&){}     
 	}},
