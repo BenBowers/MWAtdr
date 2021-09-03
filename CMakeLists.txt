@@ -63,22 +63,33 @@ add_executable("${MPI_TEST_EXECUTABLE}" ${MPI_TEST_SOURCE_FILES})
 # Intel MKL library configuration is sourced from this tool:
 # https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
 
-target_compile_options("${MAIN_EXECUTABLE}" PRIVATE -m64)
-target_compile_options("${LOCAL_TEST_EXECUTABLE}" PRIVATE -m64)
-target_compile_options("${MPI_TEST_EXECUTABLE}" PRIVATE -m64)
+set(COMPILE_OPTIONS -m64)
+set(COMPILE_DEFINITIONS MKL_ILP64)
+set(COMPILE_INCLUDE_DIRS "$ENV{MKLROOT}/include" "$ENV{TBBROOT}/include")
+set(LINK_OPTIONS "LINKER:--no-as-needed")
+set(LINK_LIBRARY_DIRS "$ENV{MKLROOT}/lib/intel64" "$ENV{TBBROOT}/lib/intel64/gcc4.8")
+set(LINK_LIBRARIES MPI::MPI_C mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb stdc++fs)
 
-target_link_options("${MAIN_EXECUTABLE}" PRIVATE "LINKER:--no-as-needed")
-target_link_options("${LOCAL_TEST_EXECUTABLE}" PRIVATE "LINKER:--no-as-needed")
+target_compile_options("${MAIN_EXECUTABLE}" PRIVATE ${COMPILE_OPTIONS})
+target_compile_options("${LOCAL_TEST_EXECUTABLE}" PRIVATE ${COMPILE_OPTIONS})
+target_compile_options("${MPI_TEST_EXECUTABLE}" PRIVATE ${COMPILE_OPTIONS})
 
-target_compile_definitions("${MAIN_EXECUTABLE}" PRIVATE MKL_ILP64)
-target_compile_definitions("${LOCAL_TEST_EXECUTABLE}" PRIVATE MKL_ILP64)
+target_compile_definitions("${MAIN_EXECUTABLE}" PRIVATE ${COMPILE_DEFINITIONS})
+target_compile_definitions("${LOCAL_TEST_EXECUTABLE}" PRIVATE ${COMPILE_DEFINITIONS})
+target_compile_definitions("${MPI_TEST_EXECUTABLE}" PRIVATE ${COMPILE_DEFINITIONS})
 
-target_include_directories("${MAIN_EXECUTABLE}" PRIVATE "$ENV{MKLROOT}/include" "$ENV{TBBROOT}/include")
-target_include_directories("${LOCAL_TEST_EXECUTABLE}" PRIVATE "$ENV{MKLROOT}/include" "$ENV{TBBROOT}/include")
+target_include_directories("${MAIN_EXECUTABLE}" PRIVATE ${COMPILE_INCLUDE_DIRS})
+target_include_directories("${LOCAL_TEST_EXECUTABLE}" PRIVATE ${COMPILE_INCLUDE_DIRS})
+target_include_directories("${MPI_TEST_EXECUTABLE}" PRIVATE ${COMPILE_INCLUDE_DIRS})
 
-target_link_directories("${MAIN_EXECUTABLE}" PRIVATE "$ENV{MKLROOT}/lib/intel64" "$ENV{TBBROOT}/lib/intel64/gcc4.8")
-target_link_directories("${LOCAL_TEST_EXECUTABLE}" PRIVATE "$ENV{MKLROOT}/lib/intel64" "$ENV{TBBROOT}/lib/intel64/gcc4.8")
+target_link_options("${MAIN_EXECUTABLE}" PRIVATE ${LINK_OPTIONS})
+target_link_options("${LOCAL_TEST_EXECUTABLE}" PRIVATE ${LINK_OPTIONS})
+target_link_options("${MPI_TEST_EXECUTABLE}" PRIVATE ${LINK_OPTIONS})
 
-target_link_libraries("${MAIN_EXECUTABLE}" PRIVATE MPI::MPI_C mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb stdc++fs)
-target_link_libraries("${LOCAL_TEST_EXECUTABLE}" PRIVATE mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb stdc++fs)
-target_link_libraries("${MPI_TEST_EXECUTABLE}" PRIVATE MPI::MPI_C)
+target_link_directories("${MAIN_EXECUTABLE}" PRIVATE ${LINK_LIBRARY_DIRS})
+target_link_directories("${LOCAL_TEST_EXECUTABLE}" PRIVATE ${LINK_LIBRARY_DIRS})
+target_link_directories("${MPI_TEST_EXECUTABLE}" PRIVATE ${LINK_LIBRARY_DIRS})
+
+target_link_libraries("${MAIN_EXECUTABLE}" PRIVATE ${LINK_LIBRARIES})
+target_link_libraries("${LOCAL_TEST_EXECUTABLE}" PRIVATE ${LINK_LIBRARIES})
+target_link_libraries("${MPI_TEST_EXECUTABLE}" PRIVATE ${LINK_LIBRARIES})
