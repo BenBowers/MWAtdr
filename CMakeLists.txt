@@ -14,17 +14,8 @@ set(TEST_SOURCE_DIR "test")
 set(LOCAL_TEST_SOURCE_DIR "${TEST_SOURCE_DIR}/local")
 set(MPI_TEST_SOURCE_DIR "${TEST_SOURCE_DIR}/mpi")
 
-set(COMMON_SOURCE_FILES
-    "${MAIN_SOURCE_DIR}/ReadInputFile.cpp"
-    "${MAIN_SOURCE_DIR}/OutSignalWriter.cpp"
-    "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"
-    "${MAIN_SOURCE_DIR}/InternodeCommunication.cpp"
-    "${MAIN_SOURCE_DIR}/SignalProcessing.cpp"
-    "${MAIN_SOURCE_DIR}/NodeAntennaInputAssigner.cpp"
-    "${MAIN_SOURCE_DIR}/MetadataFileReader.cpp"
-    "${MAIN_SOURCE_DIR}/OutputLogFileWriter.cpp"
-    "${MAIN_SOURCE_DIR}/ReadCoeData.cpp"
-    "${MAIN_SOURCE_DIR}/Common.cpp"
+set(MAIN_SOURCE_FILES
+    "${MAIN_SOURCE_DIR}/Main.cpp"
 )
 
 set(LOCAL_TEST_SOURCE_FILES
@@ -43,12 +34,25 @@ set(MPI_TEST_SOURCE_FILES
     "${MPI_TEST_SOURCE_DIR}/InternodeCommunicationTest.cpp"
 )
 
+set(COMMON_SOURCE_FILES
+    "${MAIN_SOURCE_DIR}/ReadInputFile.cpp"
+    "${MAIN_SOURCE_DIR}/OutSignalWriter.cpp"
+    "${MAIN_SOURCE_DIR}/ChannelRemapping.cpp"
+    "${MAIN_SOURCE_DIR}/InternodeCommunication.cpp"
+    "${MAIN_SOURCE_DIR}/SignalProcessing.cpp"
+    "${MAIN_SOURCE_DIR}/NodeAntennaInputAssigner.cpp"
+    "${MAIN_SOURCE_DIR}/MetadataFileReader.cpp"
+    "${MAIN_SOURCE_DIR}/OutputLogFileWriter.cpp"
+    "${MAIN_SOURCE_DIR}/ReadCoeData.cpp"
+    "${MAIN_SOURCE_DIR}/Common.cpp"
+)
+
 # This must come before adding the build targets, otherwise they won't have any effect.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable("${MAIN_EXECUTABLE}" "${MAIN_SOURCE_DIR}/Main.cpp")
+add_executable("${MAIN_EXECUTABLE}" ${MAIN_SOURCE_FILES})
 add_executable("${LOCAL_TEST_EXECUTABLE}" ${LOCAL_TEST_SOURCE_FILES})
 add_executable("${MPI_TEST_EXECUTABLE}" ${MPI_TEST_SOURCE_FILES})
 add_library("${COMMON_LIBRARY}" ${COMMON_SOURCE_FILES})
