@@ -182,7 +182,6 @@ InternodeCommunicationTest::InternodeCommunicationTest(PrimaryNodeCommunicator c
             // Similar to the test above, this test is kinda dodgy due to uncertain timing.
 
             auto const nodeID = communicator.getNodeID();
-            auto const nodeCount = communicator.getNodeCount();
             bool gotError = false;
             communicator.synchronise();
             for (unsigned long i = 0; i < 10000; ++i) {
@@ -258,7 +257,6 @@ InternodeCommunicationTest::InternodeCommunicationTest(SecondaryNodeCommunicator
 
         {"receiveAntennaInputAssignment()", [communicator]() {
             auto const nodeID = communicator.getNodeID();
-            auto const nodeCount = communicator.getNodeCount();
             auto const actual = communicator.receiveAntennaInputAssignment();
             std::optional<AntennaInputRange> expected;
             if (nodeID % 4 != 1) {
@@ -359,7 +357,6 @@ InternodeCommunicationTest::InternodeCommunicationTest(SecondaryNodeCommunicator
             // Similar to the test above, this test is kinda dodgy due to uncertain timing.
 
             auto const nodeID = communicator.getNodeID();
-            auto const nodeCount = communicator.getNodeCount();
             bool gotError = false;
             communicator.synchronise();
             for (unsigned long i = 0; i < 10000; ++i) {
