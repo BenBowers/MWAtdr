@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(MWA_TIME_DATA_RECONSTRUCTOR)
+project(MWATDR)
 
 find_package(MPI REQUIRED)
 

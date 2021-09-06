@@ -32,7 +32,7 @@ details.
 Building a project target is as simple as building the corresponding Docker stage:
 
 ```bash
-docker build --target "$target" -t "mwa_time_data_reconstructor/$target" --build-arg BUILD_TYPE=$buildType --build-arg CONTAINER_RUNTIME=$containerRuntime .
+docker build --target "$target" -t "mwatdr/$target" --build-arg BUILD_TYPE=$buildType --build-arg CONTAINER_RUNTIME=$containerRuntime .
 ```
 
 `$buildType` is the [CMake build type](https://cmake.org/cmake/help/v3.10/variable/CMAKE_BUILD_TYPE.html).
@@ -60,7 +60,7 @@ Note: this can take some time to run on the first time. Subsequent builds will b
 Running a project target is as simple as running the corresponding Docker stage:
 
 ```bash
-docker run -t mwa_time_data_reconstructor/$target
+docker run -t mwatdr/$target
 ```
 
 Convenience scripts are provided for running:
