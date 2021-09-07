@@ -1,7 +1,7 @@
-#include "../../src/ReadCoeData.hpp"
+#include "../../../src/ReadCoeData.hpp"
 #include "ReadCoeDataTest.hpp"
 #include "../TestHelper.hpp"
-#include "../../src/Common.hpp"
+#include "../../../src/Common.hpp"
 
 #include <stdexcept>
 #include <cstdint>

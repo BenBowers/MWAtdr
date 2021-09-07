@@ -7,7 +7,7 @@
 #include <tuple>
 #include <vector>
 
-#include "../../src/ChannelRemapping.hpp"
+#include "../../../src/ChannelRemapping.hpp"
 #include "../TestHelper.hpp"
 
 

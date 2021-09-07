@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../src/InternodeCommunication.hpp"
+#include "../../../src/InternodeCommunication.hpp"
 #include "../TestHelper.hpp"
 
 

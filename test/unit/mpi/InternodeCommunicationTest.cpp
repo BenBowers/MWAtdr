@@ -7,10 +7,10 @@
 #include <thread>
 #include <utility>
 
-#include "../../src/ChannelRemapping.hpp"
-#include "../../src/Common.hpp"
-#include "../../src/InternodeCommunication.hpp"
-#include "../../src/NodeAntennaInputAssigner.hpp"
+#include "../../../src/ChannelRemapping.hpp"
+#include "../../../src/Common.hpp"
+#include "../../../src/InternodeCommunication.hpp"
+#include "../../../src/NodeAntennaInputAssigner.hpp"
 #include "../TestHelper.hpp"
 
 

@@ -1,6 +1,6 @@
 #include <variant>
 
-#include "../../src/InternodeCommunication.hpp"
+#include "../../../src/InternodeCommunication.hpp"
 #include "InternodeCommunicationTest.hpp"
 #include "MPITestHelper.hpp"
 
