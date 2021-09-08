@@ -10,9 +10,9 @@ set(MPI_UNIT_TEST_EXECUTABLE "mpi_unit_test")
 set(COMMON_LIBRARY "mwatdr_common")
 
 set(MAIN_SOURCE_DIR "src")
-set(UNIT_TEST_SOURCE_DIR "test/unit")
-set(LOCAL_UNIT_TEST_SOURCE_DIR "${UNIT_TEST_SOURCE_DIR}/local")
-set(MPI_UNIT_TEST_SOURCE_DIR "${UNIT_TEST_SOURCE_DIR}/mpi")
+set(UNIT_TEST_SOURCE_DIR "test/unit/src")
+set(LOCAL_UNIT_TEST_SOURCE_DIR "test/unit/local/src")
+set(MPI_UNIT_TEST_SOURCE_DIR "test/unit/mpi/src")
 
 set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/Main.cpp"
@@ -78,8 +78,8 @@ target_compile_definitions("${MPI_UNIT_TEST_EXECUTABLE}" PRIVATE ${COMPILE_DEFIN
 target_compile_definitions("${COMMON_LIBRARY}" PRIVATE ${COMPILE_DEFINITIONS})
 
 target_include_directories("${MAIN_EXECUTABLE}" PRIVATE ${COMPILE_INCLUDE_DIRS})
-target_include_directories("${LOCAL_UNIT_TEST_EXECUTABLE}" PRIVATE ${COMPILE_INCLUDE_DIRS})
-target_include_directories("${MPI_UNIT_TEST_EXECUTABLE}" PRIVATE ${COMPILE_INCLUDE_DIRS})
+target_include_directories("${LOCAL_UNIT_TEST_EXECUTABLE}" PRIVATE ${COMPILE_INCLUDE_DIRS} ${MAIN_SOURCE_DIR} ${UNIT_TEST_SOURCE_DIR})
+target_include_directories("${MPI_UNIT_TEST_EXECUTABLE}" PRIVATE ${COMPILE_INCLUDE_DIRS} ${MAIN_SOURCE_DIR} ${UNIT_TEST_SOURCE_DIR})
 target_include_directories("${COMMON_LIBRARY}" PRIVATE ${COMPILE_INCLUDE_DIRS})
 
 target_link_options("${MAIN_EXECUTABLE}" PRIVATE ${LINK_OPTIONS})

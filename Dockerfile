@@ -47,6 +47,10 @@ RUN adduser --system --group app
 RUN mkdir /app
 RUN chown -R app:app /app
 
+WORKDIR /app
+
+USER app
+
 
 
 
@@ -54,11 +58,11 @@ RUN chown -R app:app /app
 FROM base AS app_base
 ARG BUILD_TYPE
 
-WORKDIR /app
-
 COPY CMakeLists.txt ./
 COPY src/ src/
-COPY test/unit/ test/unit/
+COPY test/unit/src/ test/unit/src/
+COPY test/unit/local/src/ test/unit/local/src/
+COPY test/unit/mpi/src/ test/unit/mpi/src/
 
 # Just configure the CMake build at this stage.
 # Unfortunately for the configure to work, all source files built by CMake must be present. We can't include only the
@@ -74,20 +78,10 @@ RUN cd build && \
 
 
 
-# Base image for unit tests.
-FROM base AS unit_test_base
-
-WORKDIR /app
-
-USER app
+# Image for non-MPI unit tests.
+FROM base AS local_unit_test
 
 COPY --from=app_base --chown=app:app /app/ /app/
-
-
-
-
-# Image for non-MPI unit tests.
-FROM unit_test_base AS local_unit_test
 
 RUN cd build && \
 	cmake --build . --target local_unit_test
@@ -98,44 +92,20 @@ ENTRYPOINT ["/app/build/local_unit_test"]
 
 
 # Image for MPI unit tests.
-FROM unit_test_base AS mpi_unit_test
+FROM base AS mpi_unit_test
 ARG CONTAINER_RUNTIME
+
+COPY --chown=app:app test/unit/mpi/entrypoint.sh ./
+RUN chmod +x entrypoint.sh
+
+COPY --from=app_base --chown=app:app /app/ /app/
 
 RUN cd build && \
 	cmake --build . --target mpi_unit_test
 
-RUN chmod +x ./test/unit/mpi/run.sh
-
 ENV CONTAINER_RUNTIME=${CONTAINER_RUNTIME}
 
-ENTRYPOINT ["/app/test/unit/mpi/run.sh"]
-
-
-
-
-# Image for integration tests.
-FROM base as integration_test
-
-RUN apt-get update -qq && \
-	apt-get install -qq --no-install-recommends -y python3-minimal python3-pip && \
-	python3 -m pip install -qq pytest && \
-# Clean up files and packages no longer required.
-	apt-get purge --auto-remove -qq -y python3-pip && \
-	apt-get clean -qq -y && \
-	rm -rf ./* /var/lib/apt/lists/*
-
-WORKDIR /app
-
-USER app
-
-COPY --from=app_base --chown=app:app /app/ /app/
-
-COPY --chown=app:app test/integration/ test/integration/
-
-RUN cd build && \
-	cmake --build . --target main
-
-ENTRYPOINT [ "python3", "-m", "pytest", "/app/test/integration" ]
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 
 
@@ -143,13 +113,14 @@ ENTRYPOINT [ "python3", "-m", "pytest", "/app/test/integration" ]
 # Image for main application executable.
 FROM base AS main
 
-WORKDIR /app
-
-USER app
+COPY --chown=app:app entrypoint.sh ./
+RUN chmod +x entrypoint.sh
 
 COPY --from=app_base --chown=app:app /app/ /app/
 
 RUN cd build && \
 	cmake --build . --target main
 
-ENTRYPOINT ["mpirun", "/app/build/main"]
+ENV CONTAINER_RUNTIME=${CONTAINER_RUNTIME}
+
+ENTRYPOINT ["/app/entrypoint.sh"]

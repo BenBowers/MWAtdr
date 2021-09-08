@@ -1,10 +1,9 @@
 #include <iostream>
 
-#include "../TestHelper.hpp"
+#include "TestHelper.hpp"
 #include "OutSignalWriterTest.hpp"
 #include "ChannelRemappingTest.hpp"
 #include "NodeAntennaInputAssignerTest.hpp"
-#include "../TestHelper.hpp"
 #include "ReadCoeDataTest.hpp"
 #include <iostream>
 

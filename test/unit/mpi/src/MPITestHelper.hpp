@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "../../../src/InternodeCommunication.hpp"
-#include "../TestHelper.hpp"
+#include "InternodeCommunication.hpp"
+#include "TestHelper.hpp"
 
 
 // Runs a set of test modules. Information on the tests is output to stdout.

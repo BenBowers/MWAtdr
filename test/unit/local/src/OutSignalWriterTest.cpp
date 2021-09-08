@@ -1,7 +1,7 @@
-#include "../../../src/OutSignalWriter.hpp"
+#include "OutSignalWriter.hpp"
 #include "OutSignalWriterTest.hpp"
-#include "../TestHelper.hpp"
-#include "../../../src/Common.hpp"
+#include "TestHelper.hpp"
+#include "Common.hpp"
 
 #include <stdexcept>
 #include <cstdint>

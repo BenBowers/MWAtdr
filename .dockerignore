@@ -7,3 +7,4 @@
 /docker_run.*
 /LICENSE
 /README.md
+/test/integration

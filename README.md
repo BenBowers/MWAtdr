@@ -2,24 +2,16 @@
 
 ## Project Structure
 
-The project builds 4 "targets" (executables):
+The project builds 3 "targets" (executables):
 
 - `main` - The actual application.
 - `local_unit_test` - Runs unit tests that do not involve MPI.
 - `mpi_unit_test` - Runs unit tests that do involve MPI.
-- `integration_test` Runs tests of the entire application.
 
 The project is fully containerised. On your local machine, the project will run with Docker. On Garrawarla, the Docker configuration is converted into a Singularity configuration for running with Singularity.  
 Multiple Docker build stages are used to create appropriate environments for the different targets.
 
-The source code is structured as follows:
-
-- `src/` - Main application source code.
-- `test/` - Test code.
-    - `unit/` - Unit test code.
-        - `local/` - Test code specific to the `local_unit_test` target.
-        - `mpi/` - Test code specific to the `mpi_unit_test` target.
-    - `integration/` - Integration test code.
+TODO: file/folder structure explanation
 
 The executables are built with CMake.
 

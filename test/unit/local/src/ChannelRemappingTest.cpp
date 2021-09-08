@@ -7,8 +7,8 @@
 #include <tuple>
 #include <vector>
 
-#include "../../../src/ChannelRemapping.hpp"
-#include "../TestHelper.hpp"
+#include "ChannelRemapping.hpp"
+#include "TestHelper.hpp"
 
 
 ChannelRemappingTest::ChannelRemappingTest() : TestModule{"Frequency channel remapper unit test", {

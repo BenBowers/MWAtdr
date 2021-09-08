@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../TestHelper.hpp"
+#include "TestHelper.hpp"
 
 struct AntennaInputRange;
 

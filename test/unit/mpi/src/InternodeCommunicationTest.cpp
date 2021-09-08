@@ -7,11 +7,11 @@
 #include <thread>
 #include <utility>
 
-#include "../../../src/ChannelRemapping.hpp"
-#include "../../../src/Common.hpp"
-#include "../../../src/InternodeCommunication.hpp"
-#include "../../../src/NodeAntennaInputAssigner.hpp"
-#include "../TestHelper.hpp"
+#include "ChannelRemapping.hpp"
+#include "Common.hpp"
+#include "InternodeCommunication.hpp"
+#include "NodeAntennaInputAssigner.hpp"
+#include "TestHelper.hpp"
 
 
 InternodeCommunicationTest::InternodeCommunicationTest(PrimaryNodeCommunicator communicator) :
