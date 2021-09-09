@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <filesystem>
 
 
 //Main function for reading in of the data file takes the name of the directory that the data files are stored in
@@ -36,4 +37,9 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
 //TODO Actual file validation
 bool validateInputData(std::string fileName){
     return true;
+}
+
+std::vector<std::complex<float>> makedatavalues(){
+
+    
 }
