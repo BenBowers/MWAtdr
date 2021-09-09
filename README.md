@@ -69,3 +69,7 @@ PowerShell:
 ```powershell
 ./docker_run.ps1 $target
 ```
+
+
+
+TODO: explain integration testing

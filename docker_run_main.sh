@@ -9,16 +9,20 @@ if [[ $# -ne 6 ]] ; then
     exit 1
 fi
 
-inputDir=$(realpath -m $1)
+hostInputDir=$(realpath -m $1)
 obsId=$2
 startTime=$3
-invPolyphaseFilterFile=$(realpath -m $4)
-outputDir=$(realpath -m $5)
+hostInvPolyphaseFilterFile=$(realpath -m $4)
+hostOutputDir=$(realpath -m $5)
 ignoreErrors=$6
 
+containerInputDir="/mnt/input_data"
+containerInvPolyphaseFilterFile="/mnt/inverse_polyphase_filter"
+containerOutputDir="/mnt/output_data"
+
 exec docker run \
-    -v "$inputDir:/app/input_data:ro" \
-    -v "$invPolyphaseFilterFile:/app/inverse_polyphase_filter:ro" \
-    -v "$outputDir:/app/output_data:rw" \
+    -v "$hostInputDir:$containerInputDir:ro" \
+    -v "$hostInvPolyphaseFilterFile:$containerInvPolyphaseFilterFile:ro" \
+    -v "$hostOutputDir:$containerOutputDir:rw" \
     -t "mwa_time_data_reconstructor/main" \
-    "$inputDir" "$obsId" "$startTime" "$invPolyphaseFilterFile" "$outputDir" "$ignoreErrors"
+    "$containerInputDir" "$obsId" "$startTime" "$containerInvPolyphaseFilterFile" "$containerOutputDir" "$ignoreErrors"
