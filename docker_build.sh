@@ -13,7 +13,7 @@ containerRuntime=$3
 
 docker build \
     --target "$target" \
-    -t "mwa_time_data_reconstructor/$target" \
+    -t "mwatdr/$target" \
     --build-arg "BUILD_TYPE=$buildType" \
     --build-arg "CONTAINER_RUNTIME=$containerRuntime" \
     --progress plain \
