@@ -60,7 +60,7 @@ add_library("${COMMON_LIBRARY}" ${COMMON_SOURCE_FILES})
 # Intel MKL library configuration is sourced from this tool:
 # https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
 
-set(COMPILE_OPTIONS -m64)
+set(COMPILE_OPTIONS -m64 -pedantic -Wall -Wextra)
 set(COMPILE_DEFINITIONS MKL_ILP64)
 set(COMPILE_INCLUDE_DIRS "$ENV{MKLROOT}/include" "$ENV{TBBROOT}/include")
 set(LINK_OPTIONS "LINKER:--no-as-needed")
