@@ -3,24 +3,29 @@
 #include "Common.hpp"
 #include "mwalib.h"
 
+#include <set>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
+// MetadataFileReader constructor throws MetadataException
 class MetadataFileReader {
 	private:
 	    VoltageContext* voltageContext;
-		MetafitsMetadata* metafitsMetadata;
+	    MetafitsMetadata* metafitsMetadata;
 
-        bool validMetafits(AppConfig const appConfig);
+        void validateMetafits(AppConfig const appConfig);
         std::vector<std::string> findVoltageFiles(AppConfig const appConfig);
-		std::vector<AntennaInputPhysID> getPhysicalAntennaInputs();
+	    std::vector<AntennaInputPhysID> getPhysicalAntennaInputs();
         std::set<unsigned> getFrequencyChannelsUsed();
+
 	public:
 	    MetadataFileReader(AppConfig const appConfig);
         AntennaConfig getAntennaConfig();
+		void freeMetadata();
 };
 
 class MetadataException : public std::runtime_error {
-    public:
-	    MetadataException() : std::runtime_error("MetadataException") {}
+	public:
+	    MetadataException(const std::string& message) : std::runtime_error(message) {}
 };

@@ -6,7 +6,7 @@
 
 #include <filesystem>
 
-#define TEST_OBSERVATION_ID 1294797712
+const unsigned long long TEST_OBSERVATION_ID = 1294797712;
 
 MetadataFileReaderTest::MetadataFileReaderTest() : TestModule{"Metadata file reader unit test", {
 	{"Testing AntennaConfig == (true)", []() {
@@ -24,7 +24,6 @@ MetadataFileReaderTest::MetadataFileReaderTest() : TestModule{"Metadata file rea
 		auto actual = mfr.getAntennaConfig();
 		AntennaConfig expected = {{}, {109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
 		                               121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132}};
-		// TODO: update to use non-standard tile numbers
 		testAssert(actual.antennaInputs.size() == 256 &&
 		           actual.frequencyChannels == expected.frequencyChannels);
 	}},
@@ -33,29 +32,55 @@ MetadataFileReaderTest::MetadataFileReaderTest() : TestModule{"Metadata file rea
 			auto mfr = MetadataFileReader({"/app/signals/invalid_metafits/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", ""});
 			failTest();
 		}
-		catch (MetadataException const&) {}
-		catch (std::runtime_error const&) {}
-    }},
-    {"Invalid voltage file", []() {
-	    try {
-			auto mfr = MetadataFileReader({"/app/signals/invalid_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", ""});
-			failTest();
+		catch (MetadataException const& e)
+		{
+			if (((std::string) e.what()).find("Invalid metafits") == -1) {
+				failTest();
+			}
 		}
-		catch (MetadataException const&) {}
-		catch (std::runtime_error const&) {}
     }},
     {"No metafits file", []() {
 		try {
 			auto mfr = MetadataFileReader({"/app/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", ""});
 			failTest();
 		}
-		catch (std::runtime_error const&) {}
+		catch (MetadataException const& e) {
+			if (((std::string) e.what()).find("No metafits") == -1) {
+				failTest();
+			}
+		}
     }},
-    {"No voltage file", []() {
+	{"Invalid voltage files", []() {
+	    try {
+			auto mfr = MetadataFileReader({"/app/signals/invalid_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", ""});
+			failTest();
+		}
+		catch (MetadataException const& e) {
+			if (((std::string) e.what()).find("Invalid/no voltage files") == -1) {
+				failTest();
+			}
+		}
+    }},
+	{"No voltage files, valid metafits", []() {
+	    try {
+			auto mfr = MetadataFileReader({"/app/signals/no_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", ""});
+			failTest();
+		}
+		catch (MetadataException const& e) {
+			if (((std::string) e.what()).find("Invalid/no voltage files") == -1) {
+				failTest();
+			}
+		}
+    }},
+	{"Invalid directory", []() {
 		try {
-		    auto mfr = MetadataFileReader({"/app/no_voltage", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", ""});
+		    auto mfr = MetadataFileReader({"/no_directory/test", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", ""});
 		    failTest();
 		}
-		catch (std::runtime_error const&) {}
+		catch (MetadataException const& e) {
+			if (((std::string) e.what()).find("No metafits") == -1) {
+				failTest();
+			}
+		}
     }}
 }} {}

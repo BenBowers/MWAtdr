@@ -1,34 +1,17 @@
 #include "MetadataFileReader.hpp"
 
 #include <filesystem>
-#include <iostream>
 #include <regex>
-#include <set>
-#include <stdexcept>
-#include <vector>
-
-// Used in VoltageContext and MetafitsMetadata creation
-#define ERROR_MESSAGE_LENGTH 1024
-// Used to check if voltage files are valid
-#define VOLTAGE_FILE_SIZE 5275652096
-
-namespace fs = std::filesystem;
-
-// WARNING: This module is an abomination, I'm truly sorry.
-// But also, probably don't try to make it better.
-// Any function containing mwalib functionality is forced to use inconvenient data types
 
 // Constructor which creates internal MetafitsMetadata (based on VoltageContext)
 MetadataFileReader::MetadataFileReader(AppConfig const appConfig) {
-	// Verify metafits file exists at specified input directory path
-	if (!validMetafits(appConfig)) {
-		throw std::runtime_error("Invalid/no metafits file at specified path");
-	}
+	// Verify metafits file exists at specified input directory path (and is not empty)
+	validateMetafits(appConfig);
 	// Verify voltage files exist at specified input directory path
 	auto const voltageFiles = findVoltageFiles(appConfig);
 	unsigned const numFiles = voltageFiles.size();
 	if (numFiles == 0) {
-		throw std::runtime_error("Invalid/no voltage files at specified path");
+		throw MetadataException("Invalid/no voltage files at specified path");
 	}
 	// Copy filenames vector to char* array to create VoltageContext
 	const char* filenamesArray[numFiles];
@@ -38,55 +21,59 @@ MetadataFileReader::MetadataFileReader(AppConfig const appConfig) {
 	// Create VoltageContext for use in MetafitsMetadata creation
 	std::string metafitsFilename = appConfig.inputDirectoryPath +
 	                               std::to_string(appConfig.observationID) + ".metafits";
-	const char* errorMessage;
-	const char* metafits = metafitsFilename.c_str();
-	if (mwalib_voltage_context_new(metafits, filenamesArray, numFiles, &voltageContext,
-	                               errorMessage, ERROR_MESSAGE_LENGTH) != EXIT_SUCCESS) {
-		// Error creating VoltageContext
-		throw MetadataException();
+    const unsigned ERROR_MESSAGE_LENGTH = 1024;
+	if (mwalib_voltage_context_new(metafitsFilename.c_str(), filenamesArray, numFiles, &voltageContext,
+	                               nullptr, ERROR_MESSAGE_LENGTH) != EXIT_SUCCESS) {
+		throw MetadataException("Error creating VoltageContext");
 	}
 	// Create MetafitsMetadata from VoltageContext
 	if (mwalib_metafits_metadata_get(nullptr, nullptr, voltageContext, &metafitsMetadata,
-	                                 errorMessage, ERROR_MESSAGE_LENGTH) != EXIT_SUCCESS) {
-		// Error loading metadata
-		throw MetadataException();
+	                                 nullptr, ERROR_MESSAGE_LENGTH) != EXIT_SUCCESS) {
+		throw MetadataException("Error loading metadata");
     }
 }
-// Finds all of the observation signal files within the specified directory
+
+// Finds all of the observation signal files within the specified input directory path
 std::vector<std::string> MetadataFileReader::findVoltageFiles(AppConfig const appConfig) {
+    // Used to check if voltage files are valid
+    const unsigned long long VOLTAGE_FILE_SIZE = 5275652096;
+
 	std::vector<std::string> voltageFilenames;
-	std::string target = appConfig.inputDirectoryPath +
-	                     std::to_string(appConfig.observationID) + "_" +
-	                     std::to_string(appConfig.signalStartTime) + "_";
-    std::regex channelAndFileType ("[0-9]+\\.sub");
-    // Detect and store voltage data file paths
-    for (auto const& file : fs::directory_iterator(appConfig.inputDirectoryPath)) {
-		auto path = std::string(file.path());
-		// Add paths that match the file format (inputDirectoryPath/observationID_signalStartTime_channel.sub)
-		if (path.length() > target.length()) {
-		    if (target == path.substr(0, target.length()) &&
-			    std::regex_match(path.substr(target.length()), channelAndFileType)) {
-				// Check if voltage file is valid
-				if (fs::file_size(file) == VOLTAGE_FILE_SIZE) {
-			        voltageFilenames.push_back(path);
+    std::regex target (std::to_string(appConfig.observationID) + "_" +
+	                   std::to_string(appConfig.signalStartTime) + "_" + "[0-9]+");
+	try {
+		// Detect and store valid voltage data file paths
+		for (auto const& file : std::filesystem::directory_iterator(appConfig.inputDirectoryPath)) {
+			std::filesystem::path path (file.path());
+			// Add (non-empty) paths that match the file format:
+			// inputDirectoryPath/observationID_signalStartTime_channel.sub
+			if (path.extension() == ".sub") {
+				if (std::regex_match((std::string) path.stem(), target)) {
+					if (!std::filesystem::is_empty(path)) {
+				        voltageFilenames.push_back(path);
+					}
 				}
-		    }
-		}
-    }
-	return voltageFilenames;
-}
-// Checks if metafits file exists and is not empty
-bool MetadataFileReader::validMetafits(AppConfig const appConfig) {
-    for (auto const& file : fs::directory_iterator(appConfig.inputDirectoryPath)) {
-		auto path = std::string(file.path());
-		if (path.compare(appConfig.inputDirectoryPath +
-		                 std::to_string(appConfig.observationID) + ".metafits") == 0) {
-			if (!fs::is_empty(file)) {
-				return true;
 			}
 		}
 	}
-	return false;
+	catch (std::filesystem::filesystem_error const&) {
+		throw MetadataException("Error opening voltage file (no such file or directory)");
+	}
+	return voltageFilenames;
+}
+
+// Checks if metafits file exists and is valid (not-empty)
+void MetadataFileReader::validateMetafits(AppConfig const appConfig) {
+	std::filesystem::path dir (appConfig.inputDirectoryPath);
+	std::filesystem::path file (std::to_string(appConfig.observationID) + ".metafits");
+	std::filesystem::path metafits = dir / file;
+
+	if (!std::filesystem::exists(metafits)) {
+		throw MetadataException("No metafits at specified path");
+	}
+	if (std::filesystem::is_empty(metafits)) {
+		throw MetadataException("Invalid metafits at specified path");
+	}
 }
 
 
@@ -116,4 +103,10 @@ std::set<unsigned> MetadataFileReader::getFrequencyChannelsUsed() {
 		frequencyChannels.insert(metafitsMetadata->metafits_coarse_chans[i].rec_chan_number);
 	}
 	return frequencyChannels;
+}
+
+
+void MetadataFileReader::freeMetadata() {
+	mwalib_metafits_metadata_free(metafitsMetadata);
+    mwalib_voltage_context_free(voltageContext);
 }
