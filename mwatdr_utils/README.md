@@ -15,6 +15,7 @@ import mwatdr_utils
 Useful operations include:
 
 - Reading/writing inverse polyphase filter files: `mwatdr_utils.inv_polyphase_filter` module. `read_inv_polyphase_filter()` and `write_inv_polyphase_filter()` functions.
+- Reading/writing output time domain signal files: `mwatdr_utils.output_signal` module. `read_output_signal()` and `write_output_signal()` functions.
 
 For more information and proper documentation, please see the source code in the `mwatdr_utils` directory.
 
