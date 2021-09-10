@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-OUTPUT_SIGNAL_FILENAME_REGEX = r'([0-9]+)_([0-9]+)_([0-9]+)_(\.).bin'
+OUTPUT_SIGNAL_FILENAME_REGEX = r'([0-9]+)_([0-9]+)_([0-9]+)_(.)\.bin'
 """Regex matching an output signal filename."""
 
 

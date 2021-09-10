@@ -3,6 +3,12 @@ from os import PathLike
 from pathlib import Path
 
 
+__all__ = [
+    'compute_file_hash',
+    'compute_file_key'
+]
+
+
 def compute_file_hash(path: PathLike) -> str:
     """Computes the MD5 hash of a file."""
 
