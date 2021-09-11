@@ -18,11 +18,12 @@ class MetadataFileReader {
         std::vector<std::string> findVoltageFiles(AppConfig const appConfig);
 	    std::vector<AntennaInputPhysID> getPhysicalAntennaInputs();
         std::set<unsigned> getFrequencyChannelsUsed();
+		void freeMetadata();
 
 	public:
 	    MetadataFileReader(AppConfig const appConfig);
         AntennaConfig getAntennaConfig();
-		void freeMetadata();
+		~MetadataFileReader();
 };
 
 class MetadataException : public std::runtime_error {

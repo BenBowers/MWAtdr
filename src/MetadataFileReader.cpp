@@ -1,5 +1,6 @@
 #include "MetadataFileReader.hpp"
 
+#include <cstring>
 #include <filesystem>
 #include <regex>
 
@@ -7,22 +8,22 @@
 MetadataFileReader::MetadataFileReader(AppConfig const appConfig) {
 	// Verify metafits file exists at specified input directory path (and is not empty)
 	validateMetafits(appConfig);
-	// Verify voltage files exist at specified input directory path
+	// Verify which voltage files exist at specified input directory path
 	auto const voltageFiles = findVoltageFiles(appConfig);
 	unsigned const numFiles = voltageFiles.size();
 	if (numFiles == 0) {
 		throw MetadataException("Invalid/no voltage files at specified path");
 	}
-	// Copy filenames vector to char* array to create VoltageContext
-	const char* filenamesArray[numFiles];
+	// Copy string vector to const char* (c string) vector for creating VoltageContext
+	std::vector<const char*> voltageFilenames;
 	for (unsigned i = 0; i < numFiles; i++) {
-		filenamesArray[i] = voltageFiles.at(i).c_str();
+		voltageFilenames.push_back(voltageFiles.at(i).c_str());
 	}
 	// Create VoltageContext for use in MetafitsMetadata creation
 	std::string metafitsFilename = appConfig.inputDirectoryPath +
 	                               std::to_string(appConfig.observationID) + ".metafits";
     const unsigned ERROR_MESSAGE_LENGTH = 1024;
-	if (mwalib_voltage_context_new(metafitsFilename.c_str(), filenamesArray, numFiles, &voltageContext,
+	if (mwalib_voltage_context_new(metafitsFilename.c_str(), voltageFilenames.data(), numFiles, &voltageContext,
 	                               nullptr, ERROR_MESSAGE_LENGTH) != EXIT_SUCCESS) {
 		throw MetadataException("Error creating VoltageContext");
 	}
@@ -105,6 +106,10 @@ std::set<unsigned> MetadataFileReader::getFrequencyChannelsUsed() {
 	return frequencyChannels;
 }
 
+
+MetadataFileReader::~MetadataFileReader() {
+	freeMetadata();
+}
 
 void MetadataFileReader::freeMetadata() {
 	mwalib_metafits_metadata_free(metafitsMetadata);
