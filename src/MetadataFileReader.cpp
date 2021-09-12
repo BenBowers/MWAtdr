@@ -50,7 +50,7 @@ std::vector<std::string> MetadataFileReader::findVoltageFiles(AppConfig const ap
 			// inputDirectoryPath/observationID_signalStartTime_channel.sub
 			if (path.extension() == ".sub") {
 				if (std::regex_match((std::string) path.stem(), target)) {
-					if (!std::filesystem::is_empty(path)) {
+					if (std::filesystem::file_size(path) == VOLTAGE_FILE_SIZE) {
 				        voltageFilenames.push_back(path);
 					}
 				}

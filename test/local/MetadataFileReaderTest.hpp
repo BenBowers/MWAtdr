@@ -16,7 +16,4 @@
 // File location: /mnt/input/no_voltage
 // Files required: valid metafits file, no voltage files
 
-class MetadataFileReaderTest : public TestModule {
-	public:
-	    MetadataFileReaderTest();
-};
+TestModule metadataFileReaderTest();

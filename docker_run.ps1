@@ -6,4 +6,4 @@ param(
     [String[]] $arguments
 )
 
-docker run -t "mwa_time_data_reconstructor/$target" @arguments
+docker run -t "mwatdr/$target" @arguments

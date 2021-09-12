@@ -5,6 +5,9 @@
 #include <string>
 #include <vector>
 
+// Constant that indicates the amount of coefficients for each filter
+inline const int filterSize = 256;
+
 // Contains the observation details, and input and output file directories
 // Entered as command line arguments
 struct AppConfig {
@@ -13,6 +16,7 @@ struct AppConfig {
 	unsigned long long signalStartTime;
 	std::string invPolyphaseFilterPath;
 	std::string outputDirectoryPath;
+	bool ignoreErrors;
 };
 
 
