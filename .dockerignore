@@ -3,7 +3,9 @@
 .gitattributes
 .gitignore
 .vscode
+*.md
 /docker_build.*
-/docker_run.*
+/docker_run*
 /LICENSE
-/README.md
+/test/input_data
+/test/output_data
