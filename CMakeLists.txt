@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(MWA_TIME_DATA_RECONSTRUCTOR)
+project(MWATDR)
 
 find_package(MPI REQUIRED)
 
@@ -63,7 +63,7 @@ add_library("${COMMON_LIBRARY}" ${COMMON_SOURCE_FILES})
 # Case insensitivity for RUNTIME_SYSTEM.
 string(TOLOWER "$ENV{RUNTIME_SYSTEM}" RUNTIME_SYSTEM)
 
-set(COMPILE_OPTIONS -m64)
+set(COMPILE_OPTIONS -m64 -pedantic -Wall -Wextra)
 if(${RUNTIME_SYSTEM} STREQUAL "garrawarla")
     # If building for Garrawarla, tune to its CPU architecture for optimal performance.
     list(APPEND COMPILE_OPTIONS -march=cascadelake)
