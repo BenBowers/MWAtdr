@@ -14,6 +14,7 @@ long stdinputsize = 5275652096;
 //Main function for reading in of the data file takes the name of the directory that the data files are stored in
 //will read all files for a specific calculation into 1 complex vector array for signal processing
 std::vector<std::complex<float> > readInputDataFile(std::string fileName,int antenaInput){   
+    fileName = "1294797712_1294797712_118.sub";
     std::vector<std::complex<float> > datavalues;
     std::ifstream datafile(fileName, std::ios::binary);
     
@@ -23,18 +24,23 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
     if(datafile.is_open()){
 
         //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
-
+        validateInputData(fileName);
         //reading the data into the vector
 
-        datavalues.reserve(64000*sizeof(std::int8_t));
-        std::int8_t rbuffer;
-        std::int8_t ibuffer;
+        datavalues.reserve(64000*sizeof(float));
+        float rbuffer;
+        float ibuffer;
         //alot of this is dependent on the meta data file reader numbers are subject to change once i figure out what to do
         //seeking to the start of the data portion of the file 
         //this will be antena 0 polarisation x sample 1 of 64000
         datafile.seekg(4096+32768000+offset, std::ios::beg);
-        while(datafile.read(reinterpret_cast<char*>(&rbuffer), 64000*sizeof(std::int8_t)))
-        datavalues.push_back({rbuffer,ibuffer});
+        for(int i = 1; i <= 64000;i++){
+            datafile.read(reinterpret_cast<char*>(&rbuffer),sizeof(std::int8_t));
+            datafile.read(reinterpret_cast<char*>(&ibuffer),sizeof(std::int8_t));
+            datavalues.push_back({rbuffer,ibuffer});
+        }
+        
+        
     }
     else{
         throw ReadInputDataException("Failed to open the file");
