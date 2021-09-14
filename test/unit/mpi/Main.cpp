@@ -11,7 +11,7 @@ int main() {
 
     std::visit([](auto const& communicator) {
         runMPITests(communicator, {
-            InternodeCommunicationTest{communicator}
+            internodeCommunicationTest(communicator)
         });
     }, internodeCommunicator);
 }

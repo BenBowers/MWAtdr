@@ -107,7 +107,7 @@ void InternodeCommunicationContext::ErrorCommunicator::indicateError() {
         assertMPISuccess(MPI_Comm_size(_communicator, &nodeCount));
         int thisNode = 0;
         assertMPISuccess(MPI_Comm_rank(_communicator, &thisNode));
-        for (unsigned node = 0; node < nodeCount; ++node) {
+        for (int node = 0; node < nodeCount; ++node) {
             if (node != thisNode) {
                 auto const message = static_cast<unsigned>(Message::ERROR_OCCURRED);
                 assertMPISuccess(MPI_Send(&message, 1, MPI_UNSIGNED, node, 0, _communicator));
@@ -375,8 +375,8 @@ std::map<unsigned, ObservationProcessingResults> PrimaryNodeCommunicator::receiv
     auto usedChannelIt = usedChannels.cbegin();
     for (unsigned node = 1; node < nodeCount; ++node) {
         ObservationProcessingResults nodeResults{};
-        auto const antennaInputCount = antennaInputCounts.at(node);
-        auto const antennaInputDisplacement = antennaInputDisplacements.at(node);
+        std::size_t const antennaInputCount = antennaInputCounts.at(node);
+        std::size_t const antennaInputDisplacement = antennaInputDisplacements.at(node);
         for (std::size_t antennaInputIdx = 0; antennaInputIdx < antennaInputCount; ++antennaInputIdx) {
             auto const antennaInput = antennaInputs.at(antennaInputDisplacement + antennaInputIdx);
             auto const success = successes.at(antennaInputDisplacement + antennaInputIdx);

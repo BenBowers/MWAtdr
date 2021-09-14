@@ -3,11 +3,19 @@
 #include "NodeAntennaInputAssigner.hpp"
 #include "TestHelper.hpp"
 
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <vector>
 
-NodeAntennaInputAssignerTest::NodeAntennaInputAssignerTest() : TestModule{"Node antenna input assigner unit test", {
+
+class NodeAntennaInputAssignerTest : public StatelessTestModuleImpl {
+public:
+	NodeAntennaInputAssignerTest();
+};
+
+
+NodeAntennaInputAssignerTest::NodeAntennaInputAssignerTest() : StatelessTestModuleImpl{{
     {"Comparing vectors: Equal vectors (with values and null)", []() {
 		std::vector<std::optional<AntennaInputRange>> const lhs{{{0, 1}}, {{2, 3}}, {}};
 		std::vector<std::optional<AntennaInputRange>> const rhs{{{0, 1}}, {{2, 3}}, {}};
@@ -67,3 +75,11 @@ NodeAntennaInputAssignerTest::NodeAntennaInputAssignerTest() : TestModule{"Node 
 		catch (std::invalid_argument const&) {}
 	}}
 }} {}
+
+
+TestModule nodeAntennaInputAssignerTest() {
+	return {
+		"Node antenna input assigner unit test",
+		[]() { return std::make_unique<NodeAntennaInputAssignerTest>(); }
+	};
+}

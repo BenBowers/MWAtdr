@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(MWA_TIME_DATA_RECONSTRUCTOR)
+project(MWATDR)
 
 find_package(MPI REQUIRED)
 
@@ -24,6 +24,7 @@ set(LOCAL_UNIT_TEST_SOURCE_FILES
     "${LOCAL_UNIT_TEST_SOURCE_DIR}/OutSignalWriterTest.cpp"
     "${LOCAL_UNIT_TEST_SOURCE_DIR}/ReadCoeDataTest.cpp"
     "${LOCAL_UNIT_TEST_SOURCE_DIR}/ChannelRemappingTest.cpp"
+    "${LOCAL_UNIT_TEST_SOURCE_DIR}/MetadataFileReaderTest.cpp"
     "${LOCAL_UNIT_TEST_SOURCE_DIR}/NodeAntennaInputAssignerTest.cpp"
 )
 
@@ -60,12 +61,19 @@ add_library("${COMMON_LIBRARY}" ${COMMON_SOURCE_FILES})
 # Intel MKL library configuration is sourced from this tool:
 # https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl/link-line-advisor.html
 
-set(COMPILE_OPTIONS -m64)
+# Case insensitivity for RUNTIME_SYSTEM.
+string(TOLOWER "$ENV{RUNTIME_SYSTEM}" RUNTIME_SYSTEM)
+
+set(COMPILE_OPTIONS -m64 -pedantic -Wall -Wextra)
+if(${RUNTIME_SYSTEM} STREQUAL "garrawarla")
+    # If building for Garrawarla, tune to its CPU architecture for optimal performance.
+    list(APPEND COMPILE_OPTIONS -march=cascadelake)
+endif()
 set(COMPILE_DEFINITIONS MKL_ILP64)
 set(COMPILE_INCLUDE_DIRS "$ENV{MKLROOT}/include" "$ENV{TBBROOT}/include")
 set(LINK_OPTIONS "LINKER:--no-as-needed")
 set(LINK_LIBRARY_DIRS "$ENV{MKLROOT}/lib/intel64" "$ENV{TBBROOT}/lib/intel64/gcc4.8")
-set(LINK_LIBRARIES MPI::MPI_C mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb stdc++fs "${COMMON_LIBRARY}")
+set(LINK_LIBRARIES MPI::MPI_C mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb stdc++fs mwalib "${COMMON_LIBRARY}")
 
 target_compile_options("${MAIN_EXECUTABLE}" PRIVATE ${COMPILE_OPTIONS})
 target_compile_options("${LOCAL_UNIT_TEST_EXECUTABLE}" PRIVATE ${COMPILE_OPTIONS})

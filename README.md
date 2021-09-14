@@ -27,11 +27,15 @@ details.
 Building a project target is as simple as building the corresponding Docker stage:
 
 ```bash
-docker build --target "$target" -t "mwa_time_data_reconstructor/$target" --build-arg BUILD_TYPE=$buildType --build-arg CONTAINER_RUNTIME=$containerRuntime .
+docker build --target "$target" -t "mwatdr/$target" --build-arg BUILD_TYPE=$buildType --build-arg RUNTIME_SYSTEM=$runtimeSystem --build-arg CONTAINER_RUNTIME=$containerRuntime .
 ```
 
 `$buildType` is the [CMake build type](https://cmake.org/cmake/help/v3.10/variable/CMAKE_BUILD_TYPE.html).
 If not specified, defaults to `Release`, which is an optimised build suitable for real-world use.
+
+`$runtimeSystem` is the environment in which the application will run.
+Options are `personal` (standard computer) or `garrawarla` (Garrawarla supercomputer),
+If not specified, defaults to `garrawarla`.
 
 `$containerRuntime` indicates what containerisation environment will be used to run the build. Options are `docker` or `singularity`.
 If not specified, defaults to `singularity`.
@@ -40,12 +44,12 @@ Convenience scripts are provided for building:
 
 Bash:
 ```bash
-./docker_build.sh $target $buildType $containerRuntime
+./docker_build.sh $target $buildType $runtimeSystem $containerRuntime
 ```
 
 PowerShell:
 ```powershell
-./docker_build.ps1 $target $buildType $containerRuntime
+./docker_build.ps1 $target $buildType $runtimeSystem $containerRuntime
 ```
 
 Note: this can take some time to run on the first time. Subsequent builds will be quicker.
@@ -55,7 +59,7 @@ Note: this can take some time to run on the first time. Subsequent builds will b
 Running a project target is as simple as running the corresponding Docker stage:
 
 ```bash
-docker run -t mwa_time_data_reconstructor/$target
+docker run -t mwatdr/$target
 ```
 
 Convenience scripts are provided for running:
