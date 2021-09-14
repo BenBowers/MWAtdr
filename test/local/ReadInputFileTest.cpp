@@ -1,4 +1,4 @@
-#include "../../src/ReadInputfile.hpp"
+#include "../../src/ReadInputFile.hpp"
 #include "ReadInputFileTest.hpp"
 #include "../TestHelper.hpp"
 #include "../../src/Common.hpp"
@@ -20,7 +20,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases() {
     return {        
         {"Valid Data File", []() {
             try{
-                readInputDataFile("1294797712_1294797712_118.sub",1);
+                readInputDataFile("1294797712_1294797712_118.sub",0);
                 failTest();
             }
             catch(ReadInputDataException const& e){}
