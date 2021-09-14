@@ -24,5 +24,5 @@ exec docker run \
     -v "$hostInputDir:$containerInputDir:ro" \
     -v "$hostInvPolyphaseFilterFile:$containerInvPolyphaseFilterFile:ro" \
     -v "$hostOutputDir:$containerOutputDir:rw" \
-    -t "mwa_time_data_reconstructor/main" \
+    -t "mwatdr/main" \
     "$containerInputDir" "$obsId" "$startTime" "$containerInvPolyphaseFilterFile" "$containerOutputDir" "$ignoreErrors"

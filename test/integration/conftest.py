@@ -15,4 +15,4 @@ def run_script(request):
 
 @pytest.fixture
 def working_dir(request):
-    return Path(request.config.getoption('--workingDir')).resolve()
+    return Path(request.config.getoption('--workingDir')).resolve() / "mwatdr_integration_test"

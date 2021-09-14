@@ -10,9 +10,9 @@ set(MPI_UNIT_TEST_EXECUTABLE "mpi_unit_test")
 set(COMMON_LIBRARY "mwatdr_common")
 
 set(MAIN_SOURCE_DIR "src")
-set(UNIT_TEST_SOURCE_DIR "test/unit/src")
-set(LOCAL_UNIT_TEST_SOURCE_DIR "test/unit/local/src")
-set(MPI_UNIT_TEST_SOURCE_DIR "test/unit/mpi/src")
+set(UNIT_TEST_SOURCE_DIR "test/unit")
+set(LOCAL_UNIT_TEST_SOURCE_DIR "${UNIT_TEST_SOURCE_DIR}/local")
+set(MPI_UNIT_TEST_SOURCE_DIR "${UNIT_TEST_SOURCE_DIR}/mpi")
 
 set(MAIN_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/Main.cpp"

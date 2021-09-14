@@ -60,9 +60,7 @@ ARG BUILD_TYPE
 
 COPY CMakeLists.txt ./
 COPY src/ src/
-COPY test/unit/src/ test/unit/src/
-COPY test/unit/local/src/ test/unit/local/src/
-COPY test/unit/mpi/src/ test/unit/mpi/src/
+COPY test/unit/ test/unit/
 
 # Just configure the CMake build at this stage.
 # Unfortunately for the configure to work, all source files built by CMake must be present. We can't include only the
@@ -95,17 +93,16 @@ ENTRYPOINT ["/app/build/local_unit_test"]
 FROM base AS mpi_unit_test
 ARG CONTAINER_RUNTIME
 
-COPY --chown=app:app test/unit/mpi/entrypoint.sh ./
-RUN chmod +x entrypoint.sh
-
 COPY --from=app_base --chown=app:app /app/ /app/
+
+RUN chmod +x test/unit/mpi/entrypoint.sh
 
 RUN cd build && \
 	cmake --build . --target mpi_unit_test
 
 ENV CONTAINER_RUNTIME=${CONTAINER_RUNTIME}
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["/app/test/unit/mpi/entrypoint.sh"]
 
 
 
