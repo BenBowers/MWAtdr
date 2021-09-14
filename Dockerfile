@@ -54,6 +54,10 @@ COPY --chown=app:app test/ test/
 # The type of build to do with CMake. See here: https://cmake.org/cmake/help/v3.10/variable/CMAKE_BUILD_TYPE.html
 ARG BUILD_TYPE=Release
 
+# The system on which the application will be running. Options are 'personal' or 'garrawarla'.
+ARG RUNTIME_SYSTEM=garrawarla
+ENV RUNTIME_SYSTEM=${RUNTIME_SYSTEM}
+
 # Just configure the CMake build at this stage.
 RUN mkdir build && \
 	cd build && \
