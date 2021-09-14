@@ -39,14 +39,15 @@ static std::filesystem::path generateFilePath(const AppConfig &observation, cons
     std::string sObsID = std::to_string(observation.observationID);
     std::string sStartTime = std::to_string(observation.signalStartTime);
     std::string sPhysID = std::to_string(physID.tile);
+    std::string sSignalChain = std::to_string(physID.signalChain);
 
     //check to see if the file directory is valid
     if(observation.outputDirectoryPath.empty() == false){
     std::filesystem::path dir (observation.outputDirectoryPath);
     std::filesystem::path obsID (sObsID+"_");
     std::filesystem::path obstime (sStartTime+"_");
-    std::filesystem::path fphysID (sPhysID);
-    std::filesystem::path file ("_signalchain.bin");
+    std::filesystem::path fphysID (sPhysID+"_");
+    std::filesystem::path file (sSignalChain+".bin");
     std::filesystem::path full_path = dir / obsID += obstime += fphysID += file;
     return full_path;
     }   
