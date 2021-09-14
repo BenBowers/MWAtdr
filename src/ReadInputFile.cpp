@@ -15,16 +15,19 @@ const long long stdinputsize = 5275652096;
 //will read all files for a specific calculation into 1 complex vector array for signal processing
 std::vector<std::complex<float> > readInputDataFile(std::string fileName,int antenaInput){    
     fileName = "mnt/1294797712_1294797712_118.sub";
+    long long Ninputs = 256;
+    long long DELAYDATALENGTH = 128000*Ninputs;
     std::vector<std::complex<float> > datavalues;
     //opening the data file stream
     std::ifstream datafile(fileName, std::ios::binary);   
-    //this gets changed depending on what antean we want to read the data from
-    //per antena per polarisation there is a 128000 bytes of dat
-    std::cout << std::to_string(antenaInput) << std::endl;
+
     // main error handling statement
     if(datafile.is_open()){
         //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
         validateInputData(fileName);
+        
+        //this gets changed depending on what antean we want to read the data from
+        //per antena per polarisation there is a 64000 bytes of data        
         long long offset;
         if(antenaInput != 0){   
             offset = 64000*antenaInput;
@@ -32,7 +35,8 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
         else{
             offset = 0;
         }
-        std::cout << std::to_string(offset) << std::endl;
+        
+        
         //reading the data into the vector
         //known size of data file enteries as per file specification pre allocation to save time later
         datavalues.reserve(64000*sizeof(std::complex<float>));        
@@ -40,7 +44,7 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
         //seeking to the start of the data portion of the file 
         //this will be antena 0 polarisation x and y sample 1 of 64000
         datafile.seekg(4096+offset, std::ios::beg);
-        for(int i = 1; i <= 1;i++){
+        for(int i = 1; i <= 160;i++){
             datafile.seekg(32768000, std::ios::cur);
             for(int j = 1; j<=64000;j++){
                 int16_t buffer;
@@ -49,7 +53,8 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
                 signed char ibuffer = buffer >> 8;
                 datavalues.push_back({rbuffer,ibuffer});
             }
-        }    
+        }
+    
     }
     else{
         //if file was unable to be opened an exception will be thrown
@@ -59,11 +64,13 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
     
     std::cout.precision(2);
     std::cout << datafile.tellg() << std::endl;
+    datafile.seekg(0,std::ios::beg);
     std::cout << std::to_string(datavalues.size()) << std::endl;
+    /*
     for (int i = 0; i < datavalues.size(); i++) {
     std::cout<< std::fixed << datavalues.at(i) << ' ';
     }
-
+*/
 
 
     return datavalues;

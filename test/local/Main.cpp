@@ -22,5 +22,8 @@ int main(){
         nodeAntennaInputAssignerTest()
     });
     */
-   readInputDataFile("",2);
+   
+   for(int i =1; i<=128; i++){
+       readInputDataFile("",i);
+   }
 }
