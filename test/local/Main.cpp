@@ -1,11 +1,11 @@
-#include <iostream>
-
 #include "../TestHelper.hpp"
-#include "OutSignalWriterTest.hpp"
+
 #include "ChannelRemappingTest.hpp"
 #include "NodeAntennaInputAssignerTest.hpp"
-#include "../TestHelper.hpp"
+#include "OutputLogFileWriterTest.hpp"
+#include "OutSignalWriterTest.hpp"
 #include "ReadCoeDataTest.hpp"
+
 #include <iostream>
 
 int main(){
@@ -15,6 +15,7 @@ int main(){
         readCoeDataTest(),
         channelRemappingTest(),
         outSignalWriterTest(),
-        nodeAntennaInputAssignerTest()
+        nodeAntennaInputAssignerTest(),
+        outputLogFileWriterTest()
     });
 }
