@@ -24,6 +24,7 @@ set(LOCAL_TEST_SOURCE_FILES
     "${LOCAL_TEST_SOURCE_DIR}/OutSignalWriterTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/ReadCoeDataTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/ChannelRemappingTest.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/MetadataFileReaderTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/NodeAntennaInputAssignerTest.cpp"
 )
 
@@ -65,7 +66,7 @@ set(COMPILE_DEFINITIONS MKL_ILP64)
 set(COMPILE_INCLUDE_DIRS "$ENV{MKLROOT}/include" "$ENV{TBBROOT}/include")
 set(LINK_OPTIONS "LINKER:--no-as-needed")
 set(LINK_LIBRARY_DIRS "$ENV{MKLROOT}/lib/intel64" "$ENV{TBBROOT}/lib/intel64/gcc4.8")
-set(LINK_LIBRARIES MPI::MPI_C mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb stdc++fs "${COMMON_LIBRARY}")
+set(LINK_LIBRARIES MPI::MPI_C mkl_intel_ilp64 mkl_tbb_thread mkl_core pthread m dl tbb stdc++fs mwalib "${COMMON_LIBRARY}")
 
 target_compile_options("${MAIN_EXECUTABLE}" PRIVATE ${COMPILE_OPTIONS})
 target_compile_options("${LOCAL_TEST_EXECUTABLE}" PRIVATE ${COMPILE_OPTIONS})
