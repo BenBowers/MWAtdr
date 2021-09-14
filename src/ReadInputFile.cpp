@@ -19,19 +19,20 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
     //opening the data file stream
     std::ifstream datafile(fileName, std::ios::binary);   
     //this gets changed depending on what antean we want to read the data from
-    //per antena per polarisation there is a 128000 bytes of data
-    long long offset;
-    if(antenaInput = 0){
-        offset = 0;
-    }
-    else{
-        offset = 64000*antenaInput;
-    }
+    //per antena per polarisation there is a 128000 bytes of dat
+    std::cout << std::to_string(antenaInput) << std::endl;
     // main error handling statement
     if(datafile.is_open()){
         //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
         validateInputData(fileName);
-        
+        long long offset;
+        if(antenaInput != 0){   
+            offset = 64000*antenaInput;
+        }
+        else{
+            offset = 0;
+        }
+        std::cout << std::to_string(offset) << std::endl;
         //reading the data into the vector
         //known size of data file enteries as per file specification pre allocation to save time later
         datavalues.reserve(64000*sizeof(std::complex<float>));        
@@ -44,8 +45,8 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
             for(int j = 1; j<=64000;j++){
                 int16_t buffer;
                 datafile.read(reinterpret_cast<char*>(&buffer),2*sizeof(signed char));
-                float rbuffer = buffer & 0xFF;
-                float ibuffer = buffer >> 8;
+                signed char rbuffer = buffer & 0xFF;
+                signed char ibuffer = buffer >> 8;
                 datavalues.push_back({rbuffer,ibuffer});
             }
         }    
@@ -56,9 +57,11 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
     }
 
     
-    std::cout << std::to_string(datavalues.size());
+    std::cout.precision(2);
+    std::cout << datafile.tellg() << std::endl;
+    std::cout << std::to_string(datavalues.size()) << std::endl;
     for (int i = 0; i < datavalues.size(); i++) {
-    std::cout << datavalues.at(i) << ' ';
+    std::cout<< std::fixed << datavalues.at(i) << ' ';
     }
 
 

@@ -22,5 +22,5 @@ int main(){
         nodeAntennaInputAssignerTest()
     });
     */
-   readInputDataFile("",26);
+   readInputDataFile("",2);
 }
