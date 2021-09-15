@@ -6,7 +6,6 @@
 #include <vector>
 #include <string>
 #include <filesystem>
-#include <set>
 
 //where dose this random ass number come from
 //MWA documentation states this is the standered file size for a 128 tile dual polarisation file
@@ -15,29 +14,30 @@ const long long stdinputsize = 5275652096;
 //Main function for reading in of the data file takes the name of the file it is to read from
 //will read all files for a specific calculation into 1 complex vector array for signal processing
 std::vector<std::complex<float> > readInputDataFile(std::string fileName,int antenaInput){    
-    fileName = "mnt/1294797712_1294797712_118.sub";
+    fileName = "1294797712_1294797712";
     
     //this needs to be moved to a diff function as for each file it could be a different number
     long long Ninputs = 256;
     long long DELAYDATALENGTH = 128000*Ninputs;
 
-
-    std::string path = "mnt";
-    std::vector<std::filesystem::path> allfiles;
-
-    for (const auto & file : std::filesystem::directory_iterator(path))
-         allfiles.push_back(file.path()); 
-
-
-    for (int i = 0; i < allfiles.size(); i++) {
-    std::cout<< std::fixed << allfiles.at(i) << ' ';
+    //checking to see what challels are avaliable in the data files provided for that observation
+    //mapping channels and filenames into usable variables
+    std::vector<std::string> allfiles;
+    std::vector<int> channels;
+    for(int l = 1; l <=256; l++){
+        std::string curpath = "mnt/" + fileName + "_" + std::to_string(l) +".sub";
+        if(std::filesystem::exists(std::filesystem::path(curpath))){
+            allfiles.push_back(curpath);
+            channels.push_back(l);
+        }    
     }
-
-
+    
+    fileName = "mnt/1294797712_1294797712_118.sub";
     std::vector<std::complex<float> > datavalues;
     //Opening the first data filestream this changes each interation of the loop to pass thru all files
+    
+    
     std::ifstream datafile(fileName, std::ios::binary);   
-
     // main error handling statement
     if(datafile.is_open()){
         //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
@@ -89,8 +89,6 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
     std::cout<< std::fixed << datavalues.at(i) << ' ';
     }
 */
-
-
     return datavalues;
 }
 //function used to validate if the data file is the correct size and thus allowing the program to know if there is anything missing.
