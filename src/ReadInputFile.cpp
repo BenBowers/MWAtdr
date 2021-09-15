@@ -32,56 +32,49 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
         }    
     }
     
-    fileName = "mnt/1294797712_1294797712_118.sub";
-    std::vector<std::complex<float> > datavalues;
-    //Opening the first data filestream this changes each interation of the loop to pass thru all files
-    
-    
-    std::ifstream datafile(fileName, std::ios::binary);   
-    // main error handling statement
-    if(datafile.is_open()){
-        //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
-        validateInputData(fileName);
+    std::vector<std::complex<float>> datavalues;
+    for (int k = 0; k < channels.size(); k++){
+        //Opening the first data filestream this changes each interation of the loop to pass thru all files
+        std::ifstream datafile(allfiles.at(k), std::ios::binary);   
+        // main error handling statement
+        if(datafile.is_open()){
+            //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
+            validateInputData(allfiles.at(k));
         
-        //this gets changed depending on what antean we want to read the data from
-        //per antena per polarisation there is a 64000 bytes of data        
-        long long offset;
-        if(antenaInput != 0){   
-            offset = 64000*antenaInput;
+            //this gets changed depending on what antean we want to read the data from
+            //per antena per polarisation there is a 64000 bytes of data        
+            long long offset;
+            if(antenaInput != 0){   
+                offset = 64000*antenaInput;
+            }
+            else{
+                offset = 0;
+            }        
+            //reading the data into the vector
+            //known size of data file enteries as per file specification pre allocation to save time later
+            datavalues.reserve(64000*sizeof(std::complex<float>));        
+            //alot of this is dependent on the meta data file reader numbers are subject to change once i figure out what to do
+            //seeking to the start of the data portion of the file 
+            //this will be antena 0 polarisation x and y sample 1 of 64000
+            datafile.seekg(4096+offset, std::ios::beg);
+            for(int i = 1; i <= 160;i++){
+                datafile.seekg(32768000, std::ios::cur);
+                for(int j = 1; j<=64000;j++){
+                    signed char rbuffer;
+                    signed char ibuffer;
+                    datafile.read(reinterpret_cast<char*>(&rbuffer),sizeof(signed char));
+                    datafile.read(reinterpret_cast<char*>(&ibuffer),sizeof(signed char));
+                    datavalues.push_back({rbuffer,ibuffer});
+                }
+            }    
         }
         else{
-            offset = 0;
+            //if file was unable to be opened an exception will be thrown
+            throw ReadInputDataException("Failed to open the file");
         }
-        
-        //reading the data into the vector
-        //known size of data file enteries as per file specification pre allocation to save time later
-        datavalues.reserve(64000*sizeof(std::complex<float>));        
-        //alot of this is dependent on the meta data file reader numbers are subject to change once i figure out what to do
-        //seeking to the start of the data portion of the file 
-        //this will be antena 0 polarisation x and y sample 1 of 64000
-        datafile.seekg(4096+offset, std::ios::beg);
-        for(int i = 1; i <= 160;i++){
-            datafile.seekg(32768000, std::ios::cur);
-            for(int j = 1; j<=64000;j++){
-                int16_t buffer;
-                datafile.read(reinterpret_cast<char*>(&buffer),2*sizeof(signed char));
-                signed char rbuffer = buffer & 0xFF;
-                signed char ibuffer = buffer >> 8;
-                datavalues.push_back({rbuffer,ibuffer});
-            }
-        }
-    
     }
-    else{
-        //if file was unable to be opened an exception will be thrown
-        throw ReadInputDataException("Failed to open the file");
-    }
-
     
     std::cout.precision(2);
-    std::cout << "file pointer location"<< std::endl;    
-    std::cout << datafile.tellg() << std::endl;
-    datafile.seekg(0,std::ios::beg);
     std::cout << "total enteries in data values" << std::endl;    
     std::cout << std::to_string(datavalues.size()) << std::endl;
     /*
