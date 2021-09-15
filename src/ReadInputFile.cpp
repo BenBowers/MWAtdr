@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <set>
 
 //where dose this random ass number come from
 //MWA documentation states this is the standered file size for a 128 tile dual polarisation file
@@ -15,10 +16,26 @@ const long long stdinputsize = 5275652096;
 //will read all files for a specific calculation into 1 complex vector array for signal processing
 std::vector<std::complex<float> > readInputDataFile(std::string fileName,int antenaInput){    
     fileName = "mnt/1294797712_1294797712_118.sub";
+    
+    //this needs to be moved to a diff function as for each file it could be a different number
     long long Ninputs = 256;
     long long DELAYDATALENGTH = 128000*Ninputs;
+
+
+    std::string path = "mnt";
+    std::vector<std::filesystem::path> allfiles;
+
+    for (const auto & file : std::filesystem::directory_iterator(path))
+         allfiles.push_back(file.path()); 
+
+
+    for (int i = 0; i < allfiles.size(); i++) {
+    std::cout<< std::fixed << allfiles.at(i) << ' ';
+    }
+
+
     std::vector<std::complex<float> > datavalues;
-    //opening the data file stream
+    //Opening the first data filestream this changes each interation of the loop to pass thru all files
     std::ifstream datafile(fileName, std::ios::binary);   
 
     // main error handling statement
@@ -35,7 +52,6 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
         else{
             offset = 0;
         }
-        
         
         //reading the data into the vector
         //known size of data file enteries as per file specification pre allocation to save time later
@@ -63,8 +79,10 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
 
     
     std::cout.precision(2);
+    std::cout << "file pointer location"<< std::endl;    
     std::cout << datafile.tellg() << std::endl;
     datafile.seekg(0,std::ios::beg);
+    std::cout << "total enteries in data values" << std::endl;    
     std::cout << std::to_string(datavalues.size()) << std::endl;
     /*
     for (int i = 0; i < datavalues.size(); i++) {

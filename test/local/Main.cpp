@@ -23,7 +23,7 @@ int main(){
     });
     */
    
-   for(int i =1; i<=128; i++){
+   for(int i =1; i<=1; i++){
        readInputDataFile("",i);
    }
 }
