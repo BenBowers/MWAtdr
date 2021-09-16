@@ -17,11 +17,11 @@ const long long stdinputsize = 5275652096;
 //Main function for reading in of the data file takes the name of the file it is to read from
 //will read all files for a specific calculation into 1 complex vector array for signal processing
 std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string fileName,int antenaInput, char pol){    
-    //this is the number of samples per 50ms time slice in the data files this is subject to change based on the MWA wiki
+    //This is the number of samples per 50ms time slice in the data files this is subject to change based on the MWA wiki
     const int NUMSAMPLES = 64000;
-    //Meta data buffer size inside the data files
+    //Meta data buffer size inside the data files constaining a subset of the overall meta data
     const int METADATASIZE = 4096;
-    //this needs to be moved to a diff function as for each file it could be a different number
+    //This needs to be moved to a diff function as for each file it could be a different number
     const long long NUMTILES = 128;
     //This is how large the delay meta data block is inside of the file is is dependent on how many tiles are in the observation
     long long DELAYDATALENGTH = NUMTILES*2*128000;
@@ -52,12 +52,12 @@ std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string file
                     offset = NUMSAMPLES*antenaInput;
                 }
                 //assuming pol y
-                else{offset = NUMSAMPLES*antenaInput +128000;}    
+                else{offset = NUMSAMPLES*antenaInput+64000;}    
             }
             else{
                 if(pol == 'x'){
                     offset = 0;
-                } else{offset = 128000;}
+                } else{offset = 64000;}
                 
             }        
             //reading the data into the vector
