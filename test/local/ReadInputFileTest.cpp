@@ -20,7 +20,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases() {
     return {        
         {"Valid Data File", []() {
             try{
-                auto data = readInputDataFile("1294797712_1294797712",0,'x');
+                auto data = readInputDataFile("1294797712_1294797712",0);
                 testAssert(data.size() == 5); 
             }
             catch(ReadInputDataException const& e){}

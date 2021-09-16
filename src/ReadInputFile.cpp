@@ -16,7 +16,7 @@ const long long stdinputsize = 5275652096;
 
 //Main function for reading in of the data file takes the name of the file it is to read from
 //will read all files for a specific calculation into 1 complex vector array for signal processing
-std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string fileName,int antenaInput, char pol){    
+std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string fileName,int antenaInput){    
     //This is the number of samples per 50ms time slice in the data files this is subject to change based on the MWA wiki
     const int NUMSAMPLES = 64000;
     //Meta data buffer size inside the data files constaining a subset of the overall meta data
@@ -48,17 +48,10 @@ std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string file
             //per antena per polarisation there is a 64000 bytes of data        
             long long offset;
             if(antenaInput != 0){   
-                if(pol == 'x'){
-                    offset = NUMSAMPLES*antenaInput;
-                }
-                //assuming pol y
-                else{offset = NUMSAMPLES*antenaInput+64000;}    
+                offset = NUMSAMPLES*antenaInput;  
             }
             else{
-                if(pol == 'x'){
-                    offset = 0;
-                } else{offset = 64000;}
-                
+                offset = 0;     
             }        
             //reading the data into the vector
             //known size of data file enteries as per file specification pre allocation to save time later
