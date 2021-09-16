@@ -13,7 +13,7 @@ const long long stdinputsize = 5275652096;
 
 //Main function for reading in of the data file takes the name of the file it is to read from
 //will read all files for a specific calculation into 1 complex vector array for signal processing
-std::vector<std::complex<float> > readInputDataFile(std::string fileName,int antenaInput){    
+std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string fileName,int antenaInput){    
     fileName = "1294797712_1294797712";
     
     //this needs to be moved to a diff function as for each file it could be a different number
@@ -32,8 +32,9 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
         }    
     }
     
-    std::vector<std::complex<float>> datavalues;
+    std::vector<std::vector<std::complex<float>>> datavalues;
     for (int k = 0; k < channels.size(); k++){
+        std::vector<std::complex<float>> channelvals;
         //Opening the first data filestream this changes each interation of the loop to pass thru all files
         std::ifstream datafile(allfiles.at(k), std::ios::binary);   
         // main error handling statement
@@ -64,9 +65,10 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
                     signed char ibuffer;
                     datafile.read(reinterpret_cast<char*>(&rbuffer),sizeof(signed char));
                     datafile.read(reinterpret_cast<char*>(&ibuffer),sizeof(signed char));
-                    datavalues.push_back({rbuffer,ibuffer});
+                    channelvals.push_back({rbuffer,ibuffer});
                 }
-            }    
+            }
+            datavalues.push_back(channelvals);    
         }
         else{
             //if file was unable to be opened an exception will be thrown
@@ -77,6 +79,10 @@ std::vector<std::complex<float> > readInputDataFile(std::string fileName,int ant
     std::cout.precision(2);
     std::cout << "total enteries in data values" << std::endl;    
     std::cout << std::to_string(datavalues.size()) << std::endl;
+    std::cout << std::to_string(datavalues[0].size()) << std::endl;
+    std::cout << std::to_string(datavalues[1].size()) << std::endl;
+    std::cout << std::to_string(datavalues[2].size()) << std::endl;
+    std::cout << std::to_string(datavalues[3].size()) << std::endl;
     /*
     for (int i = 0; i < datavalues.size(); i++) {
     std::cout<< std::fixed << datavalues.at(i) << ' ';
