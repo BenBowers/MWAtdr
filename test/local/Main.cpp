@@ -13,17 +13,12 @@
 int main(){
     std::cout << "Test random number generator seed: " << seedTestRandomEngine() << '\n' << std::endl;
 
-    /*
+    
     runTests({
-        readInputFileTest(),
         readCoeDataTest(),
         channelRemappingTest(),
         outSignalWriterTest(),
+        readInputFileTest(),
         nodeAntennaInputAssignerTest()
     });
-    */
-   
-   for(int i =1; i<=1; i++){
-       readInputDataFile("",i);
-   }
 }
