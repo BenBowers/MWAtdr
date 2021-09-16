@@ -9,8 +9,8 @@ struct ChannelRemapping;
 struct ObservationProcessingResults;
 
 // Throws LogWriterException
-void writeLogFile(AppConfig appConfig, ChannelRemapping channelRemapping,
-				  ObservationProcessingResults results, AntennaConfig antennaConfig);
+void writeLogFile(AppConfig const& appConfig, ChannelRemapping const& channelRemapping,
+				  ObservationProcessingResults const& results, AntennaConfig const& antennaConfig);
 
 class LogWriterException : public std::runtime_error {
 public:

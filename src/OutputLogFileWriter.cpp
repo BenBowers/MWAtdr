@@ -14,11 +14,11 @@ void writeProcessingDetails(std::ofstream& log, ChannelRemapping const& channelR
 void writeChannelRemappingDetails(std::ofstream& log, ChannelRemapping const& channelRemapping);
 void writeProcessingResults(std::ofstream& log, ObservationProcessingResults const& results, AntennaConfig const& antennaConfig);
 std::filesystem::path generateOutputLogFilepath(AppConfig const& appConfig);
-double roundTwoDecimalPlace(double num);
+double roundThreeDecimalPlace(double num);
 
 
-void writeLogFile(AppConfig appConfig, ChannelRemapping channelRemapping,
-				  ObservationProcessingResults results, AntennaConfig antennaConfig) {
+void writeLogFile(AppConfig const& appConfig, ChannelRemapping const& channelRemapping,
+				  ObservationProcessingResults const& results, AntennaConfig const& antennaConfig) {
     // Generate output log filepath and open file for writing
 	auto filepath = generateOutputLogFilepath(appConfig);
 	std::ofstream log (filepath);
@@ -28,6 +28,12 @@ void writeLogFile(AppConfig appConfig, ChannelRemapping channelRemapping,
 		writeProcessingDetails(log, channelRemapping);
 		writeChannelRemappingDetails(log, channelRemapping);
 		writeProcessingResults(log, results, antennaConfig);
+
+        // Check if error occurred while writing
+        if (log.fail()) {
+            throw LogWriterException("Error occurred writing to log file");
+        }
+
 	    log.close();
 	}
 	else {
@@ -53,8 +59,8 @@ void writeProcessingDetails(std::ofstream& log, ChannelRemapping const& channelR
 	double samplingPeriod = (1.0 / sampleRate) * 1000.0;
 
     log << "SIGNAL PROCESSING DETAILS" << std::endl;
-    log << "Output sample rate: " << roundTwoDecimalPlace(sampleRate) << " MHz" << std::endl;
-    log << "Output sampling period: " << roundTwoDecimalPlace(samplingPeriod) << " ns\n" << std::endl;
+    log << "Output sample rate: " << roundThreeDecimalPlace(sampleRate) << " MHz" << std::endl;
+    log << "Output sampling period: " << roundThreeDecimalPlace(samplingPeriod) << " ns\n" << std::endl;
 }
 
 // Write which frequency channels were used in the observation,
@@ -108,7 +114,7 @@ std::filesystem::path generateOutputLogFilepath(AppConfig const& appConfig) {
 }
 
 
-// Rounds a real (double) number to the nearest two decimal places.
-double roundTwoDecimalPlace(double num) {
-	return std::round(num * 100.0) / 100.0;
+// Rounds a real (double) number to the nearest three decimal places.
+double roundThreeDecimalPlace(double num) {
+	return std::round(num * 1000.0) / 1000.0;
 }
