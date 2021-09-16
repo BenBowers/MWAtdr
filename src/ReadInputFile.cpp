@@ -26,8 +26,7 @@ std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string file
     //This is how large the delay meta data block is inside of the file is is dependent on how many tiles are in the observation
     long long DELAYDATALENGTH = NUMTILES*2*128000;
 
-    //checking to see what challels are avaliable in the data files provided for that observation
-    //mapping channels and filenames into usable variables
+    //checking to see what challals are avaliable in the data files provided for that observation
     std::vector<std::string> allfiles;
     for(int l = 1; l <=256; l++){
         std::string curpath = "signals/" + fileName + "_" + std::to_string(l) +".sub";
@@ -53,8 +52,7 @@ std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string file
                     offset = NUMSAMPLES*antenaInput;
                 }
                 //assuming pol y
-                else{offset = NUMSAMPLES*antenaInput +128000;}
-                
+                else{offset = NUMSAMPLES*antenaInput +128000;}    
             }
             else{
                 if(pol == 'x'){
