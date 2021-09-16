@@ -20,7 +20,7 @@ std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string file
     //this is the number of samples per 50ms time slice in the data files this is subject to change based on the MWA wiki
     const int NUMSAMPLES = 64000;
     //Meta data buffer size inside the data files
-    int METADATASIZE = 4096;
+    const int METADATASIZE = 4096;
     //this needs to be moved to a diff function as for each file it could be a different number
     const long long NUMTILES = 128;
     //This is how large the delay meta data block is inside of the file is is dependent on how many tiles are in the observation
@@ -66,7 +66,7 @@ std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string file
             //alot of this is dependent on the meta data file reader numbers are subject to change once i figure out what to do
             //seeking to the start of the data portion of the file 
             //this will be antena 0 polarisation x and y sample 1 of 64000
-            datafile.seekg(METADATASIZE+offset, std::ios::beg);
+            datafile.seekg(offset+METADATASIZE, std::ios::beg);
             for(int i = 1; i <= 160;i++){
                 datafile.seekg(DELAYDATALENGTH, std::ios::cur);
                 for(int j = 1; j<=NUMSAMPLES;j++){
