@@ -9,7 +9,7 @@
 #include "../../src/SignalProcessing.hpp"
 #include "../TestHelper.hpp"
 #include "../../src/ChannelRemapping.hpp"
-
+#include "../../src/Common.hpp"
 
 // Use std::numeric_limits as it is more modern the INT16_MAX macros
 constexpr std::int16_t MAX_INT16 = std::numeric_limits<std::int16_t>::max();
@@ -317,6 +317,30 @@ SignalProcessingTest::SignalProcessingTest() : TestModule{"Signal Processing uni
 
         testAssert(actual == expected);
     }},
+
+    {"performPFB()", []() {
+        std::vector<std::complex<float>> const signalDataIn {
+            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f },
+            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f },
+            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f },
+            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f },
+            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f }};
+
+        std::vector<std::complex<float>> const coefficantData(256 * 5, { 0.0f, 0.0f });
+
+        std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping {
+                {0, {0, false}},
+                {1, {1, false}},
+                {2, {2, false}},
+                {3, {3, false}},
+                {4, {4, false}},
+                {5, {5, false}},
+                {6, {6, false}},
+                {7, {7, false}},
+        };
+
+    }},
+
     {"performDFT() [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]", []() {
         std::vector<std::complex<float>> signalDataIn {
             { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }};
@@ -363,6 +387,8 @@ SignalProcessingTest::SignalProcessingTest() : TestModule{"Signal Processing uni
         }
         std::cout << std::endl;
     }},
+
+
     {"doPostProcessing() regular positive input", []() {
         std::vector<float> const inData {
             1.0f,
