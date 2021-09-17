@@ -17,6 +17,8 @@ const long long stdinputsize = 5275652096;
 const int METADATASIZE = 4096;
 
 int getNinputs(std::string fileName);
+int getNpols(std::string fileName);
+int getNsamples(std::string fileName);
 //Main function for reading in of the data file takes the name of the file it is to read from
 //will read all files for a specific calculation into 1 complex vector array for signal processing
 std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string fileName,int antenaInput){    
@@ -37,7 +39,9 @@ std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string file
         }    
     }
 
-    getNinputs("signals/1294797712_1294797712_1.sub");
+    std::cout << std::to_string(getNinputs("signals/1294797712_1294797712_1.sub")) <<std::endl;
+    std::cout << std::to_string(getNpols("signals/1294797712_1294797712_1.sub")) <<std::endl;
+    std::cout << std::to_string(getNsamples("signals/1294797712_1294797712_1.sub")) <<std::endl;
     
     std::vector<std::vector<std::complex<float>>> datavalues;
     for (int k = 0; k < allfiles.size(); k++){
@@ -106,7 +110,7 @@ bool validateInputData(std::string fileName){
     }
 }
 
-int getNinputs(std::string fileName){
+int getNpols(std::string fileName){
     std::ifstream f(fileName);
     int nPols;
     if (f){
@@ -121,13 +125,43 @@ int getNinputs(std::string fileName){
 
         std::string sNpols = str.substr(pos+5,2); 
         nPols = std::stoi(sNpols);
-        std::cout << nPols <<std::endl;
     }
     return nPols;
 }
 
 int getNsamples(std::string fileName){
+    std::ifstream f(fileName);
+    int nSamples;
+    if (f){
+        f.seekg(4096, std::ios::beg);
+        const auto size = f.tellg();
+        std::string str(size, ' ');
+        f.seekg(0);
+        f.read(&str[0], size); 
+        f.close();
+        //std::cout << str << std::endl;
+        int pos = str.find("NTIMESAMPLES");
 
-
+        std::string snSamples = str.substr(pos+13,6); 
+        nSamples = std::stoi(snSamples);
+    }
+    return nSamples;
 }
 
+int getNinputs(std::string fileName){
+    std::ifstream f(fileName);
+    int nInputs;
+    if (f){
+        f.seekg(4096, std::ios::beg);
+        const auto size = f.tellg();
+        std::string str(size, ' ');
+        f.seekg(0);
+        f.read(&str[0], size); 
+        f.close();
+        //std::cout << str << std::endl;
+        int pos = str.find("NINPUTS");
+        std::string snInputs = str.substr(pos+7,4); 
+        nInputs = std::stoi(snInputs);
+    }
+    return nInputs;
+}
