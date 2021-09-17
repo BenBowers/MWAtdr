@@ -7,29 +7,15 @@
 #include <string>
 #include <filesystem>
 
-//where dose this random ass number come from
-//MWA documentation states this is the standered file size for a 128 tile dual polarisation file
-//4096+161*32768000
-//meta data 160 volatage data blocks + the single delay block before the data * the size of the delay block what is 
-//Number of tiles *2 polarisations * 128000 bytes 64000 1 byte samples for each real and imag part
-const long long stdinputsize = 5275652096;
 //Meta data buffer size inside the data files constaining a subset of the overall meta data
-const int METADATASIZE = 4096;
-
+int METADATASIZE = 4096;
 int getNinputs(std::string fileName);
 int getNpols(std::string fileName);
 int getNsamples(std::string fileName);
+
 //Main function for reading in of the data file takes the name of the file it is to read from
 //will read all files for a specific calculation into 1 complex vector array for signal processing
 std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string fileName,int antenaInput){    
-    //This is the number of samples per 50ms time slice in the data files this is subject to change based on the MWA wiki
-    const int NUMSAMPLES = 64000;
-
-    //This needs to be moved to a diff function as for each file it could be a different number
-    const long long NUMTILES = 128;
-    //This is how large the delay meta data block is inside of the file is is dependent on how many tiles are in the observation
-    long long DELAYDATALENGTH = NUMTILES*2*128000;
-
     //checking to see what challals are avaliable in the data files provided for that observation
     std::vector<std::string> allfiles;
     for(int l = 1; l <=256; l++){
@@ -38,20 +24,23 @@ std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string file
             allfiles.push_back(curpath);
         }    
     }
-
-    std::cout << std::to_string(getNinputs("signals/1294797712_1294797712_1.sub")) <<std::endl;
-    std::cout << std::to_string(getNpols("signals/1294797712_1294797712_1.sub")) <<std::endl;
-    std::cout << std::to_string(getNsamples("signals/1294797712_1294797712_1.sub")) <<std::endl;
     
     std::vector<std::vector<std::complex<float>>> datavalues;
     for (int k = 0; k < allfiles.size(); k++){
+        //This is the number of samples per 50ms time slice in the data files this is subject to change based on the MWA wiki
+        int NUMSAMPLES = getNsamples(allfiles.at(k));
+        //This needs to be moved to a diff function as for each file it could be a different number
+        long long NUMTILES = getNinputs(allfiles.at(k)) / getNpols(allfiles.at(k));
+        //This is how large the delay meta data block is inside of the file is is dependent on how many tiles are in the observation
+        long long DELAYDATALENGTH = NUMTILES*2*128000;
+        
         std::vector<std::complex<float>> channelvals;
+        //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
+        validateInputData(allfiles.at(k));
         //Opening the first data filestream this changes each interation of the loop to pass thru all files
         std::ifstream datafile(allfiles.at(k), std::ios::binary);   
         // main error handling statement
         if(datafile.is_open()){
-            //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
-            validateInputData(allfiles.at(k));
             //this gets changed depending on what antean we want to read the data from
             //per antena per polarisation there is a 64000 bytes of data        
             long long offset;
@@ -85,15 +74,6 @@ std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string file
             throw ReadInputDataException("Failed to open the file");
         }
     }
-    /*
-    std::cout.precision(2);
-    std::cout << "total enteries in data values" << std::endl;    
-    std::cout << std::to_string(datavalues.size()) << std::endl;
-    std::cout << std::to_string(datavalues[0].size()) << std::endl;
-    std::cout << std::to_string(datavalues[1].size()) << std::endl;
-    std::cout << std::to_string(datavalues[2].size()) << std::endl;
-    std::cout << std::to_string(datavalues[3].size()) << std::endl;
-    */
     return datavalues;
 }
 
@@ -102,7 +82,15 @@ std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string file
 //The file size this program will be given is a constant as such its easy to validate if the file is correct or not
 //break
 bool validateInputData(std::string fileName){
-    if(std::filesystem::file_size(fileName) != stdinputsize){
+    //MWA documentation states this is the standered file size for a 128 tile dual polarisation file
+    //4096+161*32768000
+    //meta data 160 volatage data blocks + the single delay block before the data * the size of the delay block what is 
+    //Number of tiles *2 polarisations * 128000 bytes 64000 1 byte samples for each real and imag part
+    
+    long samplebytesize = getNsamples(fileName)*2;
+    long delaydata = getNinputs(fileName) * samplebytesize;
+    long long expectedInputSize = METADATASIZE + delaydata * 161;
+    if(std::filesystem::file_size(fileName) != expectedInputSize){
         throw ReadInputDataException("Error File size is not expected");
     }    
     else{
@@ -126,6 +114,9 @@ int getNpols(std::string fileName){
         std::string sNpols = str.substr(pos+5,2); 
         nPols = std::stoi(sNpols);
     }
+    else{
+        throw ReadInputDataException("Error Reading meta data file File");
+    }
     return nPols;
 }
 
@@ -145,6 +136,9 @@ int getNsamples(std::string fileName){
         std::string snSamples = str.substr(pos+13,6); 
         nSamples = std::stoi(snSamples);
     }
+    else{
+        throw ReadInputDataException("Error Reading meta data file File");
+    }    
     return nSamples;
 }
 
@@ -163,5 +157,8 @@ int getNinputs(std::string fileName){
         std::string snInputs = str.substr(pos+7,4); 
         nInputs = std::stoi(snInputs);
     }
+    else{
+        throw ReadInputDataException("Error Reading meta data file File");
+    }    
     return nInputs;
 }
