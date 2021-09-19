@@ -33,7 +33,7 @@ std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string file
         long long NUMTILES = getNinputs(allfiles.at(k)) / getNpols(allfiles.at(k));
         //This is how large the delay meta data block is inside of the file is is dependent on how many tiles are in the observation
         long long DELAYDATALENGTH = NUMTILES*2*128000;
-        
+
         std::vector<std::complex<float>> channelvals;
         //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
         validateInputData(allfiles.at(k));
@@ -86,7 +86,6 @@ bool validateInputData(std::string fileName){
     //4096+161*32768000
     //meta data 160 volatage data blocks + the single delay block before the data * the size of the delay block what is 
     //Number of tiles *2 polarisations * 128000 bytes 64000 1 byte samples for each real and imag part
-    
     long samplebytesize = getNsamples(fileName)*2;
     long delaydata = getNinputs(fileName) * samplebytesize;
     long long expectedInputSize = METADATASIZE + delaydata * 161;
@@ -110,8 +109,8 @@ int getNpols(std::string fileName){
         f.close();
         //std::cout << str << std::endl;
         int pos = str.find("NPOL");
-
-        std::string sNpols = str.substr(pos+5,2); 
+        int delim = str.find("\n",pos);
+        std::string sNpols = str.substr(pos+5,delim); 
         nPols = std::stoi(sNpols);
     }
     else{
@@ -132,8 +131,8 @@ int getNsamples(std::string fileName){
         f.close();
         //std::cout << str << std::endl;
         int pos = str.find("NTIMESAMPLES");
-
-        std::string snSamples = str.substr(pos+13,6); 
+        int delim = str.find("\n",pos);
+        std::string snSamples = str.substr(pos+13,delim); 
         nSamples = std::stoi(snSamples);
     }
     else{
@@ -154,7 +153,8 @@ int getNinputs(std::string fileName){
         f.close();
         //std::cout << str << std::endl;
         int pos = str.find("NINPUTS");
-        std::string snInputs = str.substr(pos+7,4); 
+        int delim = str.find("\n",pos);        
+        std::string snInputs = str.substr(pos+7,delim); 
         nInputs = std::stoi(snInputs);
     }
     else{
