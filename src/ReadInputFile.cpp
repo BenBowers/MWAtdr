@@ -1,3 +1,9 @@
+/* WARNING MOST OF THIS MODULE CAN AND WILL BREAK IF THE MWA DATA FILE FORMAT CHANGES IN A DRASTIC WAY
+    Some things to note that i have tryed to make this module as effiecent as it can be
+    Due to having to read into complex numbers greatly makes this module super in efficent
+    Having to read the meta data inside of each file is also inefficent.
+
+*/
 #include "ReadInputFile.hpp"
 #include "Common.hpp"
 #include <complex>
@@ -7,8 +13,8 @@
 #include <string>
 #include <filesystem>
 
-//Meta data buffer size inside the data files constaining a subset of the overall meta data
-int METADATASIZE = 4096;
+//Meta data inside each file readers
+int getMetaDataSize(std::string fileName);
 int getNinputs(std::string fileName);
 int getNpols(std::string fileName);
 int getNsamples(std::string fileName);
@@ -24,15 +30,19 @@ std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string file
             allfiles.push_back(curpath);
         }    
     }
-    
+    if(allfiles.size() == 0){
+        throw ReadInputDataException("No data files present with that name");
+    }
+
     std::vector<std::vector<std::complex<float>>> datavalues;
     for (int k = 0; k < allfiles.size(); k++){
+        int metadatasize = getMetaDataSize(allfiles.at(k));
         //This is the number of samples per 50ms time slice in the data files this is subject to change based on the MWA wiki
         int NUMSAMPLES = getNsamples(allfiles.at(k));
         //This needs to be moved to a diff function as for each file it could be a different number
-        long long NUMTILES = getNinputs(allfiles.at(k)) / getNpols(allfiles.at(k));
+        long long NUMTILES = getNinputs(allfiles.at(k)) * getNpols(allfiles.at(k));
         //This is how large the delay meta data block is inside of the file is is dependent on how many tiles are in the observation
-        long long DELAYDATALENGTH = NUMTILES*2*128000;
+        long long DELAYDATALENGTH = NUMTILES*128000;
 
         std::vector<std::complex<float>> channelvals;
         //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
@@ -52,11 +62,11 @@ std::vector<std::vector<std::complex<float>>> readInputDataFile(std::string file
             }        
             //reading the data into the vector
             //known size of data file enteries as per file specification pre allocation to save time later
-            datavalues.reserve(64000*sizeof(std::complex<float>));        
+            datavalues.reserve(NUMSAMPLES*160*sizeof(std::complex<float>));        
             //alot of this is dependent on the meta data file reader numbers are subject to change once i figure out what to do
             //seeking to the start of the data portion of the file 
             //this will be antena 0 polarisation x and y sample 1 of 64000
-            datafile.seekg(offset+METADATASIZE, std::ios::beg);
+            datafile.seekg(offset+metadatasize, std::ios::beg);
             for(int i = 1; i <= 160;i++){
                 datafile.seekg(DELAYDATALENGTH, std::ios::cur);
                 for(int j = 1; j<=NUMSAMPLES;j++){
@@ -87,8 +97,9 @@ bool validateInputData(std::string fileName){
     //meta data 160 volatage data blocks + the single delay block before the data * the size of the delay block what is 
     //Number of tiles *2 polarisations * 128000 bytes 64000 1 byte samples for each real and imag part
     long samplebytesize = getNsamples(fileName)*2;
-    long delaydata = getNinputs(fileName) * samplebytesize;
-    long long expectedInputSize = METADATASIZE + delaydata * 161;
+    long delaydata = getNinputs(fileName) * getNpols(fileName) * samplebytesize;
+    long metadatasize = getMetaDataSize(fileName);
+    long long expectedInputSize = metadatasize + delaydata * 161;
     if(std::filesystem::file_size(fileName) != expectedInputSize){
         throw ReadInputDataException("Error File size is not expected");
     }    
@@ -107,18 +118,18 @@ int getNpols(std::string fileName){
         f.seekg(0);
         f.read(&str[0], size); 
         f.close();
-        //std::cout << str << std::endl;
         int pos = str.find("NPOL");
         int delim = str.find("\n",pos);
         std::string sNpols = str.substr(pos+5,delim); 
         nPols = std::stoi(sNpols);
     }
     else{
-        throw ReadInputDataException("Error Reading meta data file File");
+        throw ReadInputDataException("Error Reading meta data from file");
     }
     return nPols;
 }
 
+//returns the number of samples per 50ms time slice in the data file 
 int getNsamples(std::string fileName){
     std::ifstream f(fileName);
     int nSamples;
@@ -129,18 +140,18 @@ int getNsamples(std::string fileName){
         f.seekg(0);
         f.read(&str[0], size); 
         f.close();
-        //std::cout << str << std::endl;
         int pos = str.find("NTIMESAMPLES");
         int delim = str.find("\n",pos);
         std::string snSamples = str.substr(pos+13,delim); 
         nSamples = std::stoi(snSamples);
     }
     else{
-        throw ReadInputDataException("Error Reading meta data file File");
+        throw ReadInputDataException("Error Reading meta data from file");
     }    
     return nSamples;
 }
 
+//returns the humber of fine channels that the meta data expects in the file
 int getNinputs(std::string fileName){
     std::ifstream f(fileName);
     int nInputs;
@@ -151,14 +162,35 @@ int getNinputs(std::string fileName){
         f.seekg(0);
         f.read(&str[0], size); 
         f.close();
-        //std::cout << str << std::endl;
-        int pos = str.find("NINPUTS");
+        int pos = str.find("NFINE_CHAN");
         int delim = str.find("\n",pos);        
-        std::string snInputs = str.substr(pos+7,delim); 
+        std::string snInputs = str.substr(pos+10,delim); 
         nInputs = std::stoi(snInputs);
     }
     else{
-        throw ReadInputDataException("Error Reading meta data file File");
+        throw ReadInputDataException("Error Reading meta data from file");
     }    
     return nInputs;
+}
+
+//will return the size of the meta data header block described in the first line of the file
+int getMetaDataSize(std::string fileName){
+    std::ifstream f(fileName);
+    int nPols;
+    if (f){
+        f.seekg(300, std::ios::beg);
+        const auto size = f.tellg();
+        std::string str(size, ' ');
+        f.seekg(0);
+        f.read(&str[0], size); 
+        f.close();
+        int pos = str.find("HDR_SIZE");
+        int delim = str.find("\n",pos);
+        std::string sHRDsize = str.substr(pos+8,delim); 
+        nPols = std::stoi(sHRDsize);
+    }
+    else{
+        throw ReadInputDataException("Error Reading meta data from file");
+    }
+    return nPols;
 }
