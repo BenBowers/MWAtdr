@@ -34,7 +34,7 @@ ReadInputFileTest::ReadInputFileTest(){
         invf.seekg(0);
         invf.read(&invalidstr[0], size); 
         invf.close();
-    }
+    } 
     //known good file
     std::ofstream myfile("signals/1294797712_1294797717_118.sub",std::ios::out | std::ios::binary);
     if(myfile.is_open()){
