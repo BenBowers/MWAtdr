@@ -9,4 +9,4 @@ fi
 
 target=$1
 
-docker run -t "mwa_time_data_reconstructor/$target" "${@:2}"
+docker run -t "mwatdr/$target" "${@:2}"

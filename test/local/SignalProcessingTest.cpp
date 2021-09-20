@@ -5,6 +5,7 @@
 #include<cstdint>
 #include<iostream>
 #include<limits>
+#include<memory>
 
 #include "../../src/SignalProcessing.hpp"
 #include "../TestHelper.hpp"
@@ -39,7 +40,12 @@ void performDFT(std::vector<std::complex<float>>& signalData,
 void doPostProcessing(std::vector<float> const& signalData,
                       std::vector<std::int16_t>& signalDataOut);
 
-SignalProcessingTest::SignalProcessingTest() : TestModule{"Signal Processing unit test", {
+class SignalProcessingTest : public StatelessTestModuleImpl {
+    public:
+        SignalProcessingTest();
+};
+
+SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
     {"processingSignals() empty signals", []() {
         std::vector<std::vector<std::complex<float>>> const signalDataIn{};
         std::map<unsigned, unsigned> const signalDataMap{};
@@ -491,3 +497,9 @@ SignalProcessingTest::SignalProcessingTest() : TestModule{"Signal Processing uni
     }}
 }} {}
 
+ TestModule signalProcessingTest() {
+    return {
+        "Signal Processing Test",
+        []() { return std::make_unique<SignalProcessingTest>(); }
+    };
+}

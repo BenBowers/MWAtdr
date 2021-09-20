@@ -1,14 +1,23 @@
-#include <iostream>
-
 #include "../TestHelper.hpp"
+
 #include "ChannelRemappingTest.hpp"
 #include "SignalProcessingTest.hpp"
+#include "MetadataFileReaderTest.hpp"
+#include "NodeAntennaInputAssignerTest.hpp"
+#include "OutSignalWriterTest.hpp"
+#include "ReadCoeDataTest.hpp"
 
-int main() {
+#include <iostream>
+
+int main(){
     std::cout << "Test random number generator seed: " << seedTestRandomEngine() << '\n' << std::endl;
 
     runTests({
-        ChannelRemappingTest{},
-        SignalProcessingTest{}
+        signalProcessingTest(),
+        readCoeDataTest(),
+        channelRemappingTest(),
+        outSignalWriterTest(),
+        metadataFileReaderTest(),
+        nodeAntennaInputAssignerTest()
     });
 }
