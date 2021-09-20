@@ -2,7 +2,7 @@
 #include "ReadInputFileTest.hpp"
 #include "../TestHelper.hpp"
 #include "../../src/Common.hpp"
-#include <chrono>
+#include <complex>
 #include <iostream>
 
 class ReadInputFileTest : public TestModule::Impl {
@@ -22,12 +22,8 @@ std::vector<TestCase> ReadInputFileTest::getTestCases() {
     return {        
         {"5 valid Signal Channel files", []() {
             try{
-                auto tstart = std::chrono::high_resolution_clock::now();
                 auto data = readInputDataFile("1294797712_1294797712",0);
-                testAssert(data.size() == 5);
-                auto tend = std::chrono::high_resolution_clock::now();
-                auto duration = std::chrono::duration_cast<std::chrono::seconds>(tend-tstart);
-                std::cout << duration.count() << std::endl; 
+                testAssert(data.size() == 5); 
             }
             catch(ReadInputDataException const& e){}
         }},
@@ -61,17 +57,21 @@ std::vector<TestCase> ReadInputFileTest::getTestCases() {
         }}, 
         {"Single Valid Data file all Antena read (File confirmed to have 128 tiles 2x polarisations)", []() {
             try{
-                auto tstart = std::chrono::high_resolution_clock::now(); 
-                for(int i = 1; i <= 1; i++){
+                for(int i = 1; i <= 256; i++){
                     auto data = readInputDataFile("1294797712_1294797713",i);
                     testAssert(data.size() == 1);
-                }
-                auto tend = std::chrono::high_resolution_clock::now();
-                auto duration = std::chrono::duration_cast<std::chrono::seconds>(tend-tstart);
-                std::cout << duration.count() << std::endl;   
+                }  
             }
             catch(ReadInputDataException const& e){}
-        }},                                       
+        }},
+        {"Verify Data (Known Data file all 1's as input)", []() {
+            try{
+                auto data = readInputDataFile("1294797712_1294797716",0);
+                std::vector<std::vector<std::complex<float>>> expected(1,std::vector<std::complex<float>>(10240000,{1,1}));
+                testAssert(data == expected);     
+            }
+            catch(ReadInputDataException const& e){}
+        }}                                               
     };
 }
 
