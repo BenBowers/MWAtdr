@@ -1,6 +1,7 @@
 #include "../TestHelper.hpp"
 
 #include "ChannelRemappingTest.hpp"
+#include "CommandLineArgumentsTest.hpp"
 #include "MetadataFileReaderTest.hpp"
 #include "NodeAntennaInputAssignerTest.hpp"
 #include "OutSignalWriterTest.hpp"
@@ -16,6 +17,7 @@ int main(){
         channelRemappingTest(),
         outSignalWriterTest(),
         metadataFileReaderTest(),
-        nodeAntennaInputAssignerTest()
+        nodeAntennaInputAssignerTest(),
+        commandLineArgumentsTest()
     });
 }

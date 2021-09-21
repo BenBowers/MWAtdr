@@ -1,4 +1,5 @@
 #include "ChannelRemapping.hpp"
+#include "CommandLineArguments.hpp"
 #include "Common.hpp"
 #include "InternodeCommunication.hpp"
 #include "MetadataFileReader.hpp"
@@ -9,24 +10,27 @@
 #include "ReadInputFile.hpp"
 #include "SignalProcessing.hpp"
 
-#include <filesystem>
+#include <cstdint>
 #include <iostream>
+#include <map>
+#include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <variant>
 #include <vector>
 
 
+// Visitor functions for the primary or secondary nodes
 void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]);
-void runNode(SecondaryNodeCommunicator const& primary, int argc, char* argv[]);
+void runNode(SecondaryNodeCommunicator const& secondary, int argc, char* argv[]);
 
-// Command line validation functions throw std::invalid_argument
-std::string validateInputDirectoryPath(std::string const inputDirectoryPath);
-unsigned long long validateObservationID(std::string const observationID);
-unsigned long long validateSignalStartTime(unsigned long long const observationID, std::string signalStartTime);
-std::string validateInvPolyphaseFilterPath(std::string const invPolyphaseFilterPath);
-std::string validateOutputDirectoryPath(std::string const outputDirectoryPath);
-bool validateIgnoreErrors(std::string const ignoreErrors);
+ObservationProcessingResults processAssignedAntennaInputs(AppConfig const& appConfig, AntennaConfig const& antennaConfig,
+                                                          std::optional<AntennaInputRange> const& antennaInputRange);
+void mergeSecondaryProcessingResults(PrimaryNodeCommunicator const& primary, ObservationProcessingResults& processingResults);
+
+std::optional<AntennaInputRange> communicateNodeAntennaInputAssignment(PrimaryNodeCommunicator const& primary,
+                                                                       unsigned const numAntennaInputs);
 
 
 int main(int argc, char* argv[]) {
@@ -39,53 +43,50 @@ int main(int argc, char* argv[]) {
 	}, communicator);
 }
 
+
+// Run by the primary node
 void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]) {
-	bool startupStatus = true;
+	bool startupStatus = false;
 
-	// Validate command line arguments
-	if (argc != 7) {
-		throw std::invalid_argument{"Invalid number of command line arguments"};
-	}
-
-    // Read in app configuration from command line arguments
-	AppConfig appConfig;
-	appConfig.inputDirectoryPath = validateInputDirectoryPath(argv[1]);
-	appConfig.observationID = validateObservationID(argv[2]);
-	appConfig.signalStartTime = validateSignalStartTime(appConfig.observationID, argv[3]);
-	appConfig.invPolyphaseFilterPath = validateInvPolyphaseFilterPath(argv[4]);
-	appConfig.outputDirectoryPath = validateOutputDirectoryPath(argv[5]);
-	appConfig.ignoreErrors = validateIgnoreErrors(argv[6]);
+    // Create AppConfig from command line arguments
+    auto appConfig = createAppConfig(argc, argv);
 
 	// Read in metadata
 	AntennaConfig antennaConfig;
 	try {
 		MetadataFileReader mfr(appConfig);
 		antennaConfig = mfr.getAntennaConfig();
+		startupStatus = true;
 	}
 	catch (MetadataException const& e) {
 		std::cout << e.what();
-		startupStatus = false;
 	}
 
-    // Communicate startup status and app configuration
+    // Send startup status to secondary nodes
 	primary.sendAppStartupStatus(startupStatus);
+
+	// Send app configuration to secondary nodes
     primary.sendAppConfig(appConfig);
+
+	// Receive setup status from all secondary nodes
 	auto const nodeStatus = primary.receiveNodeSetupStatus();
+
+
+	// If any nodes fail, do we continue with the working nodes?
+
 
 	// Compute frequency channel remapping
 	const unsigned ORIGINAL_SAMPLING_FREQUENCY = 512;
 	auto const channelRemapping = computeChannelRemapping(ORIGINAL_SAMPLING_FREQUENCY, antennaConfig.frequencyChannels);
 
-	// Communicate antenna configuration, channel remapping, and antenna input assignment
+	// Send antenna configuration to secondary nodes
 	primary.sendAntennaConfig(antennaConfig);
+
+	// Send channel remapping to secondary nodes
 	primary.sendChannelRemapping(channelRemapping);
 
-	std::optional<AntennaInputRange> antennaInputRange;
-	auto antennaInputAssignments = assignNodeAntennaInputs(primary.getNodeCount(), antennaConfig.antennaInputs.size());
-	antennaInputRange = antennaInputAssignments.at(0);
-	for (unsigned i = 1; i < primary.getNodeCount(); i++) {
-		primary.sendAntennaInputAssignment(i, antennaInputAssignments.at(i));
-	}
+    // Send antenna input assignments to secondary nodes
+	auto antennaInputRange = communicateNodeAntennaInputAssignment(primary, antennaConfig.antennaInputs.size());
 
 	// Read in filter coefficients
 	try {
@@ -96,90 +97,82 @@ void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]) {
 	}
 
     // Read in raw signal, process, and write new signal to file for each assigned antenna input
-    // TODO: ObservationProcessingResults processAssignedAntennaInputs();
-	ObservationProcessingResults processingResults;
+    auto processingResults = processAssignedAntennaInputs(appConfig, antennaConfig, antennaInputRange);
 
-    if (antennaInputRange.has_value()) {
-		for (unsigned i = antennaInputRange.value().begin; i <= antennaInputRange.value().end; i++) {
-			// Read in raw signal file
-			// Process signal
-			// Write processed signal to file
-		}
-	}
-
-    // Gather secondary node processing results
-    auto secondaryProcessingResults = primary.receiveProcessingResults();
-	for (unsigned i = 1; i < primary.getNodeCount(); i++) {
-		processingResults.results.merge(secondaryProcessingResults.at(i).results);
-	}
+	// Gather processing results from secondary nodes and merge into processingResults
+    mergeSecondaryProcessingResults(primary, processingResults);
 
 	// Write output log file
 	writeLogFile(appConfig, channelRemapping, processingResults, antennaConfig);
 }
 
 
-void runNode(SecondaryNodeCommunicator const& primary, int argc, char* argv[]) {
+// Run by all secondary nodes
+void runNode(SecondaryNodeCommunicator const& secondary, int argc, char* argv[]) {
 }
 
 
-std::string validateInputDirectoryPath(std::string const inputDirectoryPath) {
-	std::filesystem::path directory (inputDirectoryPath);
+ObservationProcessingResults processAssignedAntennaInputs(AppConfig const& appConfig, AntennaConfig const& antennaConfig,
+                                                          std::optional<AntennaInputRange> const& antennaInputRange) {
+    ObservationProcessingResults processingResults;
 
-	if (!std::filesystem::exists(directory) ||
-        !std::filesystem::is_directory(directory) ||
-        std::filesystem::is_empty(directory)) {
-		throw std::invalid_argument {"Invalid input directory path"};
+    if (antennaInputRange.has_value()) {
+		for (unsigned index = antennaInputRange.value().begin; index <= antennaInputRange.value().end; index++) {
+			// Used to store raw signal data from all channels recorded by one antenna input
+	        std::vector<std::vector<std::complex<float>>> antennaInputSignals;
+			// Used to store processed signal for one antenna input
+			std::vector<std::int16_t> processedSignal;
+			// Used to store which channels are used in the processed signal
+			std::set<unsigned> usedChannels;
+
+			// Read in raw signal files from all channels recorded by one antenna input
+			for (auto channel : antennaConfig.frequencyChannels) {
+				std::string filename = std::to_string(appConfig.observationID) + "_" +
+				                       std::to_string(appConfig.signalStartTime) + "_" +
+									   std::to_string(channel) + ".sub";
+
+				if (validateInputData(filename)) {
+					antennaInputSignals.push_back(readInputDataFile(filename, index));
+				}
+			}
+
+			// Process signal
+			//processSignal();
+
+			// Write antenna input processed signal to file
+			try {
+				outSignalWriter(processedSignal, appConfig, antennaConfig.antennaInputs.at(index));
+				processingResults.results.insert({index, {true, usedChannels}});
+				// print antenna input processed successfully
+			}
+			catch (OutSignalException const& e) {
+				processingResults.results.insert({index, {false, usedChannels}});
+				// print antenna input processing failed
+			}
+		}
 	}
-	return (std::string) directory;
+	return processingResults;
 }
 
-unsigned long long validateObservationID(std::string const observationID) {
-	auto id = std::stoull(observationID);
 
-	if (id % 8 != 0) {
-		throw std::invalid_argument {"Invalid observation ID, must be divisible by 8"};
+void mergeSecondaryProcessingResults(PrimaryNodeCommunicator const& primary, ObservationProcessingResults& processingResults) {
+    // Gather secondary node processing results
+    auto secondaryProcessingResults = primary.receiveProcessingResults();
+	// Merge secondary node processing results into primary processing results
+	for (unsigned i = 1; i < primary.getNodeCount(); i++) {
+		processingResults.results.merge(secondaryProcessingResults.at(i).results);
 	}
-	return id;
 }
 
-unsigned long long validateSignalStartTime(unsigned long long const observationID, std::string signalStartTime) {
-	auto time = std::stoull(signalStartTime);
 
-	if (time % 8 != 0) {
-		throw std::invalid_argument {"Invalid signal start time, must be divisible by 8"};
+std::optional<AntennaInputRange> communicateNodeAntennaInputAssignment(PrimaryNodeCommunicator const& primary,
+                                                                       unsigned const numAntennaInputs) {
+    auto antennaInputAssignments = assignNodeAntennaInputs(primary.getNodeCount(), numAntennaInputs);
+
+	// Send antenna input assignment to secondary nodes
+	for (unsigned i = 1; i < primary.getNodeCount(); i++) {
+		primary.sendAntennaInputAssignment(i, antennaInputAssignments.at(i));
 	}
-	else if (time < observationID) {
-		throw std::invalid_argument {"Invalid signal start time, must be greater than or equal to observation ID"};
-	}
-	return time;
-}
 
-std::string validateInvPolyphaseFilterPath(std::string const invPolyphaseFilterPath) {
-	std::filesystem::path file (invPolyphaseFilterPath);
-
-	if (!std::filesystem::exists(file) || !std::filesystem::is_regular_file(file)) {
-		throw std::invalid_argument {"Invalid inverse polyphase filter path"};
-	}
-	return (std::string) file;
-}
-
-std::string validateOutputDirectoryPath(std::string const outputDirectoryPath) {
-	std::filesystem::path directory (outputDirectoryPath);
-
-	if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory)) {
-		throw std::invalid_argument {"Invalid output directory path"};
-	}
-	return (std::string) directory;
-}
-
-bool validateIgnoreErrors(std::string const ignoreErrors) {
-	bool ignore = false;
-
-	if (ignoreErrors.compare("true") == 0) {
-		ignore = true;
-	}
-    else if (ignoreErrors.compare("false") != 0) {
-		throw std::invalid_argument {"Ignore errors argument must be 'true' or 'false'"};
-	}
-	return ignore;
+	return antennaInputAssignments.at(0);
 }
