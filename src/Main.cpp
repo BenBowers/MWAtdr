@@ -10,6 +10,7 @@
 #include "ReadInputFile.hpp"
 #include "SignalProcessing.hpp"
 
+#include <complex>
 #include <cstdint>
 #include <iostream>
 #include <map>
@@ -19,6 +20,12 @@
 #include <string>
 #include <variant>
 #include <vector>
+
+
+class NodeException : public std::runtime_error {
+	public:
+	    NodeException(const std::string& message) : std::runtime_error(message) {}
+};
 
 
 // Visitor functions for the primary or secondary nodes
@@ -39,76 +46,122 @@ int main(int argc, char* argv[]) {
     auto const communicator = communicatorContext->getCommunicator();
 
 	std::visit([argc, argv](auto const& node) {
-	    runNode(node, argc, argv);
+		try {
+	        runNode(node, argc, argv);
+		}
+		catch (NodeException const& e) {
+			std::cout << e.what();
+		}
 	}, communicator);
 }
 
 
 // Run by the primary node
 void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]) {
-	bool startupStatus = false;
+    bool startupStatus = false;
 
     // Create AppConfig from command line arguments
-    auto appConfig = createAppConfig(argc, argv);
+    auto const appConfig = createAppConfig(argc, argv);
 
 	// Read in metadata
 	AntennaConfig antennaConfig;
 	try {
 		MetadataFileReader mfr(appConfig);
 		antennaConfig = mfr.getAntennaConfig();
-		startupStatus = true;
 	}
 	catch (MetadataException const& e) {
 		std::cout << e.what();
 	}
 
-    // Send startup status to secondary nodes
-	primary.sendAppStartupStatus(startupStatus);
+    // Read in filter coefficients
+    std::vector<std::complex<float>> coefficients;
+    try {
+        coefficients = readCoeData(appConfig.invPolyphaseFilterPath);
+        startupStatus = true;
+    }
+    catch (ReadCoeDataException const& e) {
+        std::cout << e.what();
+    }
 
-	// Send app configuration to secondary nodes
+    // Send startup status to secondary nodes
+    primary.sendAppStartupStatus(startupStatus);
+
+    // Terminate node on startup failure
+    if (!startupStatus) {
+        throw NodeException("Primary node startup failure, terminating node");
+    }
+
+    // Receive setup status from all secondary nodes
+    auto const nodeStatus = primary.receiveNodeSetupStatus();
+
+    // Send app configuration to secondary nodes
     primary.sendAppConfig(appConfig);
 
-	// Receive setup status from all secondary nodes
-	auto const nodeStatus = primary.receiveNodeSetupStatus();
+    // Send antenna configuration to secondary nodes
+    primary.sendAntennaConfig(antennaConfig);
 
+    // Compute frequency channel remapping
+    const unsigned ORIGINAL_SAMPLING_FREQUENCY = 512;
+    auto const channelRemapping = computeChannelRemapping(ORIGINAL_SAMPLING_FREQUENCY, antennaConfig.frequencyChannels);
 
-	// If any nodes fail, do we continue with the working nodes?
-
-
-	// Compute frequency channel remapping
-	const unsigned ORIGINAL_SAMPLING_FREQUENCY = 512;
-	auto const channelRemapping = computeChannelRemapping(ORIGINAL_SAMPLING_FREQUENCY, antennaConfig.frequencyChannels);
-
-	// Send antenna configuration to secondary nodes
-	primary.sendAntennaConfig(antennaConfig);
-
-	// Send channel remapping to secondary nodes
-	primary.sendChannelRemapping(channelRemapping);
+    // Send channel remapping to secondary nodes
+    primary.sendChannelRemapping(channelRemapping);
 
     // Send antenna input assignments to secondary nodes
-	auto antennaInputRange = communicateNodeAntennaInputAssignment(primary, antennaConfig.antennaInputs.size());
-
-	// Read in filter coefficients
-	try {
-	    auto const coefficients = readCoeData(appConfig.invPolyphaseFilterPath);
-	}
-	catch (ReadCoeDataException const& e) {
-		std::cout << e.what();
-	}
+    auto const antennaInputRange = communicateNodeAntennaInputAssignment(primary, antennaConfig.antennaInputs.size());
 
     // Read in raw signal, process, and write new signal to file for each assigned antenna input
     auto processingResults = processAssignedAntennaInputs(appConfig, antennaConfig, antennaInputRange);
 
-	// Gather processing results from secondary nodes and merge into processingResults
+    // Gather processing results from secondary nodes and merge into processingResults
     mergeSecondaryProcessingResults(primary, processingResults);
 
-	// Write output log file
-	writeLogFile(appConfig, channelRemapping, processingResults, antennaConfig);
+    // Write output log file
+    writeLogFile(appConfig, channelRemapping, processingResults, antennaConfig);
 }
 
 
 // Run by all secondary nodes
 void runNode(SecondaryNodeCommunicator const& secondary, int argc, char* argv[]) {
+    bool setupStatus = false;
+
+    // Receive primary node startup status
+	if (!secondary.receiveAppStartupStatus()) {
+		// Terminate node on primary startup failure
+        throw NodeException("Node " + std::to_string(secondary.getNodeID()) +
+                            ": Primary node startup failure, terminating node");
+	}
+
+    // Receive app configuration from primary node
+    auto const appConfig = secondary.receiveAppConfig();
+
+    // Read in filter coefficients
+    std::vector<std::complex<float>> coefficients;
+    try {
+        coefficients = readCoeData(appConfig.invPolyphaseFilterPath);
+        setupStatus = true;
+    }
+    catch (ReadCoeDataException const& e) {
+        std::cout << e.what();
+    }
+
+    // Send setup status to primary node
+    secondary.sendNodeSetupStatus(setupStatus);
+
+    // Receive antenna configuration from primary node
+	auto const antennaConfig = secondary.receiveAntennaConfig();
+
+    // Receive channel remapping from primary node
+	auto const channelRemapping = secondary.receiveChannelRemapping();
+
+    // Receive antenna input assignment from primary node
+    auto const antennaInputRange = secondary.receiveAntennaInputAssignment();
+
+    // Read in raw signal, process, and write new signal to file for each assigned antenna input
+    auto const processingResults = processAssignedAntennaInputs(appConfig, antennaConfig, antennaInputRange);
+
+	// Send processing results to primary node
+	secondary.sendProcessingResults(processingResults);
 }
 
 
@@ -116,6 +169,7 @@ ObservationProcessingResults processAssignedAntennaInputs(AppConfig const& appCo
                                                           std::optional<AntennaInputRange> const& antennaInputRange) {
     ObservationProcessingResults processingResults;
 
+    // Process all assigned antenna inputs (if any)
     if (antennaInputRange.has_value()) {
 		for (unsigned index = antennaInputRange.value().begin; index <= antennaInputRange.value().end; index++) {
 			// Used to store raw signal data from all channels recorded by one antenna input
@@ -139,7 +193,7 @@ ObservationProcessingResults processAssignedAntennaInputs(AppConfig const& appCo
 			// Process signal
 			//processSignal();
 
-			// Write antenna input processed signal to file
+			// Write processed antenna input signal to file
 			try {
 				outSignalWriter(processedSignal, appConfig, antennaConfig.antennaInputs.at(index));
 				processingResults.results.insert({index, {true, usedChannels}});
