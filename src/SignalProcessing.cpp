@@ -3,7 +3,7 @@
 #include<tbb/tbb.h>
 #include"SignalProcessing.hpp"
 #include"ChannelRemapping.hpp"
-
+#include<iostream>
 // Assert that these are indeed the same type at compile type due to the unsafe reinterpret_cast 's used in these functions
 // Both of these types should be a struct containing two floats
 // struct {
@@ -29,8 +29,7 @@ static const unsigned PFB_COE_CHANNELS = 256;
 // Performs an inverse polyphase filter bank (PFB) on the signal data, the mapping is required
 // for this function so the convolution only goes over the appropriate channels. This mapping
 // is provided by computeChannelRemapping() in ChannelRempping.hpp
-void performPFB(std::vector<std::complex<float>> const& signalData,
-                       std::vector<std::complex<float>>& signalDataOut,
+void performPFB(std::vector<std::complex<float>>& signalData,
                        std::vector<std::complex<float>> const& coefficantPFB,
                        std::map<unsigned, ChannelRemapping::RemappedChannel> const& mapping,
                        unsigned const numOfBlocks,
@@ -50,10 +49,57 @@ void doPostProcessing(std::vector<float> const& signalData,
                       std::vector<std::int16_t>& signalDataOut);
 
 // Simple function that checks the status of a MKL_LONG and outputs it to console
-static inline void handleMKLError(MKL_LONG status) {
+static inline void handleMKLError(MKL_LONG const status) {
     if ( status && !DftiErrorClass(status, DFTI_NO_ERROR) ) {
         throw SignalProcessingMKLError(DftiErrorMessage(status));
       }
+}
+
+
+// Don't ask why there isn't a function in MKL that does this, I could not find one.
+// These messages are taken from the wiki page from where they're listed
+// https://software.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top/statistical-functions/convolution-and-correlation/convolution-and-correlation-task-status-and-error-reporting.html
+static inline std::string getVSLError(int const status) {
+    switch(status) {
+        case VSL_CC_ERROR_NOT_IMPLEMENTED :	return "Requested functionality is not implemented.";
+        case VSL_CC_ERROR_ALLOCATION_FAILURE : return "Memory allocation failure.";
+        case VSL_CC_ERROR_BAD_DESCRIPTOR : return "Task descriptor is corrupted.";
+        case VSL_CC_ERROR_SERVICE_FAILURE : return "A service function has failed.";
+        case VSL_CC_ERROR_EDIT_FAILURE: return "Failure while editing the task.";
+        case VSL_CC_ERROR_EDIT_PROHIBITED : return "You cannot edit this parameter.";
+        case VSL_CC_ERROR_COMMIT_FAILURE : return "Task commitment has failed.";
+        case VSL_CC_ERROR_COPY_FAILURE : return "Failure while copying the task.";
+        case VSL_CC_ERROR_DELETE_FAILURE : return "Failure while deleting the task.";
+        case VSL_CC_ERROR_BAD_ARGUMENT : return "Bad argument or task parameter.";
+        case VSL_CC_ERROR_JOB : return "Bad parameter: job";
+        case VSL_CC_ERROR_KIND : return "Bad parameter: kind";
+        case VSL_CC_ERROR_MODE : return "Bad parameter: mode";
+        case VSL_CC_ERROR_METHOD : return "Bad parameter: method";
+        case VSL_CC_ERROR_TYPE : return "Bad parameter: type";
+        case VSL_CC_ERROR_EXTERNAL_PRECISION : return "Bad parameter: external_precision";
+        case VSL_CC_ERROR_INTERNAL_PRECISION : return "Bad parameter: internal_precision";
+        case VSL_CC_ERROR_PRECISION : return "Incompatible external/internal precisions.";
+        case VSL_CC_ERROR_DIMS : return "Bad parameter: dims";
+        case VSL_CC_ERROR_XSHAPE : return "Bad parameter: xshape";
+        case VSL_CC_ERROR_YSHAPE : return "Bad parameter: yshape\ncase Callback function for an abstract BRNG returns an invalid number of updated entries in a buffer, that is, < 0 or >nmax";
+        case VSL_CC_ERROR_ZSHAPE : return "Bad parameter: zshape";
+        case VSL_CC_ERROR_XSTRIDE : return "Bad parameter: xstride";
+        case VSL_CC_ERROR_YSTRIDE : return "Bad parameter: ystride";
+        case VSL_CC_ERROR_ZSTRIDE : return "Bad parameter: zstride";
+        case VSL_CC_ERROR_X : return "Bad parameter: x";
+        case VSL_CC_ERROR_Y : return "Bad parameter: y";
+        case VSL_CC_ERROR_Z : return "Bad parameter: z";
+        case VSL_CC_ERROR_START : return "Bad parameter: start";
+        case VSL_CC_ERROR_DECIMATION : return "Bad parameter: decimation";
+        case VSL_CC_ERROR_OTHER : return "Another error. ( Couldn't specify error )";
+    }
+    return "Couldn't find error";
+}
+static inline void handleVSLError(int const status) {
+    if ( status != VSL_STATUS_OK ) {
+
+        throw SignalProcessingMKLError("Convolution error, error code: " + std::to_string(status) + +", " + getVSLError(status));
+    }
 }
 
 void processSignal(std::vector<std::vector<std::complex<float>>> const& signalDataIn,
@@ -90,17 +136,17 @@ void processSignal(std::vector<std::vector<std::complex<float>>> const& signalDa
                 + std::to_string(PFB_COE_CHANNELS));
     }
 
-    std::vector<float> timeDomain {};
-    {
-        std::vector<std::complex<float>> convolvedData{};
-        // Scope these two function calls as remappedData doesn't need to be used outside it
-        {
-            std::vector<std::complex<float>> remappedData{};
-            remapChannels(signalDataIn, signalDataInMapping, remappedData, remappingData.channelMap, OUT_NUM_CHANNELS);
-            performPFB(remappedData, convolvedData, coefficiantPFB, remappingData.channelMap, IN_NUM_BLOCKS, OUT_NUM_CHANNELS);
-        }
-        performDFT(convolvedData, timeDomain, remappingData.newSamplingFreq, IN_NUM_BLOCKS, OUT_NUM_CHANNELS);
+    if ( (coefficiantPFB.size() / PFB_COE_CHANNELS) != signalDataIn[0].size() ) {
+        throw std::invalid_argument("The PFB Array must contain the same number of blocks as the signal data");
     }
+
+    std::vector<float> timeDomain{};
+    std::vector<std::complex<float>> remappedData{};
+    {
+        remapChannels(signalDataIn, signalDataInMapping, remappedData, remappingData.channelMap, OUT_NUM_CHANNELS);
+        performPFB(remappedData, coefficiantPFB, remappingData.channelMap, IN_NUM_BLOCKS, OUT_NUM_CHANNELS);
+    }
+    performDFT(remappedData, timeDomain, remappingData.newSamplingFreq, IN_NUM_BLOCKS, OUT_NUM_CHANNELS);
     doPostProcessing(timeDomain, signalDataOut);
 }
 
@@ -139,32 +185,39 @@ void remapChannels(std::vector<std::vector<std::complex<float>>> const& signalDa
     }
 }
 
-void performPFB(std::vector<std::complex<float>> const& signalData,
-                       std::vector<std::complex<float>>& signalDataOut,
+void performPFB(std::vector<std::complex<float>>& signalData,
                        std::vector<std::complex<float>> const& coefficantPFB,
                        std::map<unsigned, ChannelRemapping::RemappedChannel> const& mapping,
                        unsigned const numOfBlocks,
                        unsigned const numOfChannels) {
     VSLConvTaskPtr convolutionTask = nullptr;
 
-    // TODO: handle the error cases for this function
-    vslcConvNewTask1D(&convolutionTask,
+    handleVSLError(vslcConvNewTask1D(&convolutionTask,
                       VSL_CORR_MODE_AUTO,
                       numOfBlocks,
-                      coefficantPFB.size() / PFB_COE_CHANNELS,
-                      numOfBlocks);
+                      numOfBlocks,
+                      (numOfBlocks*2) - 1));
 
     // Only work over the channels that actually have something in them
+    // TODO: Multithread this
     for(auto map : mapping) {
         unsigned const oldChannel = map.first;
         unsigned const newChannel = map.second.newChannel;
-        // TODO: handle error cases for this function call
+
+        // Temporary Location to do the convolution in
+        std::vector<std::complex<float>> convolutionResult((numOfBlocks * 2) - 1, { 0.0f, 0.0f });
+
         // NOTE: Stride over coefficantPFB data is using the original channel data as it didn't get remapped
-        vslcConvExec1D(convolutionTask,
+        handleVSLError(vslcConvExec1D(convolutionTask,
                        reinterpret_cast<const MKL_Complex8*>(signalData.data() + newChannel), numOfChannels,
                        reinterpret_cast<const MKL_Complex8*>(coefficantPFB.data() + oldChannel), PFB_COE_CHANNELS,
-                       reinterpret_cast<MKL_Complex8*>(signalDataOut.data() + newChannel), numOfChannels);
+                       reinterpret_cast<MKL_Complex8*>(convolutionResult.data()), 1));
+        // Copy the middle part of the convolution back to the orginal array
+        cblas_ccopy(numOfBlocks,
+                    convolutionResult.data() + numOfBlocks/2, 1,
+                    signalData.data() + newChannel, numOfChannels);
     }
+    vslConvDeleteTask(&convolutionTask);
 }
 
 void performDFT(std::vector<std::complex<float>>& signalData,

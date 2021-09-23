@@ -6,6 +6,7 @@
 #include<iostream>
 #include<limits>
 #include<memory>
+#include<algorithm>
 
 #include "../../src/SignalProcessing.hpp"
 #include "../TestHelper.hpp"
@@ -24,8 +25,7 @@ void remapChannels(std::vector<std::vector<std::complex<float>>> const& signalDa
                    std::map<unsigned, ChannelRemapping::RemappedChannel> const& channelRemapping,
                    unsigned const outNumChannels);
 
-void performPFB(std::vector<std::complex<float>> const& signalData,
-                       std::vector<std::complex<float>>& signalDataOut,
+void performPFB(std::vector<std::complex<float>>& signalData,
                        std::vector<std::complex<float>> const& coefficantPFB,
                        std::map<unsigned, ChannelRemapping::RemappedChannel> const& mapping,
                        unsigned const numOfBlocks,
@@ -39,6 +39,32 @@ void performDFT(std::vector<std::complex<float>>& signalData,
 
 void doPostProcessing(std::vector<float> const& signalData,
                       std::vector<std::int16_t>& signalDataOut);
+
+// Helper function to generate a coefficantArray with the number of channels in Common.hpp
+// Will take a vector containing each channels blocks and a map to tell what channel is what
+std::vector<std::complex<float>> makeCoeArr(std::vector<std::vector<std::complex<float>>> const& channels,
+                                            std::map<unsigned, unsigned> const& mapping) {
+    // Get number of blocks from the width of channels
+    unsigned const NUM_OF_BLOCKS = channels[0].size();
+    // Get the number of channels from common.hpp
+    unsigned const NUM_OF_CHANNELS = filterSize;
+
+    // Allocate the array with zeros
+    std::vector<std::complex<float>> coefficantData(NUM_OF_BLOCKS * NUM_OF_CHANNELS, { 0.0f, 0.0f });
+
+    // Iterate over each channel
+    for( unsigned ii = 0; ii < mapping.size(); ++ii ) {
+        auto const channelData = channels[ii];
+        unsigned const channelNum = mapping.at(ii);
+
+        // Copy that channel to coefficantData
+        for ( unsigned jj = 0; jj < NUM_OF_BLOCKS; ++jj ) {
+            coefficantData[channelNum + jj * NUM_OF_CHANNELS] = channelData[jj];
+        }
+    }
+
+    return coefficantData;
+}
 
 class SignalProcessingTest : public StatelessTestModuleImpl {
     public:
@@ -325,14 +351,14 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
     }},
 
     {"performPFB()", []() {
-        std::vector<std::complex<float>> const signalDataIn {
+        unsigned const numOfBlocks = 5;
+        unsigned const numOfChannels = 8;
+        std::vector<std::complex<float>> signalDataIn {
             { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f },
             { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f },
             { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f },
             { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f },
             { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 4.0f, 0.0f }, { 0.0f, 0.0f }};
-
-        std::vector<std::complex<float>> const coefficantData(256 * 5, { 0.0f, 0.0f });
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping {
                 {0, {0, false}},
@@ -345,6 +371,25 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
                 {7, {7, false}},
         };
 
+        // Generate the coefficantData
+        std::vector<std::vector<std::complex<float>>> const coefficantData{
+            { { 1.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 0.0f } },
+            { { 1.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 0.0f } }
+        };
+
+        std::map<unsigned, unsigned> const coefficantDataMap{ { 0, 2 }, { 1, 6 } };
+
+        std::vector<std::complex<float>> const coefficantArray = makeCoeArr(coefficantData, coefficantDataMap);
+
+        std::vector<std::complex<float>> expected {
+            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 12.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 12.0f, 0.0f }, { 0.0f, 0.0f },
+            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 16.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 16.0f, 0.0f }, { 0.0f, 0.0f },
+            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 20.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 20.0f, 0.0f }, { 0.0f, 0.0f },
+            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 16.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 16.0f, 0.0f }, { 0.0f, 0.0f },
+            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 12.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 12.0f, 0.0f }, { 0.0f, 0.0f }};
+
+        performPFB(signalDataIn, coefficantArray, channelRemapping, numOfBlocks, numOfChannels);
+        testAssert( signalDataIn == expected );
     }},
 
     {"performDFT() [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]", []() {
