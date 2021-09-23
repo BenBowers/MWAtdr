@@ -136,8 +136,8 @@ void processSignal(std::vector<std::vector<std::complex<float>>> const& signalDa
                 + std::to_string(PFB_COE_CHANNELS));
     }
 
-    if ( (coefficiantPFB.size() / PFB_COE_CHANNELS) != signalDataIn[0].size() ) {
-        throw std::invalid_argument("The PFB Array must contain the same number of blocks as the signal data");
+    if ( (coefficiantPFB.size() / PFB_COE_CHANNELS) > signalDataIn[0].size() ) {
+        throw std::invalid_argument("The PFB Array must contain the same number or less blocks as the signal data");
     }
 
     std::vector<float> timeDomain{};
@@ -190,13 +190,14 @@ void performPFB(std::vector<std::complex<float>>& signalData,
                        std::map<unsigned, ChannelRemapping::RemappedChannel> const& mapping,
                        unsigned const numOfBlocks,
                        unsigned const numOfChannels) {
-    VSLConvTaskPtr convolutionTask = nullptr;
+    unsigned const coefficantBlockSize = coefficantPFB.size() / PFB_COE_CHANNELS;
 
+    VSLConvTaskPtr convolutionTask = nullptr;
     handleVSLError(vslcConvNewTask1D(&convolutionTask,
                       VSL_CORR_MODE_AUTO,
                       numOfBlocks,
-                      numOfBlocks,
-                      (numOfBlocks*2) - 1));
+                      coefficantBlockSize,
+                      (numOfBlocks + coefficantBlockSize) - 1));
 
     // Only work over the channels that actually have something in them
     // TODO: Multithread this
@@ -205,7 +206,7 @@ void performPFB(std::vector<std::complex<float>>& signalData,
         unsigned const newChannel = map.second.newChannel;
 
         // Temporary Location to do the convolution in
-        std::vector<std::complex<float>> convolutionResult((numOfBlocks * 2) - 1, { 0.0f, 0.0f });
+        std::vector<std::complex<float>> convolutionResult((numOfBlocks + coefficantBlockSize) - 1, { 0.0f, 0.0f });
 
         // NOTE: Stride over coefficantPFB data is using the original channel data as it didn't get remapped
         handleVSLError(vslcConvExec1D(convolutionTask,
@@ -214,7 +215,7 @@ void performPFB(std::vector<std::complex<float>>& signalData,
                        reinterpret_cast<MKL_Complex8*>(convolutionResult.data()), 1));
         // Copy the middle part of the convolution back to the orginal array
         cblas_ccopy(numOfBlocks,
-                    convolutionResult.data() + numOfBlocks/2, 1,
+                    convolutionResult.data() + coefficantBlockSize/2, 1,
                     signalData.data() + newChannel, numOfChannels);
     }
     vslConvDeleteTask(&convolutionTask);
