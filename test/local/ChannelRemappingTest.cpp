@@ -1,6 +1,7 @@
 #include "ChannelRemappingTest.hpp"
 
 #include <algorithm>
+#include <memory>
 #include <numeric>
 #include <set>
 #include <stdexcept>
@@ -11,7 +12,13 @@
 #include "../TestHelper.hpp"
 
 
-ChannelRemappingTest::ChannelRemappingTest() : TestModule{"Frequency channel remapper unit test", {
+class ChannelRemappingTest : public StatelessTestModuleImpl {
+public:
+    ChannelRemappingTest();
+};
+
+
+ChannelRemappingTest::ChannelRemappingTest() : StatelessTestModuleImpl{{
     {"RemappedChannel equality", []() {
         std::vector<std::tuple<ChannelRemapping::RemappedChannel, ChannelRemapping::RemappedChannel, bool>> data{
             {{54, true}, {54, true}, true},
@@ -199,3 +206,11 @@ ChannelRemappingTest::ChannelRemappingTest() : TestModule{"Frequency channel rem
         }
     }}
 }} {}
+
+
+TestModule channelRemappingTest() {
+    return {
+        "Frequency channel remapper unit test",
+        []() { return std::make_unique<ChannelRemappingTest>(); }
+    };
+}

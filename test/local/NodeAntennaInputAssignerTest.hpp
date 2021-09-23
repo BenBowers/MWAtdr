@@ -2,9 +2,4 @@
 
 #include "../TestHelper.hpp"
 
-struct AntennaInputRange;
-
-class NodeAntennaInputAssignerTest : public TestModule {
-	public:
-	    NodeAntennaInputAssignerTest();
-};
+TestModule nodeAntennaInputAssignerTest();

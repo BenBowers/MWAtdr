@@ -7,6 +7,13 @@ WORKDIR /tmp
 # Note SSH is only required for MPI communication outside of Garrawarla.
 RUN apt-get update -qq && \
 	apt-get install -qq --no-install-recommends -y ca-certificates gnupg2 wget gcc g++ make cmake lbzip2 ssh && \
+# Install mwalib. Installation guide found here: https://github.com/MWATelescope/mwalib/wiki/Installation
+    wget -q "https://github.com/MWATelescope/mwalib/releases/download/v0.10.0/mwalib-v0.10.0-linux_x86_64.tar.gz" -O mwalib.tar.gz && \
+	mkdir mwalib && \
+    tar xvf mwalib.tar.gz -C mwalib && \
+    cp mwalib/libmwalib.* /usr/local/lib && \
+    cp mwalib/mwalib.h /usr/local/include && \
+	ldconfig && \
 # Add Intel repositories to apt for MKL and TBB installation. Steps taken from here:
 # https://software.intel.com/content/www/us/en/develop/documentation/installation-guide-for-intel-oneapi-toolkits-linux/top/installation/install-using-package-managers/apt.html
 	wget -q https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB && \
@@ -46,6 +53,10 @@ COPY --chown=app:app test/ test/
 
 # The type of build to do with CMake. See here: https://cmake.org/cmake/help/v3.10/variable/CMAKE_BUILD_TYPE.html
 ARG BUILD_TYPE=Release
+
+# The system on which the application will be running. Options are 'personal' or 'garrawarla'.
+ARG RUNTIME_SYSTEM=garrawarla
+ENV RUNTIME_SYSTEM=${RUNTIME_SYSTEM}
 
 # Just configure the CMake build at this stage.
 RUN mkdir build && \

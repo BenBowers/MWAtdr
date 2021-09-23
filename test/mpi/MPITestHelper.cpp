@@ -1,7 +1,10 @@
 #include "MPITestHelper.hpp"
 
+#include "../TestHelper.hpp"
+
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -15,6 +18,8 @@ void runMPITests(InternodeCommunicator const& internodeCommunicator, std::vector
 
     auto const nodeID = internodeCommunicator.getNodeID();
     
+    unsigned long long moduleSetupSuccesses = 0;
+    unsigned long long moduleSetupFailures = 0;
     unsigned long long casesPassed = 0;
     unsigned long long casesFailed = 0;
 
@@ -25,32 +30,62 @@ void runMPITests(InternodeCommunicator const& internodeCommunicator, std::vector
 
         auto const modulePrefix = nodePrefix + '"' + testModule.name + "\" | ";
 
-        for (auto const& testCase : testModule.testCases) {
-            auto const casePrefix = modulePrefix + '"' + testCase.name + "\"... ";
+        std::unique_ptr<TestModule::Impl> testModuleImpl;
+        try {
+            testModuleImpl = testModule.factory();
+        }
+        catch (std::exception const& e) {
+            std::cout << modulePrefix << "Module setup FAILED - unhandled std::exception: " << e.what() << std::endl;
+        }
+        catch (...) {
+            // Unfortunately I don't think there is any way to get the thrown value.
+            std::cout << modulePrefix << "Module setup FAILED - unhandled thrown value" << std::endl;
+        }
 
-            bool passed = false;
-            try {
-                testCase.function();
-                passed = true;
+        if (testModuleImpl) {
+            ++moduleSetupSuccesses;
+
+            for (auto const& testCase : testModuleImpl->getTestCases()) {
+                auto const casePrefix = modulePrefix + '"' + testCase.name + "\"... ";
+
+                bool passed = false;
+                try {
+                    testCase.function();
+                    passed = true;
+                }
+                catch (TestAssertionError const& e) {
+                    std::cout << casePrefix << "FAILED - assertion failed: " << e.message << std::endl;
+                }
+                catch (std::exception const& e) {
+                    std::cout << casePrefix << "FAILED - unhandled std::exception: " << e.what() << std::endl;
+                }
+                catch (...) {
+                    // Unfortunately I don't think there is any way to get the thrown value.
+                    std::cout << casePrefix << "FAILED - unhandled thrown value" << std::endl;
+                }
+
+                if (passed) {
+                    std::cout << casePrefix << "PASSED" << std::endl;
+                    ++casesPassed;
+                }
+                else {
+                    ++casesFailed;
+                }
             }
-            catch (TestAssertionError const& e) {
-                std::cout << casePrefix << "FAILED - assertion failed: " << e.message << std::endl;
+
+            try {
+                testModuleImpl.reset();
             }
             catch (std::exception const& e) {
-                std::cout << casePrefix << "FAILED - unhandled std::exception: " << e.what() << std::endl;
+                std::cout << modulePrefix << "Module teardown FAILED - unhandled std::exception: " << e.what() << std::endl;
             }
             catch (...) {
                 // Unfortunately I don't think there is any way to get the thrown value.
-                std::cout << casePrefix << "FAILED - unhandled thrown value" << std::endl;
+                std::cout << modulePrefix << "Module teardown FAILED - unhandled thrown value" << std::endl;
             }
-
-            if (passed) {
-                std::cout << casePrefix << "PASSED" << std::endl;
-                ++casesPassed;
-            }
-            else {
-                ++casesFailed;
-            }
+        }
+        else {
+            ++moduleSetupFailures;
         }
     }
 
@@ -58,6 +93,8 @@ void runMPITests(InternodeCommunicator const& internodeCommunicator, std::vector
     // Really dodgy sleep just to wait for all output to stdout from all nodes to be written.
     std::this_thread::sleep_for(std::chrono::milliseconds{250});
 
-    std::cout << nodePrefix << casesPassed << " test cases passed, " << casesFailed << " test cases failed."
-        << std::endl;
+    // TODO
+    std::cout << nodePrefix << moduleSetupSuccesses << " test modules started successfully, "
+        << moduleSetupFailures << " test modules failed to start, "
+        << casesPassed << " test cases passed, " << casesFailed << " test cases failed." << std::endl;
 }
