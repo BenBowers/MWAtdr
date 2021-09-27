@@ -2,5 +2,4 @@
 
 #include "../TestHelper.hpp"
 
-
 TestModule nodeAntennaInputAssignerTest();

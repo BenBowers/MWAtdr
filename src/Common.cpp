@@ -1,6 +1,5 @@
 #include "Common.hpp"
 
-
 bool operator==(AppConfig const& lhs, AppConfig const& rhs) {
     return lhs.observationID == rhs.observationID
         && lhs.signalStartTime == rhs.signalStartTime

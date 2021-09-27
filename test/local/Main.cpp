@@ -1,6 +1,7 @@
 #include "../TestHelper.hpp"
 
 #include "ChannelRemappingTest.hpp"
+#include "MetadataFileReaderTest.hpp"
 #include "NodeAntennaInputAssignerTest.hpp"
 #include "OutputLogFileWriterTest.hpp"
 #include "OutSignalWriterTest.hpp"
@@ -15,6 +16,7 @@ int main(){
         readCoeDataTest(),
         channelRemappingTest(),
         outSignalWriterTest(),
+        metadataFileReaderTest(),
         nodeAntennaInputAssignerTest(),
         outputLogFileWriterTest()
     });
