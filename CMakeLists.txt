@@ -26,6 +26,7 @@ set(LOCAL_TEST_SOURCE_FILES
     "${LOCAL_TEST_SOURCE_DIR}/ChannelRemappingTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/MetadataFileReaderTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/NodeAntennaInputAssignerTest.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/OutputLogFileWriterTest.cpp"
 )
 
 set(MPI_TEST_SOURCE_FILES

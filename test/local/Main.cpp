@@ -3,6 +3,7 @@
 #include "ChannelRemappingTest.hpp"
 #include "MetadataFileReaderTest.hpp"
 #include "NodeAntennaInputAssignerTest.hpp"
+#include "OutputLogFileWriterTest.hpp"
 #include "OutSignalWriterTest.hpp"
 #include "ReadCoeDataTest.hpp"
 
@@ -16,6 +17,7 @@ int main(){
         channelRemappingTest(),
         outSignalWriterTest(),
         metadataFileReaderTest(),
-        nodeAntennaInputAssignerTest()
+        nodeAntennaInputAssignerTest(),
+        outputLogFileWriterTest()
     });
 }
