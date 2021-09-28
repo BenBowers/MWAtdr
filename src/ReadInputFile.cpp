@@ -51,7 +51,7 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
             offset = 0;     
         }        
         //reading the data into the vector
-        //known size of data file enteries as per file specification pre allocation to save time later
+        //known size of data file enteries as per file specifclearication pre allocation to save time later
         datavalues.reserve(NUMSAMPLES*160);        
         //alot of this is dependent on the meta data file reader numbers are subject to change once i figure out what to do
         //seeking to the start of the data portion of the file 
