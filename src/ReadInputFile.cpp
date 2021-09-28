@@ -33,7 +33,7 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
     //This needs to be moved to a diff function as for each file it could be a different number
     long long NUMTILES = getNinputs(metadata) * getNpols(metadata);
     //This is how large the delay meta data block is inside of the file is is dependent on how many tiles are in the observation
-    long long DELAYDATALENGTH = NUMTILES*128000;
+    long long DELAYDATALENGTH = NUMTILES*NUMSAMPLES*2;
 
     //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
     validateInputData(fileName);
