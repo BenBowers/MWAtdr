@@ -6,6 +6,8 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <filesystem>
+#include <random>
 
 class ReadInputFileTest : public TestModule::Impl {
 public:
@@ -14,157 +16,111 @@ public:
     virtual std::vector<TestCase> getTestCases() override;
 };
 
+std::vector<std::complex<float>> testdata;
+ReadInputFileTest::ReadInputFileTest(){ 
+    std::string str = "HDR_SIZE 4096\nPOPULATED 1\nOBS_ID 1294797712\nSUBOBS_ID 1294797712\nMODE VOLTAGE_START\nUTC_START 2021-01-16-02:01:34\nOBS_OFFSET 0\nNBIT 8\nNPOL 2\nNTIMESAMPLES 64000\nNINPUTS 256\nNINPUTS_XGPU 256\nAPPLY_PATH_WEIGHTS 0\nAPPLY_PATH_DELAYS 0\nINT_TIME_MSEC 500\nFSCRUNCH_FACTOR 50\nAPPLY_VIS_WEIGHTS 0\nTRANSFER_SIZE 5275648000\nPROJ_ID G0034\nEXPOSURE_SECS 304\nCOARSE_CHANNEL 118\nCORR_COARSE_CHANNEL 10\nSECS_PER_SUBOBS 8\nUNIXTIME 1610762494\nUNIXTIME_MSEC 0\nFINE_CHAN_WIDTH_HZ 10000\nNFINE_CHAN 128\nBANDWIDTH_HZ 1280000\nSAMPLE_RATE 1280000\nMC_IP 0.0.0.0\nMC_PORT 0\nMC_SRC_IP 0.0.0.0\n";
+    std::string invalidstr = "HDR_SIZE 4096\nPOPULATED 1\nOBS_ID 1294797712\nSUBOBS_ID 1294797712\nMODE VOLTAGE_START\nUTC_START 2021-01-16-02:01:34\nOBS_OFFSET 0\nNBIT 8\nNPOL 3\nNTIMESAMPLES 64000\nNINPUTS 256\nNINPUTS_XGPU 256\nAPPLY_PATH_WEIGHTS 0\nAPPLY_PATH_DELAYS 0\nINT_TIME_MSEC 500\nFSCRUNCH_FACTOR 50\nAPPLY_VIS_WEIGHTS 0\nTRANSFER_SIZE 5275648000\nPROJ_ID G0034\nEXPOSURE_SECS 304\nCOARSE_CHANNEL 118\nCORR_COARSE_CHANNEL 10\nSECS_PER_SUBOBS 8\nUNIXTIME 1610762494\nUNIXTIME_MSEC 0\nFINE_CHAN_WIDTH_HZ 10000\nNFINE_CHAN 128\nBANDWIDTH_HZ 1280000\nSAMPLE_RATE 1280000\nMC_IP 0.0.0.0\nMC_PORT 0\nMC_SRC_IP 0.0.0.0\n";
 
-ReadInputFileTest::ReadInputFileTest(){
-    std::ifstream f("signals/metadata.sub");   
-    std::string str(4096, ' ');
-    if (f){
-        f.seekg(4096, std::ios::beg);
-        const auto size = f.tellg();
-        f.seekg(0);
-        f.read(&str[0], size); 
-        f.close();
-    }
-
-    std::ifstream invf("signals/invalidmetadata.sub");   
-    std::string invalidstr(4096, ' ');
-    if (invf){
-        invf.seekg(4096, std::ios::beg);
-        const auto size = invf.tellg();
-        invf.seekg(0);
-        invf.read(&invalidstr[0], size); 
-        invf.close();
-    } 
     //known good file
-    std::ofstream myfile("signals/1294797712_1294797717_118.sub",std::ios::out | std::ios::binary);
+    std::ofstream myfile("test_input/1294797712_1294797717_118.sub",std::ios::out | std::ios::binary);
     if(myfile.is_open()){
         myfile << str;
+        for(int i =1; i<= 3533;i++){
+            myfile <<(std::int8_t)0;
+        }
         for(long i = 1; i <= 32768000; i++){
-            myfile << (signed char)0;
+            myfile << (std::int8_t)0;
         }
         //num tiles
-        for(long long i = 1; i<=256; i++){
-            //number of data enteries
-            for(long long j =1; j<=160; j++){
-                //num samples
-                for (long k = 1; k <= 64000; k++){
-                    myfile << (signed char)1;
-                    myfile << (signed char)1;
-                }
+        for(long i = 1; i<=2621440000; i++){
+            signed char realrand = (std::int8_t) rand();
+            signed char irand = (std::int8_t) rand();
+            if(i <= 64000){
+                testdata.push_back({realrand,irand});
+                myfile << realrand;
+                myfile << irand;
             }
+            else{
+                myfile << realrand;
+                myfile << irand;
+            }    
         }  
-    }
-    //invalid metadata wrong file size
-    std::ofstream invalidfile("signals/1294797712_1294797715_118.sub",std::ios::out | std::ios::binary);
-    if(invalidfile.is_open()){
-        invalidfile << str;
-        for(long i = 1; i <= 32768000; i++){
-            invalidfile << (signed char)0;
-        }
-        //num tiles
-        for(long long i = 1; i<=256; i++){
-            //number of data enteries
-            for(long long j =1; j<=160; j++){
-                //num samples
-                for (long k = 1; k <= 64001; k++){
-                    invalidfile << (signed char)1;
-                    invalidfile << (signed char)1;
-                }
-            }
-        }  
-    }    
-    //invalid meta data
-    std::ofstream invalidmeta("signals/1294797712_1294797714_118.sub",std::ios::out | std::ios::binary);
-    if(invalidmeta.is_open()){
-        invalidmeta << invalidstr;
-        for(long i = 1; i <= 32768000; i++){
-            invalidmeta << (signed char)0;
-        }
-        //num tiles
-        for(long long i = 1; i<=256; i++){
-            //number of data enteries
-            for(long long j =1; j<=160; j++){
-                //num samples
-                for (long k = 1; k <= 64000; k++){
-                    invalidmeta << (signed char)1;
-                    invalidmeta << (signed char)1;
-                }
-            }
-        }  
-    }    
-    //5 different channels
-    for(int ii =1; ii<=5; ii++){
-        std::string filename = "signals/1294797712_1294797712_"+std::to_string(ii) +".sub";
-        std::ofstream diffchan(filename,std::ios::out | std::ios::binary);
-        if(diffchan.is_open()){
-            diffchan << str;
-            for(long i = 1; i <= 32768000; i++){
-                diffchan << (signed char)0;
-            }
-            //num tiles
-            for(long long i = 1; i<=256; i++){
-                //number if data enteries
-                for(long long j =1; j<=160; j++){
-                    //num samples
-                    for (long k = 1; k <= 64000; k++){
-                        diffchan << (signed char)1;
-                        diffchan << (signed char)1;
-                    }
-                }
-            }  
-        }
     }
     
+    std::ofstream invalidfile("test_input/1294797712_1294797718_118.sub",std::ios::out | std::ios::binary);
+    if(invalidfile.is_open()){
+        invalidfile << invalidstr;
+        for(int i =1; i<= 3533;i++){
+            invalidfile <<(std::int8_t)0;
+        }
+        for(long i = 1; i <= 32768000; i++){
+            invalidfile << (std::int8_t)0;
+        }
+        //num tiles
+        for(long i = 1; i<=2621440000; i++){
+            signed char realrand = (std::int8_t) rand();
+            signed char irand = (std::int8_t) rand();
+            invalidfile << realrand;
+            invalidfile << irand;   
+        }  
+    }
+    std::ofstream wrongsize("test_input/1294797712_1294797719_118.sub",std::ios::out | std::ios::binary);
+    if(wrongsize.is_open()){
+        wrongsize << str;
+        for(int i =1; i<= 3533;i++){
+            wrongsize <<(std::int8_t)0;
+        }
+        for(long i = 1; i <= 32768000; i++){
+            wrongsize << (std::int8_t)0;
+        }
+        //num tiles
+        for(long i = 1; i<=2621440001; i++){
+            signed char realrand = (std::int8_t) rand();
+            signed char irand = (std::int8_t) rand();
+            wrongsize << realrand;
+            wrongsize << irand;   
+        }  
+    }    
 }
 
 
 std::vector<TestCase> ReadInputFileTest::getTestCases() {
     return {        
-        {"5 valid Signal Channel files", []() {
+        {"Single Valid Data file(Checking the first 64000 elements are the same)", []() {
             try{
-                auto data = readInputDataFile("1294797712_1294797712",0);
-                testAssert(data.size() == 5); 
+                std::vector<std::complex<float>> data = readInputDataFile("test_input/1294797712_1294797717_118.sub",0);              
+                testAssert(std::equal(testdata.begin(), testdata.end(),data.begin()) == true);                                                            
             }
             catch(ReadInputDataException const& e){}
         }},
-        {"Invalid data file name", []() {
+        {"Single Valid Data file(Assert Vector Size is expeted)", []() {
             try{
-                auto data = readInputDataFile("1234567890",0);
-                failTest();
+                std::vector<std::complex<float>> data = readInputDataFile("test_input/1294797712_1294797717_118.sub",0);              
+                testAssert(data.size() == 10240000);                                                            
+            }
+            catch(ReadInputDataException const& e){}
+        }},        
+        {"Single invalid Data file (invalid file size)", []() {
+            try{
+                std::vector<std::complex<float>> data = readInputDataFile("test_input/1294797712_1294797719_118.sub",0);              
+                failTest();                                                            
             }
             catch(ReadInputDataException const& e){}
         }},
-        {"Single Malformed Meta Data file Incorect NPOLS", []() {
+        {"Invalid File Name", []() {
             try{
-                auto data = readInputDataFile("1294797712_1294797714",0);
-                failTest();
+                std::vector<std::complex<float>> data = readInputDataFile("123456789",0);              
+                failTest();                                                            
             }
             catch(ReadInputDataException const& e){}
         }},
-        {"Single Invalid Data file Correct Meta Data wrong size", []() {
+        {"Correct Data File Invalid Meta Data", []() {
             try{
-                auto data = readInputDataFile("1294797712_1294797715",0);
-                failTest(); 
+                std::vector<std::complex<float>> data = readInputDataFile("test_input/1294797712_1294797718_118.sub",0);              
+                failTest();                                                            
             }
             catch(ReadInputDataException const& e){}
-        }}, 
-        {"Single Valid Data file all Antena read (File confirmed to have 128 tiles 2x polarisations)", []() {
-            try{
-                for(int i = 1; i <= 1; i++){
-                    auto data = readInputDataFile("1294797712_1294797713",i);
-                    testAssert(data.size() == 1);
-                }  
-            }
-            catch(ReadInputDataException const& e){}
-        }},
-        {"Verify Data (Known Data file all 1's as input)", []() {
-            try{
-                auto data = readInputDataFile("1294797712_1294797717",0);
-                std::vector<std::vector<std::complex<float>>> expected(1,std::vector<std::complex<float>>(10240000,{1,1}));
-                testAssert(expected == data);     
-            }
-            catch(ReadInputDataException const& e){}
-        }}                                               
+        }},                                                                             
     };
 }
 
