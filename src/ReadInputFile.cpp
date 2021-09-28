@@ -52,7 +52,7 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
         }        
         //reading the data into the vector
         //known size of data file enteries as per file specification pre allocation to save time later
-        datavalues.reserve(NUMSAMPLES*160*sizeof(std::complex<float>));        
+        datavalues.reserve(NUMSAMPLES*160);        
         //alot of this is dependent on the meta data file reader numbers are subject to change once i figure out what to do
         //seeking to the start of the data portion of the file 
         //this will be antena 0 polarisation x and y sample 1 of 64000
