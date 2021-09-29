@@ -60,8 +60,8 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
         for(int i = 1; i <= 160;i++){
             datafile.seekg(DELAYDATALENGTH, std::ios::cur);
             for(int j = 1; j<=NUMSAMPLES;j++){
-                signed char rbuffer;
-                signed char ibuffer;
+                std::int8_t rbuffer;
+                std::int8_t ibuffer;
 
                 datafile.read(reinterpret_cast<char*>(&rbuffer),sizeof(std::int8_t));
                 datafile.read(reinterpret_cast<char*>(&ibuffer),sizeof(std::int8_t));
