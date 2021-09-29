@@ -96,16 +96,14 @@ std::vector<TestCase> ReadInputFileTest::getTestCases() {
         {"Single Valid Data file(Assert Vector Size is expeted)", []() {
             try{
                 std::vector<std::complex<float>> data = readInputDataFile("/mnt/test_input/1294797712_1294797717_118.sub",0);              
-                testAssert(data.size() == 10240000);
-                std::filesystem::remove("/mnt/test_input/1294797712_1294797717_118.sub");                                                            
+                testAssert(data.size() == 10240000);                                                            
             }
             catch(ReadInputDataException const& e){}
         }},        
         {"Single invalid Data file (invalid file size)", []() {
             try{
                 std::vector<std::complex<float>> data = readInputDataFile("/mnt/test_input/1294797712_1294797719_118.sub",0);              
-                failTest();
-                std::filesystem::remove("/mnt/test_input/1294797712_1294797719_118.sub");                                                            
+                failTest();                                                            
             }
             catch(ReadInputDataException const& e){}
         }},
@@ -119,8 +117,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases() {
         {"Correct Data File Invalid Meta Data", []() {
             try{
                 std::vector<std::complex<float>> data = readInputDataFile("/mnt/test_input/1294797712_1294797718_118.sub",0);              
-                failTest();
-                std::filesystem::remove("/mnt/test_input/1294797712_1294797718_118.sub");                                                            
+                failTest();                                                            
             }
             catch(ReadInputDataException const& e){}
         }},                                                                             
@@ -133,4 +130,7 @@ TestModule readInputFileTest() {
         "Input File reader test",
         []() { return std::make_unique<ReadInputFileTest>(); }
     };
+    std::filesystem::remove("/mnt/test_input/1294797712_1294797718_118.sub");
+    std::filesystem::remove("/mnt/test_input/1294797712_1294797719_118.sub");
+    std::filesystem::remove("/mnt/test_input/1294797712_1294797717_118.sub");
 }

@@ -15,10 +15,10 @@
 
 //Meta data inside each file readers
 std::string getMetaDataString(std::string fileName);
-int getMetaDataSize(std::string fileName);
-int getNinputs(std::string fileName);
-int getNpols(std::string fileName);
-int getNsamples(std::string fileName);
+unsigned int getMetaDataSize(std::string fileName);
+int getNInputs(std::string fileName);
+int getNPols(std::string fileName);
+int getNSamples(std::string fileName);
 
 //Main function for reading in of the data file takes the name of the file it is to read from
 //will read all files for a specific calculation into 1 complex vector array for signal processing
@@ -27,11 +27,11 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
     std::vector<std::complex<float>> datavalues;
         
     std::string metadata = getMetaDataString(fileName);
-    int metadatasize = getMetaDataSize(metadata);
+    unsigned int metadatasize = getMetaDataSize(metadata);
     //This is the number of samples per 50ms time slice in the data files this is subject to change based on the MWA wiki
-    int NUMSAMPLES = getNsamples(metadata);
+    int NUMSAMPLES = getNSamples(metadata);
     //This needs to be moved to a diff function as for each file it could be a different number
-    long long NUMTILES = getNinputs(metadata) * getNpols(metadata);
+    long long NUMTILES = getNInputs(metadata) * getNPols(metadata);
     //This is how large the delay meta data block is inside of the file is is dependent on how many tiles are in the observation
     long long DELAYDATALENGTH = NUMTILES*NUMSAMPLES*2;
 
@@ -83,22 +83,19 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
 //function used to validate if the data file is the correct size and thus allowing the program to know if there is anything missing.
 //The file size this program will be given is a constant as such its easy to validate if the file is correct or not
 //break
-bool validateInputData(std::string fileName){
+void validateInputData(std::string fileName){
     //MWA documentation states this is the standered file size for a 128 tile dual polarisation file
     //4096+161*32768000
     //meta data 160 volatage data blocks + the single delay block before the data * the size of the delay block what is 
     //Number of tiles *2 polarisations * 128000 bytes 64000 1 byte samples for each real and imag part
     std::string metadata = getMetaDataString(fileName);    
     //2 bytes per sample
-    long samplebytesize = getNsamples(metadata)*2;
-    long delaydata = getNinputs(metadata) * getNpols(metadata) * samplebytesize;
+    long samplebytesize = getNSamples(metadata)*2;
+    long delaydata = getNInputs(metadata) * getNPols(metadata) * samplebytesize;
     long metadatasize = getMetaDataSize(metadata);
     long long expectedInputSize = metadatasize + delaydata * 161;
     if(std::filesystem::file_size(fileName) != expectedInputSize){
         throw ReadInputDataException("Error File size is not expected");
-    }    
-    else{
-        return true;
     }
 }
 
@@ -118,7 +115,7 @@ std::string getMetaDataString(std::string fileName){
     }    
 }
 
-int getNpols(std::string str){
+int getNPols(std::string str){
     int nPols;
     int pos = str.find("NPOL");
     int delim = str.find("\n",pos);
@@ -128,7 +125,7 @@ int getNpols(std::string str){
 }
 
 //returns the number of samples per 50ms time slice in the data file 
-int getNsamples(std::string str){
+int getNSamples(std::string str){
     int nSamples;
     int pos = str.find("NTIMESAMPLES");
     int delim = str.find("\n",pos);
@@ -138,7 +135,7 @@ int getNsamples(std::string str){
 }
 
 //returns the humber of fine channels that the meta data expects in the file
-int getNinputs(std::string str){
+int getNInputs(std::string str){
     int nInputs;
     int pos = str.find("NFINE_CHAN");
     int delim = str.find("\n",pos);        
@@ -148,8 +145,8 @@ int getNinputs(std::string str){
 }
 
 //will return the size of the meta data header block described in the first line of the file
-int getMetaDataSize(std::string str){
-    int mSize;
+unsigned int getMetaDataSize(std::string str){
+    unsigned int mSize;
     int pos = str.find("HDR_SIZE");
     int delim = str.find("\n",pos);
     std::string sHRDsize = str.substr(pos+8,delim); 
