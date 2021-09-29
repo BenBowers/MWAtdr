@@ -182,6 +182,15 @@ void remapChannels(std::vector<std::vector<std::complex<float>>> const& signalDa
                         channelVector.data(), 1,
                         signalDataOut.data() + newChannel, outNumChannels);
         }
+
+        // I would've liked to do this outside of the loop so it only needs to be done once but due
+        // to the fact that the mapping is indexed by the original channel this is not possible!
+        // Scale by two for these edge cases
+        if ( (newChannel == outNumChannels - 1) || // If nyquist frequency
+             (newChannel == 0 && oldChannel != 0) // If something was remapped to zero
+            ) {
+            cblas_csscal(NUM_OF_BLOCKS, 2, signalDataOut.data() + newChannel, outNumChannels);
+        }
     }
 }
 
