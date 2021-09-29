@@ -3,6 +3,7 @@
 #include<tbb/tbb.h>
 #include"SignalProcessing.hpp"
 #include"ChannelRemapping.hpp"
+#include"Common.hpp"
 #include<iostream>
 // Assert that these are indeed the same type at compile type due to the unsafe reinterpret_cast 's used in these functions
 // Both of these types should be a struct containing two floats
@@ -24,7 +25,7 @@ void remapChannels(std::vector<std::vector<std::complex<float>>> const& signalDa
                    std::map<unsigned, ChannelRemapping::RemappedChannel> const& channelRemapping,
                    unsigned const outNumChannels);
 
-static const unsigned PFB_COE_CHANNELS = 256;
+static const unsigned PFB_COE_CHANNELS = filterSize;
 
 // Performs an inverse polyphase filter bank (PFB) on the signal data, the mapping is required
 // for this function so the convolution only goes over the appropriate channels. This mapping
