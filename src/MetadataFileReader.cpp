@@ -92,7 +92,8 @@ std::vector<AntennaInputPhysID> MetadataFileReader::getPhysicalAntennaInputs() {
 	std::vector<AntennaInputPhysID> antennaInputs;
 	// Convert each Rfinput to AntennaInputPhysID and add to the vector
 	for (unsigned i = 0; i < metafitsMetadata->num_rf_inputs; i++) {
-		antennaInputs.push_back({metafitsMetadata->rf_inputs[i].tile_id, *(metafitsMetadata->rf_inputs[i].pol)});
+        auto const antenna = metafitsMetadata->rf_inputs[i];
+		antennaInputs.push_back({antenna.tile_id, *(antenna.pol), antenna.flagged});
 	}
 	return antennaInputs;
 }

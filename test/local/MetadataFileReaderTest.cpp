@@ -5,6 +5,8 @@
 #include "../TestHelper.hpp"
 
 #include <filesystem>
+#include <set>
+#include <vector>
 
 const unsigned long long TEST_OBSERVATION_ID = 1294797712;
 
@@ -16,13 +18,13 @@ public:
 
 MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
 	{"Testing AntennaConfig == (true)", []() {
-		AntennaConfig const lhs = {{{{4, 'X'}}}, {14, 15}};
-		AntennaConfig const rhs = {{{{4, 'X'}}}, {14, 15}};
+		AntennaConfig const lhs = {{{{4, 'X', false}}}, {14, 15}};
+		AntennaConfig const rhs = {{{{4, 'X', false}}}, {14, 15}};
 		testAssert (lhs == rhs);
 	}},
     {"Testing AntennaConfig == (false)", []() {
-		AntennaConfig const lhs = {{{{4, 'X'}}}, {14, 15}};
-		AntennaConfig const rhs = {{{{5, 'Y'}}}, {29, 30}};
+		AntennaConfig const lhs = {{{{4, 'X', false}}}, {14, 15}};
+		AntennaConfig const rhs = {{{{5, 'Y', true}}}, {29, 30}};
 		testAssert (!(lhs == rhs));
 	}},
 	{"Valid metafits and one voltage file", []() {
@@ -39,9 +41,16 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
 							2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029,
 							2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040, 2041, 2042, 2043, 2044,
 							2045, 2046, 2047, 2048, 2049, 2050, 2051, 2052, 2053, 2054, 2055, 2056};
+		std::set<unsigned> flagged = {102, 115, 151, 164, 999, 2013, 2017, 2044, 2047};
 		for (auto i : tiles) {
-			expected.antennaInputs.push_back({i, 'X'});
-			expected.antennaInputs.push_back({i, 'Y'});
+			if (flagged.find(i) == flagged.end()) {
+			    expected.antennaInputs.push_back({i, 'X', false});
+			    expected.antennaInputs.push_back({i, 'Y', false});
+			}
+			else {
+				expected.antennaInputs.push_back({i, 'X', true});
+				expected.antennaInputs.push_back({i, 'Y', true});
+			}
 		}
 		testAssert(actual.antennaInputs == expected.antennaInputs &&
 		           actual.frequencyChannels == expected.frequencyChannels);
