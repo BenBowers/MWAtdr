@@ -35,7 +35,8 @@ void performDFT(std::vector<std::complex<float>>& signalData,
                 std::vector<float>& outData,
                 unsigned const samplingFreq,
                 unsigned const numOfBlocks,
-                unsigned const numOfChannels);
+                unsigned const numOfChannels,
+                unsigned const originalSamplingFreq);
 
 void doPostProcessing(std::vector<float> const& signalData,
                       std::vector<std::int16_t>& signalDataOut);
@@ -72,7 +73,7 @@ class SignalProcessingTest : public StatelessTestModuleImpl {
 };
 
 SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
-    {"processingSignals() empty signals", []() {
+    {"processSignals() empty signals", []() {
         std::vector<std::vector<std::complex<float>>> const signalDataIn{};
         std::map<unsigned, unsigned> const signalDataMap{};
         std::vector<int16_t> signalDataOut{};
@@ -678,54 +679,87 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
 
         testAssert( signalDataIn == expected );
     }},
-    {"performDFT() [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]", []() {
-        std::vector<std::complex<float>> signalDataIn {
-            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }};
-        std::vector<float> actual{};
-        performDFT(signalDataIn, actual, 20, 1, 11);
-        std::cout << std::endl;
-        for(auto num : actual) {
-            std::cout << num << ", ";
-        }
-        std::cout << std::endl;
-    }},
+    {"performDFT() Three blocks of cosine waves", []() {
 
-    {"performDFT() [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]", []() {
-        std::vector<std::complex<float>> signalDataIn {
-            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f } };
-        std::vector<float> actual{};
-        performDFT(signalDataIn, actual, 20, 1, 11);
-        std::cout << std::endl;
-        for(auto num : actual) {
-            std::cout << num << ", ";
-        }
-        std::cout << std::endl;
-    }},
-    {"performDFT() [1,0,0]", []() {
-        std::vector<std::complex<float>> signalDataIn {
-            { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f } };
+        // Signal in (time domain)
+        // 1, 0, -1, 0, 1, 0, -1, 0
 
-        std::vector<float> actual{};
-        performDFT(signalDataIn, actual, 4, 1, 3);
-        std::cout << std::endl;
-        for(auto num : actual) {
-            std::cout << num << ", ";
-        }
-        std::cout << std::endl;
-    }},
-    {"performDFT() [0, 0, 0, 0, 0, 1]", []() {
-        std::vector<std::complex<float>> signalDataIn {
-            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f }};
+        // Signal in (freq domain)
+        // 0, 0, 4, 0, 0
+
+        // Remapped data ( New sampling freq of 2 )
+        // 8, 0
+
+        // Aliased signal
+        // 1, 1
+        std::vector<std::complex<float>> inData {
+            { 8.0f, 0.0f }, { 0.0f, 0.0f },
+            { 8.0f, 0.0f }, { 0.0f, 0.0f },
+            { 8.0f, 0.0f }, { 0.0f, 0.0f }
+        };
+
+        std::vector<float> expected {
+            1.0f, 1.0f,
+            1.0f, 1.0f,
+            1.0f, 1.0f,
+        };
+
         std::vector<float> actual {};
-        performDFT(signalDataIn, actual, 10, 1, 6);
-        std::cout << std::endl;
-        for(auto num : actual) {
-            std::cout << num << ", ";
-        }
-        std::cout << std::endl;
+
+        performDFT(inData, actual, 2, 3, 2, 8);
+
+        testAssert(actual == expected);
     }},
+    {"performDFT() Three blocks of sine waves", []() {
 
+        // Signal in (time domain)
+        // 0, 1, 0, -1, 0, 1, 0, -1
 
+        // Signal in (freq domain)
+        // 0, 0, 0-4j, 0, 0
+
+        // Remapped data ( New sampling freq of 2 )
+        // 0-8j, 0
+
+        // Aliased signal
+        // 0, 0
+        std::vector<std::complex<float>> inData {
+            { 0.0f, -8.0f }, { 0.0f, 0.0f },
+            { 0.0f, -8.0f }, { 0.0f, 0.0f },
+            { 0.0f, -8.0f }, { 0.0f, 0.0f }
+        };
+
+        std::vector<float> expected {
+            0.0f, 0.0f,
+            0.0f, 0.0f,
+            0.0f, 0.0f,
+        };
+
+        std::vector<float> actual {};
+
+        performDFT(inData, actual, 2, 3, 2, 8);
+
+        testAssert(actual == expected);
+    }},
+    {"performDFT() Conjagated remap", []() {
+	    std::vector<std::complex<float>> inData {
+		    { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f },
+		    { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f },
+		    { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }
+	};
+
+	    std::vector<float> expected {
+		    0.4f, 0.0f, 0.0f, 0.0f, -0.4f, 0.0f, 0.0f, 0.0f,
+		    0.4f, 0.0f, 0.0f, 0.0f, -0.4f, 0.0f, 0.0f, 0.0f,
+		    0.4f, 0.0f, 0.0f, 0.0f, -0.4f, 0.0f, 0.0f, 0.0f
+	    };
+
+	    std::vector<float> actual {};
+
+        performDFT(inData, actual, 8, 3, 6, 10);
+
+        testAssert(actual == expected);
+    }},
     {"doPostProcessing() regular positive input", []() {
         std::vector<float> const inData {
             1.0f,
