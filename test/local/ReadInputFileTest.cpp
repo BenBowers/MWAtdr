@@ -32,6 +32,7 @@ ReadInputFileTest::ReadInputFileTest(){
             myfile << (std::int8_t)0;
         }
         //num tiles
+        long j = 1;
         for(long i = 1; i<=2621440000; i++){
             signed char realrand = (std::int8_t) rand();
             signed char irand = (std::int8_t) rand();
@@ -40,11 +41,19 @@ ReadInputFileTest::ReadInputFileTest(){
                 myfile << realrand;
                 myfile << irand;
             }
+            if(i == 16384000*j+64000){
+                    j++;    
+            }
+            else if(i > 16384000*j && i <= 16384000*j+64000){                
+                testdata.push_back({realrand,irand});
+                myfile << realrand;
+                myfile << irand;
+            }
             else{
                 myfile << realrand;
                 myfile << irand;
             }    
-        }  
+        }
     }
 
     std::ofstream invalidfile("/tmp/1294797712_1294797718_118.sub",std::ios::out | std::ios::binary);
@@ -58,10 +67,8 @@ ReadInputFileTest::ReadInputFileTest(){
         }
         //num tiles
         for(long i = 1; i<=2621440000; i++){
-            signed char realrand = (std::int8_t) rand();
-            signed char irand = (std::int8_t) rand();
-            invalidfile << realrand;
-            invalidfile << irand;   
+            std::int8_t sample[2] = {(std::int8_t) rand(),(std::int8_t) rand()};
+            invalidfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));   
         }  
     }
     std::ofstream wrongsize("/tmp/1294797712_1294797719_118.sub",std::ios::out | std::ios::binary);
@@ -75,10 +82,8 @@ ReadInputFileTest::ReadInputFileTest(){
         }
         //num tiles
         for(long i = 1; i<=2621440001; i++){
-            signed char realrand = (std::int8_t) rand();
-            signed char irand = (std::int8_t) rand();
-            wrongsize << realrand;
-            wrongsize << irand;   
+            std::int8_t sample[2] = {(std::int8_t) rand(),(std::int8_t) rand()};
+            wrongsize.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));   
         }  
     }    
 }
@@ -89,14 +94,16 @@ std::vector<TestCase> ReadInputFileTest::getTestCases() {
         {"Single Valid Data file(Checking the first 64000 elements are the same)", []() {
             try{
                 std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",0);              
-                testAssert(std::equal(testdata.begin(), testdata.end(),data.begin()) == true);                                                           
+                testAssert(data == testdata);                                                           
             }
             catch(ReadInputDataException const& e){}
         }},
-        {"Single Valid Data file(Assert Vector Size is expeted)", []() {
+        {"Single Valid Data file(Assert Vector Size is expeted) for all antenas", []() {
             try{
-                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",0);              
-                testAssert(data.size() == 10240000);
+                for(int i = 0; i <= 10; i++){
+                    std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",i);              
+                    testAssert(data.size() == 10240000);
+                }
                 std::filesystem::remove("/tmp/1294797712_1294797717_118.sub");                                                            
             }
             catch(ReadInputDataException const& e){}
