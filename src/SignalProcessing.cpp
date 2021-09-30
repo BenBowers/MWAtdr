@@ -179,7 +179,7 @@ void remapChannels(std::vector<std::vector<std::complex<float>>> const& signalDa
         bool const flipped = map.second.flipped;
 
         // Grab the correct channel vector based on the mapping
-        std::vector<std::complex<float>> const channelVector = signalDataIn[signalDataInMapping.find(oldChannel)->second];
+        std::vector<std::complex<float>> const& channelVector = signalDataIn[signalDataInMapping.find(oldChannel)->second];
 
         if (flipped) {
             // Do a strided conjugated copy over it
