@@ -93,7 +93,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases() {
     return {        
         {"Single Valid Data file(Checking the first 64000 elements are the same)", []() {
             try{
-                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",0);              
+                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",0,256);              
                 testAssert(data == testdata);                                                           
             }
             catch(ReadInputDataException const& e){}
@@ -101,7 +101,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases() {
         {"Single Valid Data file(Assert Vector Size is expeted) for all antenas", []() {
             try{
                 for(int i = 0; i <= 255; i++){
-                    std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",i);              
+                    std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",i,256);              
                     testAssert(data.size() == 10240000);
                 }
                 std::filesystem::remove("/tmp/1294797712_1294797717_118.sub");                                                            
@@ -110,7 +110,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases() {
         }},        
         {"Single invalid Data file (invalid file size)", []() {
             try{
-                std::vector<std::complex<float>> data = readInputDataFile("/mnt/test_input/1294797712_1294797719_118.sub",0);              
+                std::vector<std::complex<float>> data = readInputDataFile("/mnt/test_input/1294797712_1294797719_118.sub",0,256);              
                 failTest();                                                            
             }
             catch(ReadInputDataException const& e){
@@ -119,14 +119,14 @@ std::vector<TestCase> ReadInputFileTest::getTestCases() {
         }},
         {"Invalid File Name", []() {
             try{
-                std::vector<std::complex<float>> data = readInputDataFile("123456789",0);              
+                std::vector<std::complex<float>> data = readInputDataFile("123456789",0,256);              
                 failTest();                                                            
             }
             catch(ReadInputDataException const& e){}
         }},
         {"Correct Data File Invalid Meta Data", []() {
             try{
-                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797718_118.sub",0);              
+                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797718_118.sub",0,256);              
                 failTest();                                                            
             }
             catch(ReadInputDataException const& e){

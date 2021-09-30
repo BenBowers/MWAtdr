@@ -1,7 +1,11 @@
 /* WARNING MOST OF THIS MODULE CAN AND WILL BREAK IF THE MWA DATA FILE FORMAT CHANGES IN A DRASTIC WAY
     Some things to note that i have tryed to make this module as effiecent as it can be
     Due to having to read into complex numbers greatly makes this module super in efficent
-    Having to read the meta data inside of each file is also inefficent.
+
+    In an attempt to reduce how badly this will break if things changes this file reader uses the metadata
+    block at the start of each file to base calculations off where to find each input. as of now the onyl way this is being validated
+    is by checking that the number of n inputs eg the number of antea in each observation matches the metafits file for that
+    observation. I understand that this is not ideal but it is unfortantly all that i have to work with.
 
 */
 #include "ReadInputFile.hpp"
@@ -16,13 +20,14 @@
 //Meta data inside each file readers
 std::string getMetaDataString(std::string fileName);
 unsigned int getMetaDataSize(std::string fileName);
+void validateInputData(std::string fileName, unsigned int expectedNInputs);
 int getNInputs(std::string fileName);
 int getNPols(std::string fileName);
 int getNSamples(std::string fileName);
 
 //Main function for reading in of the data file takes the name of the file it is to read from
 //will read all files for a specific calculation into 1 complex vector array for signal processing
-std::vector<std::complex<float>> readInputDataFile(std::string fileName,int antenaInput){    
+std::vector<std::complex<float>> readInputDataFile(std::string fileName,int antenaInput, unsigned int expectedNInputs){    
 
     std::vector<std::complex<float>> datavalues;
         
@@ -36,7 +41,7 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
     long long DELAYDATALENGTH = NUMTILES*NUMSAMPLES*2;
 
     //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
-    validateInputData(fileName);
+    validateInputData(fileName, expectedNInputs);
     //Opening the first data filestream this changes each interation of the loop to pass thru all files
     std::ifstream datafile(fileName, std::ios::binary);   
     // main error handling statement
@@ -83,7 +88,7 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
 //function used to validate if the data file is the correct size and thus allowing the program to know if there is anything missing.
 //The file size this program will be given is a constant as such its easy to validate if the file is correct or not
 //break
-void validateInputData(std::string fileName){
+void validateInputData(std::string fileName, unsigned int expectedNInputs){
     //MWA documentation states this is the standered file size for a 128 tile dual polarisation file
     //4096+161*32768000
     //meta data 160 volatage data blocks + the single delay block before the data * the size of the delay block what is 
@@ -92,6 +97,9 @@ void validateInputData(std::string fileName){
     //2 bytes per sample
     long samplebytesize = getNSamples(metadata)*2;
     long delaydata = getNInputs(metadata) * getNPols(metadata) * samplebytesize;
+    if(getNInputs(metadata) != expectedNInputs){
+        throw ReadInputDataException("Observation metadata and file metadata do not match");
+    }
     long metadatasize = getMetaDataSize(metadata);
     long long expectedInputSize = metadatasize + delaydata * 161;
     if(std::filesystem::file_size(fileName) != expectedInputSize){
@@ -114,7 +122,8 @@ std::string getMetaDataString(std::string fileName){
         throw ReadInputDataException("Error Reading meta data from file");
     }    
 }
-
+//gets the number of polaritys each antea is using in this observation it is safe to assume this to be 2 normaly but in the future could change
+//thus why it is read from the meta data.
 int getNPols(std::string str){
     int nPols;
     int pos = str.find("NPOL");
@@ -134,7 +143,7 @@ int getNSamples(std::string str){
     return nSamples;
 }
 
-//returns the humber of fine channels that the meta data expects in the file
+//returns the number of fine channels that the meta data expects in the file
 int getNInputs(std::string str){
     int nInputs;
     int pos = str.find("NFINE_CHAN");
