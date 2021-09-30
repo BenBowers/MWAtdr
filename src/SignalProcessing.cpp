@@ -114,24 +114,32 @@ void processSignal(std::vector<std::vector<std::complex<float>>> const& signalDa
         throw std::invalid_argument("ChannelRemapping cannot be empty ");
     }
 
-    unsigned const IN_NUM_CHANNELS = remappingData.channelMap.rbegin()->first + 1;
-
-    if ( signalDataIn.size() % IN_NUM_CHANNELS != 0 ) {
-        throw std::invalid_argument("signalDataIn is not a multiple of the number of channels");
+    if ( remappingData.channelMap.size() != signalDataInMapping.size() ) {
+        throw std::invalid_argument("Different number of remapped channels and input channels");
     }
 
+    if ( signalDataInMapping.size() != signalDataIn.size() ) {
+        throw std::invalid_argument("Number of channels present in input signal do not equal number of channels in mapping");
+    }
+
+    unsigned const IN_NUM_CHANNELS = signalDataIn.size();
     unsigned const IN_NUM_BLOCKS = signalDataIn[0].size();
+
+    for (auto iterator = signalDataIn.begin()++; iterator != signalDataIn.end(); ++iterator) {
+        if (iterator->size() != IN_NUM_BLOCKS) {
+            throw std::invalid_argument("Input signal has different number of blocks for each signal");
+        }
+    }
 
     if ( IN_NUM_BLOCKS % 2 != 0 && IN_NUM_BLOCKS != 1 ) {
         throw std::invalid_argument("Number of samples in the input data is not a multiple of 2 or size of 1");
     }
 
-
     // New number of channels will be half the number of samples due the nyquist sampling theory
-    unsigned const OUT_NUM_CHANNELS = remappingData.newSamplingFreq / 2;
+    unsigned const OUT_NUM_CHANNELS = (remappingData.newSamplingFreq / 2) + 1;
 
     if ( IN_NUM_CHANNELS < OUT_NUM_CHANNELS ) {
-        throw std::invalid_argument("Invalid signalDataIn, channelMap combination");
+        throw std::invalid_argument("New sampling frequency is greater than orginal");
     }
 
     if ( coefficiantPFB.size() % PFB_COE_CHANNELS != 0 ) {
