@@ -34,24 +34,20 @@ ReadInputFileTest::ReadInputFileTest(){
         //num tiles
         long j = 1;
         for(long i = 1; i<=2621440000; i++){
-            signed char realrand = (std::int8_t) rand();
-            signed char irand = (std::int8_t) rand();
+            std::int8_t sample[2] = {(std::int8_t) rand(),(std::int8_t) rand()};
             if(i <= 64000){
-                testdata.push_back({realrand,irand});
-                myfile << realrand;
-                myfile << irand;
+                testdata.push_back({sample[0],sample[1]});
+                myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
             }
             if(i == 16384000*j+64000){
                     j++;    
             }
             else if(i > 16384000*j && i <= 16384000*j+64000){                
-                testdata.push_back({realrand,irand});
-                myfile << realrand;
-                myfile << irand;
+                testdata.push_back({sample[0],sample[1]});
+                myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
             }
             else{
-                myfile << realrand;
-                myfile << irand;
+                myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
             }    
         }
     }
