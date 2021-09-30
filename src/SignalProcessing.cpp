@@ -14,6 +14,7 @@
 static_assert(std::is_same<decltype(MKL_Complex8::real), decltype(std::complex<float>().real())>::value, "MKL_Complex8 doesn't equal std::complex<float>");
 static_assert(std::is_same<decltype(MKL_Complex8::imag), decltype(std::complex<float>().imag())>::value, "MKL_Complex8 doesn't equal std::complex<float>");
 static_assert(sizeof(MKL_Complex8) == sizeof(std::complex<float>), "MKL_Complex8 doesn't equal std::complex<float>");
+static_assert(alignof(MKL_Complex8) == alignof(std::complex<float>), "MKL_Complex8 doesn't have the same alignt as std::complex<float>");
 
 // Remaps the channels based on the mapping given to it, once the channels are remapped the data may be
 // conjugated based on the data in ChannelRemapping.
