@@ -100,7 +100,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases() {
         }},
         {"Single Valid Data file(Assert Vector Size is expeted) for all antenas", []() {
             try{
-                for(int i = 0; i <= 10; i++){
+                for(int i = 0; i <= 255; i++){
                     std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",i);              
                     testAssert(data.size() == 10240000);
                 }
