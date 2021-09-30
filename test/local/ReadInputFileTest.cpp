@@ -85,7 +85,7 @@ ReadInputFileTest::ReadInputFileTest(){
 }
 
 
-std::vector<TestCase> ReadInputFileTest::getTestCases() {
+std::vector<TestCase> ReadInputFileTest::getTestCases(){
     return {        
         {"Single Valid Data file(Checking the first 64000 elements are the same)", []() {
             try{

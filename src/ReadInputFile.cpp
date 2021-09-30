@@ -20,7 +20,6 @@
 //Meta data inside each file readers
 std::string getMetaDataString(std::string fileName);
 unsigned int getMetaDataSize(std::string fileName);
-void validateInputData(std::string fileName, unsigned int expectedNInputs);
 int getNInputs(std::string fileName);
 int getNPols(std::string fileName);
 int getNSamples(std::string fileName);
@@ -39,7 +38,6 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
     long long NUMTILES = getNInputs(metadata) * getNPols(metadata);
     //This is how large the delay meta data block is inside of the file is is dependent on how many tiles are in the observation
     long long DELAYDATALENGTH = NUMTILES*NUMSAMPLES*2;
-
     //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
     validateInputData(fileName, expectedNInputs);
     //Opening the first data filestream this changes each interation of the loop to pass thru all files
