@@ -73,7 +73,7 @@ class SignalProcessingTest : public StatelessTestModuleImpl {
 };
 
 SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
-    {"processSignals() empty signals", []() {
+    {"processSignals() Empty Channel Remapping", []() {
         std::vector<std::vector<std::complex<float>>> const signalDataIn{};
         std::map<unsigned, unsigned> const signalDataMap{};
         std::vector<int16_t> signalDataOut{};
@@ -87,6 +87,235 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             // Test passed
         }
 
+    }},
+    {"processSignals() Different Number of Channels in mappings", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn{};
+        std::map<unsigned, unsigned> const signalDataMap{{1, 1}};
+        std::vector<int16_t> signalDataOut{};
+        ChannelRemapping const remappingData{
+            2,
+            {
+                {0, {0, false}},
+                {1, {1, false}}
+            }
+        };
+        std::vector<std::complex<float>> coeData{};
+
+        try {
+            processSignal(signalDataIn, signalDataMap, signalDataOut, coeData, remappingData);
+            failTest();
+        } catch (std::invalid_argument& e) {
+            // Test passed
+        }
+
+    }},
+    {"processSignals() Different Number of Channels between signal and mapping", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn{};
+        std::map<unsigned, unsigned> const signalDataMap{{0, 0}, {1, 1}};
+        std::vector<int16_t> signalDataOut{};
+        ChannelRemapping const remappingData{
+            2,
+            {
+                {0, {0, false}},
+                {1, {1, false}}
+            }
+        };
+        std::vector<std::complex<float>> coeData{};
+
+        try {
+            processSignal(signalDataIn, signalDataMap, signalDataOut, coeData, remappingData);
+            failTest();
+        } catch (std::invalid_argument& e) {
+            // Test passed
+        }
+
+    }},
+    {"processSignals() Different number of blocks in the input data (Different at the start)", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn{
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }, {0.0f, 0.0f }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
+        };
+        std::map<unsigned, unsigned> const signalDataMap{
+            {0, 0},
+            {1, 1},
+            {2, 2},
+            {3, 3}};
+
+        std::vector<int16_t> signalDataOut{};
+        ChannelRemapping const remappingData{
+            4,
+            {
+                {0, {0, false}},
+                {1, {1, false}},
+                {2, {2, false}},
+                {3, {3, false}}
+            }
+        };
+        std::vector<std::complex<float>> coeData{};
+
+        try {
+            processSignal(signalDataIn, signalDataMap, signalDataOut, coeData, remappingData);
+            failTest();
+        } catch (std::invalid_argument& e) {
+        }
+    }},
+    {"processSignals() Different number of blocks in the input data (Different in the middle)", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn{
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }, { 0.0f, 0.0f }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
+        };
+        std::map<unsigned, unsigned> const signalDataMap{
+            {0, 0},
+            {1, 1},
+            {2, 2},
+            {3, 3}};
+
+        std::vector<int16_t> signalDataOut{};
+        ChannelRemapping const remappingData{
+            4,
+            {
+                {0, {0, false}},
+                {1, {1, false}},
+                {2, {2, false}},
+                {3, {3, false}}
+            }
+        };
+        std::vector<std::complex<float>> coeData{};
+
+        try {
+            processSignal(signalDataIn, signalDataMap, signalDataOut, coeData, remappingData);
+            failTest();
+        } catch (std::invalid_argument& e) {
+        }
+    }},
+    {"processSignals() Different number of blocks in the input data (Different at the end)", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn{
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }, { 0.0f, 0.0f }}
+        };
+        std::map<unsigned, unsigned> const signalDataMap{
+            {0, 0},
+            {1, 1},
+            {2, 2},
+            {3, 3}};
+
+        std::vector<int16_t> signalDataOut{};
+        ChannelRemapping const remappingData{
+            4,
+            {
+                {0, {0, false}},
+                {1, {1, false}},
+                {2, {2, false}},
+                {3, {3, false}}
+            }
+        };
+        std::vector<std::complex<float>> coeData{};
+
+        try {
+            processSignal(signalDataIn, signalDataMap, signalDataOut, coeData, remappingData);
+            failTest();
+        } catch (std::invalid_argument& e) {
+        }
+    }},
+    {"processSignals() New samping frequency invalid", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn{
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
+        };
+        std::map<unsigned, unsigned> const signalDataMap{
+            {0, 0},
+            {1, 1},
+            {2, 2},
+            {3, 3}};
+
+        std::vector<int16_t> signalDataOut{};
+        ChannelRemapping const remappingData{
+            8,
+            {
+                {0, {0, false}},
+                {1, {1, false}},
+                {2, {2, false}},
+                {3, {3, false}}
+            }
+        };
+        std::vector<std::complex<float>> coeData{};
+
+        try {
+            processSignal(signalDataIn, signalDataMap, signalDataOut, coeData, remappingData);
+            failTest();
+        } catch (std::invalid_argument& e) {
+        }
+    }},
+    {"processSignals() Invalid coefficant data, not a multiple of the number of channels", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn{
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
+        };
+        std::map<unsigned, unsigned> const signalDataMap{
+            {0, 0},
+            {1, 1},
+            {2, 2},
+            {3, 3}};
+
+        std::vector<int16_t> signalDataOut{};
+        ChannelRemapping const remappingData{
+            4,
+            {
+                {0, {0, false}},
+                {1, {1, false}},
+                {2, {2, false}},
+                {3, {3, false}}
+            }
+        };
+        std::vector<std::complex<float>> coeData{ { 0.0f, 0.0f } };
+
+        try {
+            processSignal(signalDataIn, signalDataMap, signalDataOut, coeData, remappingData);
+            failTest();
+        } catch (std::invalid_argument& e) {
+        }
+    }},
+    {"processSignals() Invalid coefficant data, (More blocks than signal data)", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn{
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
+            {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
+        };
+        std::map<unsigned, unsigned> const signalDataMap{
+            {0, 0},
+            {1, 1},
+            {2, 2},
+            {3, 3}};
+
+        std::vector<int16_t> signalDataOut{};
+        ChannelRemapping const remappingData{
+            4,
+            {
+                {0, {0, false}},
+                {1, {1, false}},
+                {2, {2, false}},
+                {3, {3, false}}
+            }
+        };
+
+        std::vector<std::complex<float>> coeData(filterSize * 5, { 0.0f, 0.0f } );
+
+        try {
+            processSignal(signalDataIn, signalDataMap, signalDataOut, coeData, remappingData);
+            failTest();
+        } catch (std::invalid_argument& e) {
+        }
     }},
     // This test should do nothing to the data as the mapping is exactly the same apart from the nyquist scaling
     {"remapChannels() contiguous input ( No Conjagation, No Nyquist channel )", []() {

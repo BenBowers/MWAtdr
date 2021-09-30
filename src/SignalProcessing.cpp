@@ -38,8 +38,6 @@ void performPFB(std::vector<std::complex<float>>& signalData,
                        unsigned const numOfChannels);
 
 // Performs an inverse discrete fourier transorm on the signal data, changing the frequency
-// data into a time domain signal this is done in place! DO NOT use imaginary conmpenent of the data
-// this is done to save a copy.
 void performDFT(std::vector<std::complex<float>>& signalData,
                 std::vector<float>& outData,
                 unsigned const samplingFreq,
@@ -219,20 +217,21 @@ void performPFB(std::vector<std::complex<float>>& signalData,
                       coefficantBlockSize,
                       (numOfBlocks + coefficantBlockSize) - 1));
 
+    // Temporary Location to do the convolution in
+    std::vector<std::complex<float>> convolutionResult((numOfBlocks + coefficantBlockSize) - 1, { 0.0f, 0.0f });
+
+
     // Only work over the channels that actually have something in them
-    // TODO: Multithread this
     for(auto map : mapping) {
         unsigned const oldChannel = map.first;
         unsigned const newChannel = map.second.newChannel;
-
-        // Temporary Location to do the convolution in
-        std::vector<std::complex<float>> convolutionResult((numOfBlocks + coefficantBlockSize) - 1, { 0.0f, 0.0f });
 
         // NOTE: Stride over coefficantPFB data is using the original channel data as it didn't get remapped
         handleVSLError(vslcConvExec1D(convolutionTask,
                        reinterpret_cast<const MKL_Complex8*>(signalData.data() + newChannel), numOfChannels,
                        reinterpret_cast<const MKL_Complex8*>(coefficantPFB.data() + oldChannel), PFB_COE_CHANNELS,
                        reinterpret_cast<MKL_Complex8*>(convolutionResult.data()), 1));
+
         // Copy the middle part of the convolution back to the orginal array
         cblas_ccopy(numOfBlocks,
                     convolutionResult.data() + coefficantBlockSize/2, 1,
