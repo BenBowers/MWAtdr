@@ -98,9 +98,11 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
             try{
                 for(int i = 0; i <= 255; i++){
                     std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",i,256);              
+                    if(i == 255){
+                        std::filesystem::remove("/tmp/1294797712_1294797717_118.sub");
+                    }
                     testAssert(data.size() == 10240000);
-                }
-                std::filesystem::remove("/tmp/1294797712_1294797717_118.sub");                                                            
+                }                                                            
             }
             catch(ReadInputDataException const& e){}
         }},        
