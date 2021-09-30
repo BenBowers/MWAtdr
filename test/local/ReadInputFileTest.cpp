@@ -67,6 +67,7 @@ ReadInputFileTest::ReadInputFileTest(){
             invalidfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));   
         }  
     }
+    
     std::ofstream wrongsize("/tmp/1294797712_1294797719_118.sub",std::ios::out | std::ios::binary);
     if(wrongsize.is_open()){
         wrongsize << str;
@@ -128,9 +129,17 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                 failTest();                                                            
             }
             catch(ReadInputDataException const& e){
+            }
+        }},
+        {"Metafits and file metadata not the same", []() {
+            try{
+                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797718_118.sub",0,253);              
+                failTest();                                                            
+            }
+            catch(ReadInputDataException const& e){
                 std::filesystem::remove("/tmp/1294797712_1294797718_118.sub");
             }
-        }},                                                                             
+        }},                                                                                     
     };
 }
 
