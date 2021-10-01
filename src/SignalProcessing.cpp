@@ -27,6 +27,7 @@ void remapChannels(std::vector<std::vector<std::complex<float>>> const& signalDa
                    unsigned const outNumChannels);
 
 static const unsigned PFB_COE_CHANNELS = filterSize;
+static const unsigned MWA_SAMPLING_RATE = SAMPLING_RATE;
 
 // Performs an inverse polyphase filter bank (PFB) on the signal data, the mapping is required
 // for this function so the convolution only goes over the appropriate channels. This mapping
@@ -42,8 +43,7 @@ void performDFT(std::vector<std::complex<float>>& signalData,
                 std::vector<float>& outData,
                 unsigned const samplingFreq,
                 unsigned const numOfBlocks,
-                unsigned const numOfChannels,
-                unsigned const originalSamplingFreq);
+                unsigned const numOfChannels);
 
 // Converts the downsampled time domain array into a 16bit signed int with clamping
 void doPostProcessing(std::vector<float> const& signalData,
@@ -155,7 +155,7 @@ void processSignal(std::vector<std::vector<std::complex<float>>> const& signalDa
         remapChannels(signalDataIn, signalDataInMapping, remappedData, remappingData.channelMap, OUT_NUM_CHANNELS);
         performPFB(remappedData, coefficiantPFB, remappingData.channelMap, IN_NUM_BLOCKS, OUT_NUM_CHANNELS);
     }
-    performDFT(remappedData, timeDomain, remappingData.newSamplingFreq, IN_NUM_BLOCKS, OUT_NUM_CHANNELS, IN_NUM_CHANNELS * 2);
+    performDFT(remappedData, timeDomain, remappingData.newSamplingFreq, IN_NUM_BLOCKS, OUT_NUM_CHANNELS);
     doPostProcessing(timeDomain, signalDataOut);
 }
 
@@ -244,15 +244,14 @@ void performDFT(std::vector<std::complex<float>>& signalData,
                 std::vector<float>& outData,
                 unsigned const samplingFreq,
                 unsigned const numOfBlocks,
-                unsigned const numOfChannels,
-                unsigned const originalSamplingFreq) {
+                unsigned const numOfChannels) {
     DFTI_DESCRIPTOR_HANDLE hand;
     outData.resize(samplingFreq * numOfBlocks);
     handleMKLError(DftiCreateDescriptor(&hand, DFTI_SINGLE, DFTI_REAL, 1, samplingFreq));
     handleMKLError(DftiSetValue(hand, DFTI_PACKED_FORMAT, DFTI_CCE_FORMAT));
     handleMKLError(DftiSetValue(hand, DFTI_PLACEMENT, DFTI_NOT_INPLACE));
     handleMKLError(DftiSetValue(hand, DFTI_CONJUGATE_EVEN_STORAGE,  DFTI_COMPLEX_COMPLEX));
-    handleMKLError(DftiSetValue(hand, DFTI_BACKWARD_SCALE, 1.0f / static_cast<float>(originalSamplingFreq)));
+    handleMKLError(DftiSetValue(hand, DFTI_BACKWARD_SCALE, 1.0f / static_cast<float>(MWA_SAMPLING_RATE)));
     handleMKLError(DftiSetValue(hand, DFTI_NUMBER_OF_TRANSFORMS, static_cast<MKL_LONG>(numOfBlocks)));
     handleMKLError(DftiSetValue(hand, DFTI_INPUT_DISTANCE, numOfChannels));
     handleMKLError(DftiSetValue(hand, DFTI_OUTPUT_DISTANCE, samplingFreq));

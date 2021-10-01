@@ -7,6 +7,7 @@
 #include<limits>
 #include<memory>
 #include<algorithm>
+#include<mkl.h>
 
 #include "../../src/SignalProcessing.hpp"
 #include "../TestHelper.hpp"
@@ -35,8 +36,7 @@ void performDFT(std::vector<std::complex<float>>& signalData,
                 std::vector<float>& outData,
                 unsigned const samplingFreq,
                 unsigned const numOfBlocks,
-                unsigned const numOfChannels,
-                unsigned const originalSamplingFreq);
+                unsigned const numOfChannels);
 
 void doPostProcessing(std::vector<float> const& signalData,
                       std::vector<std::int16_t>& signalDataOut);
@@ -909,6 +909,11 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
         testAssert( signalDataIn == expected );
     }},
     {"performDFT() Three blocks of cosine waves", []() {
+        unsigned const IN_SAMPLING_FREQ = 8;
+        unsigned const NUM_CHANNELS = 2;
+        unsigned const NUM_BLOCKS = 3;
+        unsigned const OUT_SAMPLES = 2;
+
 
         // Signal in (time domain)
         // 1, 0, -1, 0, 1, 0, -1, 0
@@ -933,13 +938,21 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             1.0f, 1.0f,
         };
 
-        std::vector<float> actual {};
+        // Scale data as the IDFT will scale it based of the MWA sampling rate
+        cblas_sscal(expected.size(), static_cast<float>(IN_SAMPLING_FREQ)/static_cast<float>(SAMPLING_RATE), expected.data(), 1);
 
-        performDFT(inData, actual, 2, 3, 2, 8);
+	    std::vector<float> actual {};
+
+        performDFT(inData, actual, OUT_SAMPLES, NUM_BLOCKS, NUM_CHANNELS);
 
         testAssert(actual == expected);
     }},
     {"performDFT() Three blocks of sine waves", []() {
+        unsigned const IN_SAMPLING_FREQ = 8;
+        unsigned const NUM_CHANNELS = 2;
+        unsigned const NUM_BLOCKS = 3;
+        unsigned const OUT_SAMPLES = 2;
+
 
         // Signal in (time domain)
         // 0, 1, 0, -1, 0, 1, 0, -1
@@ -964,14 +977,23 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             0.0f, 0.0f,
         };
 
-        std::vector<float> actual {};
+        // Scale data as the IDFT will scale it based of the MWA sampling rate
+        cblas_sscal(expected.size(), static_cast<float>(IN_SAMPLING_FREQ)/static_cast<float>(SAMPLING_RATE), expected.data(), 1);
 
-        performDFT(inData, actual, 2, 3, 2, 8);
+	    std::vector<float> actual {};
+
+        performDFT(inData, actual, OUT_SAMPLES, NUM_BLOCKS, NUM_CHANNELS);
+
 
         testAssert(actual == expected);
     }},
     {"performDFT() Conjagated remap", []() {
-	    std::vector<std::complex<float>> inData {
+        unsigned const IN_SAMPLING_FREQ = 10;
+        unsigned const NUM_CHANNELS = 6;
+        unsigned const NUM_BLOCKS = 3;
+        unsigned const OUT_SAMPLES = 8;
+
+        std::vector<std::complex<float>> inData {
 		    { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f },
 		    { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f },
 		    { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }
@@ -983,9 +1005,12 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
 		    0.4f, 0.0f, 0.0f, 0.0f, -0.4f, 0.0f, 0.0f, 0.0f
 	    };
 
+        // Scale data as the IDFT will scale it based of the MWA sampling rate
+        cblas_sscal(expected.size(), static_cast<float>(IN_SAMPLING_FREQ)/static_cast<float>(SAMPLING_RATE), expected.data(), 1);
+
 	    std::vector<float> actual {};
 
-        performDFT(inData, actual, 8, 3, 6, 10);
+        performDFT(inData, actual, OUT_SAMPLES, NUM_BLOCKS, NUM_CHANNELS);
 
         testAssert(actual == expected);
     }},
