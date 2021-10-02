@@ -1,9 +1,9 @@
 # Test Input and Output Data
 
-Two directories in this directory, `input_data` and `output_data`, are used to interact with the test code.
+Two folders in this directory, `input_data` and `output_data`, are used to interact with the test code.
 
 `input_data` contains the test data required for testing.  
-These files are too big to be committed to the repository, so it is your responsibility to provide them if you want to run the tests.
+This folder should not be modified in any way to ensure the tests function as expected.
 
 `output_data` contains any files output from the tests, for human inspection.
 
@@ -11,7 +11,8 @@ See below for specifications of what files are required/output for each test typ
 
 ## Non-MPI unit tests
 
-TODO: explain in here what test input files need to be present for each unit test.
+All files included should be sufficient for running the non-MPI tests correctly.
+These tests output an example log file.
 
 ## MPI unit tests
 

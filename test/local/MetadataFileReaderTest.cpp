@@ -28,7 +28,7 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
 		testAssert (!(lhs == rhs));
 	}},
 	{"Valid metafits and one voltage file", []() {
-		auto mfr = MetadataFileReader({"/mnt/input_data/mfr/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
+		auto mfr = MetadataFileReader({"/mnt/input_data/mfr/one_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
 		auto actual = mfr.getAntennaConfig();
 		AntennaConfig expected = {{}, {109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
 		                               121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132}};
@@ -55,6 +55,73 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
 		testAssert(actual.antennaInputs == expected.antennaInputs &&
 		           actual.frequencyChannels == expected.frequencyChannels);
 	}},
+    {"Valid metafits and two voltage files", []() {
+		auto mfr = MetadataFileReader({"/mnt/input_data/mfr/two_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
+		auto actual = mfr.getAntennaConfig();
+		AntennaConfig expected = {{}, {109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
+		                               121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132}};
+		// Populating expected.antennaInputs
+		unsigned tiles[] = {51, 52, 53, 54, 55, 56, 57, 58, 71, 72, 73, 74, 75, 76, 77, 78, 101, 102, 104, 105,
+		                    106, 107, 108, 111, 112, 113, 114, 115, 116, 117, 118, 121, 122, 123, 124, 125, 126,
+							127, 128, 131, 132, 133, 134, 135, 136, 137, 138, 141, 142, 143, 144, 145, 146, 147,
+							148, 151, 152, 153, 154, 155, 156, 157, 158, 161, 162, 163, 164, 165, 166, 167, 168,
+							999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014,
+							2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029,
+							2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040, 2041, 2042, 2043, 2044,
+							2045, 2046, 2047, 2048, 2049, 2050, 2051, 2052, 2053, 2054, 2055, 2056};
+		std::set<unsigned> flagged = {102, 115, 151, 164, 999, 2013, 2017, 2044, 2047};
+		for (auto i : tiles) {
+			if (flagged.find(i) == flagged.end()) {
+			    expected.antennaInputs.push_back({i, 'X', false});
+			    expected.antennaInputs.push_back({i, 'Y', false});
+			}
+			else {
+				expected.antennaInputs.push_back({i, 'X', true});
+				expected.antennaInputs.push_back({i, 'Y', true});
+			}
+		}
+		testAssert(actual.antennaInputs == expected.antennaInputs &&
+		           actual.frequencyChannels == expected.frequencyChannels);
+	}},
+    {"Valid metafits and 24 voltage files", []() {
+		auto mfr = MetadataFileReader({"/mnt/input_data/mfr/multi_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
+		auto actual = mfr.getAntennaConfig();
+		AntennaConfig expected = {{}, {109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
+		                               121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132}};
+		// Populating expected.antennaInputs
+		unsigned tiles[] = {51, 52, 53, 54, 55, 56, 57, 58, 71, 72, 73, 74, 75, 76, 77, 78, 101, 102, 104, 105,
+		                    106, 107, 108, 111, 112, 113, 114, 115, 116, 117, 118, 121, 122, 123, 124, 125, 126,
+							127, 128, 131, 132, 133, 134, 135, 136, 137, 138, 141, 142, 143, 144, 145, 146, 147,
+							148, 151, 152, 153, 154, 155, 156, 157, 158, 161, 162, 163, 164, 165, 166, 167, 168,
+							999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014,
+							2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029,
+							2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040, 2041, 2042, 2043, 2044,
+							2045, 2046, 2047, 2048, 2049, 2050, 2051, 2052, 2053, 2054, 2055, 2056};
+		std::set<unsigned> flagged = {102, 115, 151, 164, 999, 2013, 2017, 2044, 2047};
+		for (auto i : tiles) {
+			if (flagged.find(i) == flagged.end()) {
+			    expected.antennaInputs.push_back({i, 'X', false});
+			    expected.antennaInputs.push_back({i, 'Y', false});
+			}
+			else {
+				expected.antennaInputs.push_back({i, 'X', true});
+				expected.antennaInputs.push_back({i, 'Y', true});
+			}
+		}
+		testAssert(actual.antennaInputs == expected.antennaInputs &&
+		           actual.frequencyChannels == expected.frequencyChannels);
+	}},
+    {"Valid metafits and no voltage files", []() {
+	    try {
+			auto mfr = MetadataFileReader({"/mnt/input_data/mfr/no_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
+			failTest();
+		}
+		catch (MetadataException const& e) {
+			if ((int) ((std::string) e.what()).find("Invalid/no voltage files") == -1) {
+				failTest();
+			}
+		}
+    }},
     {"Invalid metafits file", []() {
 		try {
 			auto mfr = MetadataFileReader({"/mnt/input_data/mfr/invalid_metafits/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
@@ -81,17 +148,6 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
 	{"Invalid voltage files", []() {
 	    try {
 			auto mfr = MetadataFileReader({"/mnt/input_data/mfr/invalid_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
-			failTest();
-		}
-		catch (MetadataException const& e) {
-			if ((int) ((std::string) e.what()).find("Invalid/no voltage files") == -1) {
-				failTest();
-			}
-		}
-    }},
-	{"No voltage files, valid metafits", []() {
-	    try {
-			auto mfr = MetadataFileReader({"/mnt/input_data/mfr/no_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
 			failTest();
 		}
 		catch (MetadataException const& e) {
