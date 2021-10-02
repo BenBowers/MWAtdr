@@ -19,7 +19,7 @@ int main(){
         channelRemappingTest(),
         outSignalWriterTest(),
         readInputFileTest(),
-        nodeAntennaInputAssignerTest()
+        nodeAntennaInputAssignerTest(),
         metadataFileReaderTest(),
         nodeAntennaInputAssignerTest(),
         outputLogFileWriterTest()
