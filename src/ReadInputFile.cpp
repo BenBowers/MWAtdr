@@ -39,7 +39,11 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
     //This is how large the delay meta data block is inside of the file is is dependent on how many tiles are in the observation
     long long DELAYDATALENGTH = NUMTILES*NUMSAMPLES*2;
     //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
-    validateInputData(fileName, expectedNInputs);
+   /*
+     if(validateInputData(fileName, expectedNInputs) != true){
+         throw ReadInputDataException("Data file faild validation");
+     }
+     */
     //Opening the first data filestream this changes each interation of the loop to pass thru all files
     std::ifstream datafile(fileName, std::ios::binary);   
     // main error handling statement
@@ -86,7 +90,7 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
 //function used to validate if the data file is the correct size and thus allowing the program to know if there is anything missing.
 //The file size this program will be given is a constant as such its easy to validate if the file is correct or not
 //break
-void validateInputData(std::string fileName, unsigned int expectedNInputs){
+bool validateInputData(std::string fileName, unsigned int expectedNInputs){
     //MWA documentation states this is the standered file size for a 128 tile dual polarisation file
     //4096+161*32768000
     //meta data 160 volatage data blocks + the single delay block before the data * the size of the delay block what is 
@@ -101,7 +105,10 @@ void validateInputData(std::string fileName, unsigned int expectedNInputs){
     long metadatasize = getMetaDataSize(metadata);
     long long expectedInputSize = metadatasize + delaydata * 161;
     if(std::filesystem::file_size(fileName) != expectedInputSize){
-        throw ReadInputDataException("Error File size is not expected");
+        return false;
+    }
+    else{
+        return true;
     }
 }
 
