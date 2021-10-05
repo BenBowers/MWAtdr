@@ -16,7 +16,12 @@ public:
     virtual std::vector<TestCase> getTestCases() override;
 };
 
-std::vector<std::complex<float>> testdata;
+//antena 0 expected data
+std::vector<std::complex<float>> testdata0;
+//antena 256 expected data
+std::vector<std::complex<float>> testdata1;
+//antena 100 expected data
+std::vector<std::complex<float>> testdata2;
 ReadInputFileTest::ReadInputFileTest(){ 
     std::string str = "HDR_SIZE 4096\nPOPULATED 1\nOBS_ID 1294797712\nSUBOBS_ID 1294797712\nMODE VOLTAGE_START\nUTC_START 2021-01-16-02:01:34\nOBS_OFFSET 0\nNBIT 8\nNPOL 2\nNTIMESAMPLES 64000\nNINPUTS 256\nNINPUTS_XGPU 256\nAPPLY_PATH_WEIGHTS 0\nAPPLY_PATH_DELAYS 0\nINT_TIME_MSEC 500\nFSCRUNCH_FACTOR 50\nAPPLY_VIS_WEIGHTS 0\nTRANSFER_SIZE 5275648000\nPROJ_ID G0034\nEXPOSURE_SECS 304\nCOARSE_CHANNEL 118\nCORR_COARSE_CHANNEL 10\nSECS_PER_SUBOBS 8\nUNIXTIME 1610762494\nUNIXTIME_MSEC 0\nFINE_CHAN_WIDTH_HZ 10000\nNFINE_CHAN 128\nBANDWIDTH_HZ 1280000\nSAMPLE_RATE 1280000\nMC_IP 0.0.0.0\nMC_PORT 0\nMC_SRC_IP 0.0.0.0\n";
     std::string invalidstr = "HDR_SIZE 4096\nPOPULATED 1\nOBS_ID 1294797712\nSUBOBS_ID 1294797712\nMODE VOLTAGE_START\nUTC_START 2021-01-16-02:01:34\nOBS_OFFSET 0\nNBIT 8\nNPOL 3\nNTIMESAMPLES 64000\nNINPUTS 256\nNINPUTS_XGPU 256\nAPPLY_PATH_WEIGHTS 0\nAPPLY_PATH_DELAYS 0\nINT_TIME_MSEC 500\nFSCRUNCH_FACTOR 50\nAPPLY_VIS_WEIGHTS 0\nTRANSFER_SIZE 5275648000\nPROJ_ID G0034\nEXPOSURE_SECS 304\nCOARSE_CHANNEL 118\nCORR_COARSE_CHANNEL 10\nSECS_PER_SUBOBS 8\nUNIXTIME 1610762494\nUNIXTIME_MSEC 0\nFINE_CHAN_WIDTH_HZ 10000\nNFINE_CHAN 128\nBANDWIDTH_HZ 1280000\nSAMPLE_RATE 1280000\nMC_IP 0.0.0.0\nMC_PORT 0\nMC_SRC_IP 0.0.0.0\n";
@@ -33,27 +38,76 @@ ReadInputFileTest::ReadInputFileTest(){
             std::int8_t sample[1] = {0};
             myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
         }
+        //counters for file validation writing
         long j = 1;
         for(long i = 1; i<=2621440000; i++){
             std::int8_t sample[2] = {(std::int8_t) rand(),(std::int8_t) rand()};
+            //antena 0
             if(i <= 64000){
-                testdata.push_back({sample[0],sample[1]});
+                testdata0.push_back({sample[0],sample[1]});
                 myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
             }
+            //antena 0
             else if(i == 16384000*j+64000){
                     j++;
-                    testdata.push_back({sample[0],sample[1]});
+                    testdata0.push_back({sample[0],sample[1]});
                     myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));    
             }
+            //antena 0
             else if(i > 16384000*j && i <= 16384000*j+64000){                
-                testdata.push_back({sample[0],sample[1]});
+                testdata0.push_back({sample[0],sample[1]});
                 myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }
+            }                     
+            //all other antena
             else{
                 myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
             }    
         }
-    }
+        std::cout << testdata0.size() << std::endl;
+    } 
+
+    //known good file vectore of input 256
+    std::ofstream myfile("/tmp/1294797712_1294797715_118.sub",std::ios::out | std::ios::binary);
+    if(myfile.is_open()){
+        myfile << str;
+        for(int i =1; i<= 3533;i++){
+            std::int8_t sample[1] = {0};
+            myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
+        }
+        for(long i = 1; i <= 32768000; i++){
+            std::int8_t sample[1] = {0};
+            myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
+        }
+
+        //counters for file validation writing
+        long k = 1;
+        for(long i = 1; i<=2621440000; i++){
+            long offset = 64000*k;
+            std::int8_t sample[2] = {(std::int8_t) rand(),(std::int8_t) rand()};
+            //antena 256
+            if(i > 16320000 && i <= 16383999){
+                testdata1.push_back({sample[0],sample[1]});
+                myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
+            }
+            //antena 256
+            else if(i == 16384000*k){
+                    k++;
+                    testdata1.push_back({sample[0],sample[1]});
+                    myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));    
+            }   
+            //antena 256
+            else if(i > 16320000*k+offset && i <= 16384000*k){                
+                testdata1.push_back({sample[0],sample[1]});
+                myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
+            }                     
+            //all other antena
+            else{
+                myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
+            }    
+        }
+        std::cout << k <<std::endl;
+        std::cout << testdata1.size() << std::endl;
+    }    
     
     std::ofstream invalidfile("/tmp/1294797712_1294797718_118.sub",std::ios::out | std::ios::binary);
     if(invalidfile.is_open()){
@@ -89,20 +143,35 @@ ReadInputFileTest::ReadInputFileTest(){
             std::int8_t sample[2] = {(std::int8_t) rand(),(std::int8_t) rand()};
             wrongsize.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));   
         }  
-    }  
+    } 
+     
 }
 
 
 std::vector<TestCase> ReadInputFileTest::getTestCases(){
     return {        
         
-        {"Single Valid Data file(Checking the first 64000 elements are the same)", []() {
+        {"Single Valid Data file(Checking the first all elements are the same) antena 0", []() {
             try{
                 std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",0,256);              
-                testAssert(data == testdata);                                                           
+                testAssert(data == testdata0);                                                           
             }
             catch(ReadInputDataException const& e){}
         }},
+        {"Single Valid Data file(Checking the first all elements are the same) antena 256", []() {
+            try{
+                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",255,256);              
+                testAssert(data == testdata0);                                                           
+            }
+            catch(ReadInputDataException const& e){}
+        }},
+        {"Single Valid Data file(Checking the first all elements are the same) antena 100", []() {
+            try{
+                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",100,256);              
+                testAssert(data == testdata0);                                                           
+            }
+            catch(ReadInputDataException const& e){}
+        }},                
         {"Single Valid Data file(Assert Vector Size is expeted) for 0-50 inputs", []() {
             try{
                 for(int i = 0; i <= 50; i++){    
@@ -148,9 +217,9 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                 std::cout << "\nerror" << std::endl;
             }
         }},
-        {"Single Valid Data file(Assert Vector Size is expeted) for 201-256 inputs", []() {
+        {"Single Valid Data file(Assert Vector Size is expeted) for 201-255 inputs", []() {
             try{
-                for(int i = 201; i <= 256; i++){    
+                for(int i = 201; i <= 255; i++){    
                     std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",i,256);
                     testAssert(data.size() == 10240000);
                 }
@@ -198,6 +267,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
             }
             catch(ReadInputDataException const& e){}
         }},
+        
         {"Validate file function Test(Fail) metafits and file dont match", []() {
             try{             
                 testAssert(validateInputData("/tmp/1294797712_1294797717_118.sub",220) == false);
