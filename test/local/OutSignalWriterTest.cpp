@@ -18,7 +18,7 @@ AppConfig validTestConfig = {"",123456789,123456789,"","/tmp/"}; //input and out
 //Antena input Physical ID the two components of that struct is the first physical id the second is the char representing what signal chain that id is for 
 AntennaInputPhysID testAntenaPhysID = {1,'x'};
 
-std::filesystem::path filename = validTestConfig.outputDirectoryPath + std::to_string(validTestConfig.observationID) + "_" + std::to_string(validTestConfig.signalStartTime) + "_" + std::to_string(testAntenaPhysID.tile) +"_signalchain.bin";
+std::filesystem::path filename = validTestConfig.outputDirectoryPath + std::to_string(validTestConfig.observationID) + "_" + std::to_string(validTestConfig.signalStartTime) + "_" + std::to_string(testAntenaPhysID.tile) +"_"+ std::to_string(testAntenaPhysID.signalChain)+".bin";
 
 
 class OutSignalWriterTest : public StatelessTestModuleImpl {

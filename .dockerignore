@@ -4,9 +4,11 @@
 .gitignore
 .pytest_cache
 .vscode
+*.md
 __pycache__
 /docker_build.*
-/docker_run.*
+/docker_run*
 /LICENSE
 /mwatdr_utils
-/README.md
+/test/input_data
+/test/output_data
