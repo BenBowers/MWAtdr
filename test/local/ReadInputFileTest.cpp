@@ -53,7 +53,6 @@ ReadInputFileTest::ReadInputFileTest(){
                 myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
             }    
         }
-        std::cout << j <<std::endl;
     }
     
     std::ofstream invalidfile("/tmp/1294797712_1294797718_118.sub",std::ios::out | std::ios::binary);
