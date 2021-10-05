@@ -66,7 +66,7 @@ add_library("${COMMON_LIBRARY}" ${COMMON_SOURCE_FILES})
 # Case insensitivity for RUNTIME_SYSTEM.
 string(TOLOWER "$ENV{RUNTIME_SYSTEM}" RUNTIME_SYSTEM)
 
-set(COMPILE_OPTIONS -m64 -pedantic -Wall -Wextra)
+set(COMPILE_OPTIONS -m64 -pedantic -Wall -Wextra -D_FILE_OFFSET_BITS=64)
 if(${RUNTIME_SYSTEM} STREQUAL "garrawarla")
     # If building for Garrawarla, tune to its CPU architecture for optimal performance.
     list(APPEND COMPILE_OPTIONS -march=cascadelake)
