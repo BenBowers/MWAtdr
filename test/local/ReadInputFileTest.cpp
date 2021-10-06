@@ -49,12 +49,7 @@ ReadInputFileTest::ReadInputFileTest(){
             if(i <= 64000){
                 testdata0.push_back({sample[0],sample[1]});
                 myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }
-            //antena 100
-            if(i > 6336000 && i <= 6400000){
-                testdata2.push_back({sample[0],sample[1]});
-                myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }            
+            }           
             //antena 255
             if(i > 16320000 && i <= 16383999){
                 testdata1.push_back({sample[0],sample[1]});
@@ -65,13 +60,7 @@ ReadInputFileTest::ReadInputFileTest(){
                     k++;
                     testdata1.push_back({sample[0],sample[1]});
                     myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));    
-            }
-            //antena 100
-            else if(i == 16384000*l+6400000){
-                    l++;
-                    testdata2.push_back({sample[0],sample[1]});
-                    myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));    
-            }                                   
+            }                                  
             //antena 0
             else if(i == 16384000*j+64000){
                     j++;
@@ -81,11 +70,6 @@ ReadInputFileTest::ReadInputFileTest(){
             //antena 0
             else if(i > 16384000*j && i <= 16384000*j+64000){                
                 testdata0.push_back({sample[0],sample[1]});
-                myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }
-            //antena 100
-            else if(i > 16384000*l+6336000 && i <= 16384000*l+6400000){                
-                testdata2.push_back({sample[0],sample[1]});
                 myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
             }            
             //antena 256
@@ -153,28 +137,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                 testAssert(data == testdata1);                                                            
             }
             catch(ReadInputDataException const& e){}
-        }},
-        {"Single Valid Data file(Checking the first all elements are the same) antena 100", []() {
-            try{
-                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",100,256);              
-                testAssert(data == testdata2);                                                            
-            }
-            catch(ReadInputDataException const& e){}
-        }},                
-        {"Single Valid Data file(Checking the first all elements are the same) antena 256", []() {
-            try{
-                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",255,256);              
-                testAssert(data == testdata0);                                                           
-            }
-            catch(ReadInputDataException const& e){}
-        }},
-        {"Single Valid Data file(Checking the first all elements are the same) antena 100", []() {
-            try{
-                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",100,256);              
-                testAssert(data == testdata0);                                                           
-            }
-            catch(ReadInputDataException const& e){}
-        }},                
+        }},                               
         {"Single Valid Data file(Assert Vector Size is expeted) for 0-50 inputs", []() {
             try{
                 for(int i = 0; i <= 50; i++){    
@@ -262,7 +225,9 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                 std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797718_118.sub",0,253);              
                 failTest();                                                            
             }
-            catch(ReadInputDataException const& e){}
+            catch(ReadInputDataException const& e){
+                std::filesystem::remove("/tmp/1294797712_1294797718_118.sub");
+            }
         }},
         {"Validate file function Test valid input", []() {
             try{             
