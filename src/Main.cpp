@@ -40,7 +40,9 @@ std::optional<AntennaInputRange> communicateNodeAntennaInputAssignment(PrimaryNo
 unsigned getActiveNodeCount(std::map<unsigned, bool> const& secondaryNodeStatus);
 
 ObservationProcessingResults processAssignedAntennaInputs(AppConfig const& appConfig, AntennaConfig const& antennaConfig,
-                                                          std::optional<AntennaInputRange> const& antennaInputRange);
+                                                          std::optional<AntennaInputRange> const& antennaInputRange,
+                                                          std::vector<std::complex<float>> const& coefficients,
+                                                          ChannelRemapping const& channelRemapping);
 void mergeSecondaryProcessingResults(PrimaryNodeCommunicator const& primary, ObservationProcessingResults& processingResults);
 
 
@@ -54,7 +56,7 @@ int main(int argc, char* argv[]) {
 	        runNode(node, argc, argv);
 		}
 		catch (NodeException const& e) {
-			std::cout << e.what();
+			std::cout << e.what() << std::endl;
 		}
 	}, communicator);
 }
@@ -64,14 +66,24 @@ int main(int argc, char* argv[]) {
 void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]) {
     bool startupStatus = true;
 
-    // Create AppConfig from command line arguments
-    auto const appConfig = createAppConfig(argc, argv);
+    AppConfig appConfig;
+    AntennaConfig antennaConfig;
+    std::vector<std::complex<float>> coefficients;
 
-    // Read in metadata
-    auto const antennaConfig = createAntennaConfig(appConfig, startupStatus);
+    try {
+        // Create AppConfig from command line arguments
+        appConfig = createAppConfig(argc, argv);
+        
+        // Read in metadata
+        antennaConfig = createAntennaConfig(appConfig, startupStatus);
 
-    // Read in filter coefficients
-    auto const coefficients = createFilterCoefficients(appConfig.invPolyphaseFilterPath, startupStatus);
+        // Read in filter coefficients
+        coefficients = createFilterCoefficients(appConfig.invPolyphaseFilterPath, startupStatus);
+    }
+    catch (std::invalid_argument const& e) {
+        startupStatus = false;
+        std::cout << "Node 0 (Primary): " << e.what() << std::endl;
+    }
 
     // Send startup status to secondary nodes
     primary.sendAppStartupStatus(startupStatus);
@@ -80,6 +92,8 @@ void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]) {
     if (!startupStatus) {
         throw NodeException("Node 0 (Primary): Primary node startup failure, terminating node");
     }
+
+    std::cout << "Node 0 (Primary): Successful startup" << std::endl;
 
     // Receive setup status from all secondary nodes
     auto const secondaryNodeStatus = primary.receiveNodeSetupStatus();
@@ -101,7 +115,11 @@ void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]) {
     auto const antennaInputRange = communicateNodeAntennaInputAssignment(primary, secondaryNodeStatus, antennaConfig.antennaInputs.size());
 
     // Read in raw signal, process, and write new signal to file for each assigned antenna input
-    auto processingResults = processAssignedAntennaInputs(appConfig, antennaConfig, antennaInputRange);
+    auto processingResults = processAssignedAntennaInputs(appConfig, antennaConfig, antennaInputRange,
+                                                          coefficients, channelRemapping);
+
+    // Wait for all nodes to finish processing
+    primary.synchronise();
 
     // Gather processing results from secondary nodes and merge into processingResults
     mergeSecondaryProcessingResults(primary, processingResults);
@@ -121,6 +139,9 @@ void runNode(SecondaryNodeCommunicator const& secondary, int argc, char* argv[])
         throw NodeException("Node " + std::to_string(secondary.getNodeID()) +
                             ": Primary node startup failure, terminating node");
     }
+
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Successful startup" << std::endl;
 
     // Receive app configuration from primary node
     auto const appConfig = secondary.receiveAppConfig();
@@ -147,7 +168,11 @@ void runNode(SecondaryNodeCommunicator const& secondary, int argc, char* argv[])
     auto const antennaInputRange = secondary.receiveAntennaInputAssignment();
 
     // Read in raw signal, process, and write new signal to file for each assigned antenna input
-    auto const processingResults = processAssignedAntennaInputs(appConfig, antennaConfig, antennaInputRange);
+    auto const processingResults = processAssignedAntennaInputs(appConfig, antennaConfig, antennaInputRange,
+                                                                coefficients, channelRemapping);
+
+    // Wait for all nodes to finish processing
+    secondary.synchronise();
 
 	// Send processing results to primary node
 	secondary.sendProcessingResults(processingResults);
@@ -155,7 +180,9 @@ void runNode(SecondaryNodeCommunicator const& secondary, int argc, char* argv[])
 
 
 ObservationProcessingResults processAssignedAntennaInputs(AppConfig const& appConfig, AntennaConfig const& antennaConfig,
-                                                          std::optional<AntennaInputRange> const& antennaInputRange) {
+                                                          std::optional<AntennaInputRange> const& antennaInputRange,
+                                                          std::vector<std::complex<float>> const& coefficients,
+                                                          ChannelRemapping const& channelRemapping) {
     ObservationProcessingResults processingResults;
 
     // Process all assigned antenna inputs (if any)
@@ -167,6 +194,9 @@ ObservationProcessingResults processAssignedAntennaInputs(AppConfig const& appCo
 			std::vector<std::int16_t> processedSignal;
 			// Used to store which channels are used in the processed signal
 			std::set<unsigned> usedChannels;
+            // Used to store which channel index maps to which channel
+            std::map<unsigned, unsigned> channelIndexMapping;
+            unsigned channelIndex = 0;
 
 			// Read in raw signal files from all channels recorded by one antenna input
 			for (auto channel : antennaConfig.frequencyChannels) {
@@ -176,26 +206,31 @@ ObservationProcessingResults processAssignedAntennaInputs(AppConfig const& appCo
 									             std::to_string(channel) + ".sub";
                 std::filesystem::path voltageFile = dir / filename;
 
-				//try {
-					antennaInputSignals.push_back(readInputDataFile(voltageFile, index));
-				//}
-                //catch (ReadInputDataException const& e) {
+				try {
+					antennaInputSignals.push_back(readInputDataFile(voltageFile, index, antennaConfig.antennaInputs.size()));
+                    usedChannels.insert(channel);
+
+                    channelIndexMapping.insert({channelIndex, channel});
+                    channelIndex++;
+				}
+                catch (ReadInputDataException const& e) {
                     // Skip processing
-                //}
+                }
 			}
 
 			// Process signal
-			//processSignal();
+			processSignal(antennaInputSignals, channelIndexMapping, processedSignal, coefficients, channelRemapping);
 
+            auto const antenna = antennaConfig.antennaInputs.at(index);
 			// Write processed antenna input signal to file
 			try {
-				outSignalWriter(processedSignal, appConfig, antennaConfig.antennaInputs.at(index));
+				outSignalWriter(processedSignal, appConfig, antenna);
 				processingResults.results.insert({index, {true, usedChannels}});
-				// print antenna input processed successfully
+                std::cout << "Tile " << antenna.tile << antenna.signalChain << " processed successfully" << std::endl;
 			}
 			catch (OutSignalException const& e) {
 				processingResults.results.insert({index, {false, usedChannels}});
-				// print antenna input processing failed
+                std::cout << "Tile " << antenna.tile << antenna.signalChain << " failed" << std::endl;
 			}
 		}
 	}
@@ -222,7 +257,7 @@ AntennaConfig createAntennaConfig(AppConfig const& appConfig, bool& success) {
 	}
 	catch (MetadataException const& e) {
         success = false;
-		std::cout << e.what();
+		std::cout << "Error creating antenna configuration: " << e.what() << std::endl;
 	}
     return antennaConfig;
 }
@@ -236,7 +271,7 @@ std::vector<std::complex<float>> createFilterCoefficients(std::string const filt
     }
     catch (ReadCoeDataException const& e) {
         success = false;
-        std::cout << e.what();
+        std::cout << "Error creating filter coefficients: " << e.what() << std::endl;
     }
     return coefficients;
 }

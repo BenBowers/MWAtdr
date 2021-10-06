@@ -26,7 +26,7 @@ CommandLineArgumentsTest::CommandLineArgumentsTest() : StatelessTestModuleImpl{{
     }},
     {"validateInputDirectoryPath(): Non-directory path", []() {
         try {
-            validateInputDirectoryPath("/mnt/test_input/1294797712.metafits");
+            validateInputDirectoryPath("/mnt/test_input/mfr/multi_voltage/1294797712.metafits");
             failTest();
         }
         catch (std::invalid_argument const& e) {
@@ -47,7 +47,7 @@ CommandLineArgumentsTest::CommandLineArgumentsTest() : StatelessTestModuleImpl{{
         }
     }},
     {"validateInputDirectoryPath(): Valid path", []() {
-        auto const actual = validateInputDirectoryPath("/mnt/test_input/");
+        auto const actual = validateInputDirectoryPath("/mnt/test_input/mfr/multi_voltage/");
         std::string const expected = "/mnt/test_input/";
         testAssert(actual.compare(expected) == 0);
     }},
@@ -138,7 +138,7 @@ CommandLineArgumentsTest::CommandLineArgumentsTest() : StatelessTestModuleImpl{{
     }},
     {"validateOutputDirectoryPath(): Non-directory path", []() {
         try {
-            validateOutputDirectoryPath("/mnt/test_input/1294797712.metafits");
+            validateOutputDirectoryPath("/mnt/test_input/mfr/multi_voltage/1294797712.metafits");
             failTest();
         }
         catch (std::invalid_argument const& e) {
