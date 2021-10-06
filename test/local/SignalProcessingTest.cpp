@@ -641,10 +641,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
 
 
         remapChannels(signalDataIn, signalDataMapping, actual, channelRemapping, 2);
-        for(auto num : actual) {
-            std::cout << num << ", ";
-        }
-        std::cout << std::endl;
+
         testAssert(actual == expected);
     }},
     {"performPFB(), same number of blocks", []() {
