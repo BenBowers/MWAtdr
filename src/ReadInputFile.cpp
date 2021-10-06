@@ -49,7 +49,6 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
      if(validateInputData(fileName, expectedNInputs) != true){
          throw ReadInputDataException("Data file faild validation");
      }
-     
     //Opening the first data filestream this changes each interation of the loop to pass thru all files
     std::ifstream datafile(fileName, std::ios::binary);   
     // main error handling statement

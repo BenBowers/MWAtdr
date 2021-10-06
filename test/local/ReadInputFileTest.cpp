@@ -42,7 +42,7 @@ ReadInputFileTest::ReadInputFileTest(){
         long j = 1;
         for(long i = 1; i<=2621440000; i++){
             long long iMax = 16384000;
-            std::int8_t sample[2] = {(std::int8_t) rand()%256,(std::int8_t) rand()%256};
+            std::int8_t sample[2] = {rand()%256,rand()%256};
             //antena 0
             if(i <= 64000){
                 testdata0.push_back({sample[0],sample[1]});
@@ -65,7 +65,6 @@ ReadInputFileTest::ReadInputFileTest(){
             }    
         }
     }
-
     //known good file test for input 256
     std::ofstream difffile("/tmp/1294797712_1294797716_118.sub",std::ios::out | std::ios::binary);
     if(difffile.is_open()){
@@ -82,7 +81,7 @@ ReadInputFileTest::ReadInputFileTest(){
         long k = 1;
         for(long i = 1; i<=2621440000; i++){
             long long iMax = 16384000;
-            std::int8_t sample[2] = {(std::int8_t) rand()%256,(std::int8_t) rand()%256};          
+            std::int8_t sample[2] = {rand()%256,rand()%256};          
             //antena 255
             if(i > 16320000 && i <= 16383999){
                 testdata1.push_back({sample[0],sample[1]});
@@ -105,8 +104,7 @@ ReadInputFileTest::ReadInputFileTest(){
             }    
         }
         
-    }     
-    /*
+    }
     std::ofstream invalidfile("/tmp/1294797712_1294797718_118.sub",std::ios::out | std::ios::binary);
     if(invalidfile.is_open()){
         invalidfile << invalidstr;
@@ -142,13 +140,10 @@ ReadInputFileTest::ReadInputFileTest(){
             wrongsize.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));   
         }  
     }
-    */
 }
 
-
 std::vector<TestCase> ReadInputFileTest::getTestCases(){
-    return {        
-    /* 
+    return {         
         {"Single Valid Data file(Checking the first all elements are the same) antena 0", []() {
             try{
                 std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",0,256);              
@@ -161,7 +156,6 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                 std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797716_118.sub",255,256);              
                 testAssert(data == testdata1);                                                            
             }
-            std::filesystem::remove("/tmp/1294797712_1294797716_118.sub");
             catch(ReadInputDataException const& e){}
         }},                               
         {"Single Valid Data file(Assert Vector Size is expeted) for 0-50 inputs", []() {
@@ -261,7 +255,6 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
             }
             catch(ReadInputDataException const& e){}
         }},
-        */
         {"Validate file function Test(Fail) metafits and file dont match", []() {
             try{             
                 testAssert(validateInputData("/tmp/1294797712_1294797717_118.sub",220) == false);
