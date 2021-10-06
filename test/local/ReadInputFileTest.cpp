@@ -63,47 +63,7 @@ ReadInputFileTest::ReadInputFileTest(){
             else{
                 myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
             }    
-        }
-    }
-    //known good file test for input 256
-    std::ofstream difffile("/tmp/1294797712_1294797716_118.sub",std::ios::out | std::ios::binary);
-    if(difffile.is_open()){
-        myfile << str;
-        for(int i =1; i<= 3533;i++){
-            std::int8_t sample[1] = {0};
-            difffile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-        }
-        for(long i = 1; i <= 32768000; i++){
-            std::int8_t sample[1] = {0};
-            difffile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-        }
-        //counters for file validation writing
-        long k = 1;
-        for(long i = 1; i<=2621440000; i++){
-            long long iMax = 16384000;
-            std::int8_t sample[2] = {rand()%256,rand()%256};          
-            //antena 255
-            if(i > 16320000 && i <= 16383999){
-                testdata1.push_back({sample[0],sample[1]});
-                difffile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }   
-            //antena 255
-            else if(i == 16384000*k){
-                    k++;
-                    testdata1.push_back({sample[0],sample[1]});
-                    difffile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));    
-            }                                             
-            //antena 256
-            else if(i > iMax*k-64000 && i < iMax*k){                
-                testdata1.push_back({sample[0],sample[1]});
-                difffile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }                                 
-            //all other antena
-            else{
-                difffile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }    
-        }
-        
+        }   
     }
     std::ofstream invalidfile("/tmp/1294797712_1294797718_118.sub",std::ios::out | std::ios::binary);
     if(invalidfile.is_open()){
@@ -150,14 +110,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                 testAssert(data == testdata0);                                                            
             }
             catch(ReadInputDataException const& e){}
-        }},
-        {"Single Valid Data file(Checking the first all elements are the same) antena 255", []() {
-            try{
-                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797716_118.sub",255,256);              
-                testAssert(data == testdata1);                                                            
-            }
-            catch(ReadInputDataException const& e){}
-        }},                               
+        }},                              
         {"Single Valid Data file(Assert Vector Size is expeted) for 0-50 inputs", []() {
             try{
                 for(int i = 0; i <= 50; i++){    
@@ -166,7 +119,6 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                 }                                                          
             }
             catch(ReadInputDataException const& e){
-                std::cout << "\nerror" << std::endl;
             }
         }},
         {"Single Valid Data file(Assert Vector Size is expeted) for 51-100 inputs", []() {
@@ -177,7 +129,6 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                 }                                                          
             }
             catch(ReadInputDataException const& e){
-                std::cout << "\nerror" << std::endl;
             }
         }},
         {"Single Valid Data file(Assert Vector Size is expeted) for 101-150 inputs", []() {
@@ -188,7 +139,6 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                 }                                                          
             }
             catch(ReadInputDataException const& e){
-                std::cout << "\nerror" << std::endl;
             }
         }},
         
@@ -200,7 +150,6 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                 }                                                          
             }
             catch(ReadInputDataException const& e){
-                std::cout << "\nerror" << std::endl;
             }
         }},
         {"Single Valid Data file(Assert Vector Size is expeted) for 201-255 inputs", []() {
@@ -212,10 +161,8 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                 std::filesystem::remove("/tmp/1294797712_1294797717_118.sub");                                                          
             }
             catch(ReadInputDataException const& e){
-                std::cout << "\nerror" << std::endl;
             }
-        }}, 
-                                               
+        }},                                    
         {"Single invalid Data file (invalid file size)", []() {
             try{
                 std::vector<std::complex<float>> data = readInputDataFile("/mnt/test_input/1294797712_1294797719_118.sub",0,256);              

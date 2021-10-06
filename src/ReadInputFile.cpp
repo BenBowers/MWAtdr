@@ -7,6 +7,8 @@
     is by checking that the number of n inputs eg the number of antea in each observation matches the metafits file for that
     observation. I understand that this is not ideal but it is unfortantly all that i have to work with.
 
+    https://wiki.mwatelescope.org/display/MP/MWA+High+Time+Resolution+Voltage+Capture+System
+
 */
 #include "ReadInputFile.hpp"
 #include "Common.hpp"
