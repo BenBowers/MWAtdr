@@ -97,7 +97,6 @@ $RECYCLE.BIN/
 /.vscode
 
 # Test data
-/test/input_data
 /test/output_data
 
 # Python cache
