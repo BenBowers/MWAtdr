@@ -28,7 +28,7 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
 		testAssert (!(lhs == rhs));
 	}},
 	{"Valid metafits and one voltage file", []() {
-		auto mfr = MetadataFileReader({"/mnt/input_data/mfr/one_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
+		auto mfr = MetadataFileReader({"/mnt/test_input/mfr/one_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
 		auto actual = mfr.getAntennaConfig();
 		AntennaConfig expected = {{}, {109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
 		                               121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132}};
@@ -56,7 +56,7 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
 		           actual.frequencyChannels == expected.frequencyChannels);
 	}},
     {"Valid metafits and two voltage files", []() {
-		auto mfr = MetadataFileReader({"/mnt/input_data/mfr/two_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
+		auto mfr = MetadataFileReader({"/mnt/test_input/mfr/two_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
 		auto actual = mfr.getAntennaConfig();
 		AntennaConfig expected = {{}, {109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
 		                               121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132}};
@@ -84,7 +84,7 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
 		           actual.frequencyChannels == expected.frequencyChannels);
 	}},
     {"Valid metafits and 24 voltage files", []() {
-		auto mfr = MetadataFileReader({"/mnt/input_data/mfr/multi_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
+		auto mfr = MetadataFileReader({"/mnt/test_input/mfr/multi_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
 		auto actual = mfr.getAntennaConfig();
 		AntennaConfig expected = {{}, {109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
 		                               121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132}};
@@ -113,7 +113,7 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
 	}},
     {"Valid metafits and no voltage files", []() {
 	    try {
-			auto mfr = MetadataFileReader({"/mnt/input_data/mfr/no_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
+			auto mfr = MetadataFileReader({"/mnt/test_input/mfr/no_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
 			failTest();
 		}
 		catch (MetadataException const& e) {
@@ -124,7 +124,7 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
     }},
     {"Invalid metafits file", []() {
 		try {
-			auto mfr = MetadataFileReader({"/mnt/input_data/mfr/invalid_metafits/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
+			auto mfr = MetadataFileReader({"/mnt/test_input/mfr/invalid_metafits/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
 			failTest();
 		}
 		catch (MetadataException const& e)
@@ -136,7 +136,7 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
     }},
     {"No metafits file", []() {
 		try {
-			auto mfr = MetadataFileReader({"/mnt/input_data/empty/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
+			auto mfr = MetadataFileReader({"/mnt/test_input/empty/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
 			failTest();
 		}
 		catch (MetadataException const& e) {
@@ -147,7 +147,7 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
     }},
 	{"Invalid voltage files", []() {
 	    try {
-			auto mfr = MetadataFileReader({"/mnt/input_data/mfr/invalid_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
+			auto mfr = MetadataFileReader({"/mnt/test_input/mfr/invalid_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
 			failTest();
 		}
 		catch (MetadataException const& e) {
