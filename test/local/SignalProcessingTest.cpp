@@ -590,7 +590,63 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
 
         testAssert(actual == expected);
     }},
+    {"remapChannels(), only one channel, non zero channel", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn { {
+            // Channel 5
+                { 0.5f, 0.5f }, { 1.5f, 1.5f }, { 2.5f, 2.5f }, { 3.5f, 3.5f }, { 4.5f, 4.5f }, { 5.5f, 5.5f }
+        }};
 
+        std::map<unsigned, unsigned> signalDataMapping {
+            { 0, 5 }
+        };
+
+        std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping {
+            {5, {0, false}},
+        };
+
+        std::vector<std::complex<float>> const expected {
+            { 1.0f, 1.0f }, { 3.0f, 3.0f }, { 5.0f, 5.0f }, { 7.0f, 7.0f }, { 9.0f, 9.0f }, { 11.0f, 11.0f }
+        };
+
+        std::vector<std::complex<float>> actual;
+
+
+        remapChannels(signalDataIn, signalDataMapping, actual, channelRemapping, 1);
+
+
+        testAssert(actual == expected);
+    }},
+    {"remapChannels(), only one channel, zero channel", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn { {
+                { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 2.0f, 2.0f }, { 3.0f, 3.0f }, { 4.0f, 4.0f }, { 5.0f, 5.0f }
+        }};
+
+        std::map<unsigned, unsigned> signalDataMapping {
+            { 0, 0 }
+        };
+
+        std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping {
+            {0, {0, false}},
+        };
+        std::vector<std::complex<float>> const expected {
+            { 0.0f, 0.0f }, { 0.0f, 0.0f },
+            { 1.0f, 1.0f }, { 0.0f, 0.0f },
+            { 2.0f, 2.0f }, { 0.0f, 0.0f },
+            { 3.0f, 3.0f }, { 0.0f, 0.0f },
+            { 4.0f, 4.0f }, { 0.0f, 0.0f },
+            { 5.0f, 5.0f }, { 0.0f, 0.0f },
+        };
+
+        std::vector<std::complex<float>> actual;
+
+
+        remapChannels(signalDataIn, signalDataMapping, actual, channelRemapping, 2);
+        for(auto num : actual) {
+            std::cout << num << ", ";
+        }
+        std::cout << std::endl;
+        testAssert(actual == expected);
+    }},
     {"performPFB(), same number of blocks", []() {
         unsigned const numOfBlocks = 5;
         unsigned const numOfChannels = 8;
