@@ -24,6 +24,7 @@ set(LOCAL_TEST_SOURCE_FILES
     "${LOCAL_TEST_SOURCE_DIR}/OutSignalWriterTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/ReadCoeDataTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/ChannelRemappingTest.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/SignalProcessingTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/MetadataFileReaderTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/NodeAntennaInputAssignerTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/OutputLogFileWriterTest.cpp"
