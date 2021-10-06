@@ -98,3 +98,9 @@ $RECYCLE.BIN/
 
 # Test data
 /test/output_data
+
+# Python cache
+__pycache__
+
+# Pytest cache
+.pytest_cache

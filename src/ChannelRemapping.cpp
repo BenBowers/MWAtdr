@@ -24,9 +24,6 @@ ChannelRemapping computeChannelRemapping(unsigned samplingFreq, std::set<unsigne
     if (samplingFreq <= 0) {
         throw std::invalid_argument{"samplingFreq must be > 0"};
     }
-    else if (!(samplingFreq % 2 == 0 || samplingFreq == 1)) {
-        throw std::invalid_argument{"samplingFreq must be even or 1"};
-    }
     for (auto const channel : channels) {
         if (channel > samplingFreq / 2) {
             throw std::invalid_argument{"Frequency channels must be <= samplingFreq/2"};
@@ -39,8 +36,9 @@ ChannelRemapping computeChannelRemapping(unsigned samplingFreq, std::set<unsigne
     }
     else if (channels.size() == 1) {
         auto const channel = *channels.cbegin();
-        // Note: if there is only channel 0, new sampling frequency becomes 1 (not even!).
-        auto const newSamplingFreq = std::max<unsigned>(2 * channel, 1);
+        // Note: if there is only channel 0, new sampling frequency becomes 1.
+        // Otherwise, new sampling frequency becomes channel (not 2x channel).
+        auto const newSamplingFreq = std::max<unsigned>(channel, 1);
         return {newSamplingFreq, {{channel, {0, false}}}};
     }
     else {
