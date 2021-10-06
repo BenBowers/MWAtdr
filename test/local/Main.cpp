@@ -4,6 +4,8 @@
 #include "SignalProcessingTest.hpp"
 #include "MetadataFileReaderTest.hpp"
 #include "NodeAntennaInputAssignerTest.hpp"
+#include "ReadInputFileTest.hpp"
+#include "../TestHelper.hpp"
 #include "OutputLogFileWriterTest.hpp"
 #include "OutSignalWriterTest.hpp"
 #include "ReadCoeDataTest.hpp"
@@ -18,6 +20,8 @@ int main(){
         readCoeDataTest(),
         channelRemappingTest(),
         outSignalWriterTest(),
+        readInputFileTest(),
+        nodeAntennaInputAssignerTest(),
         metadataFileReaderTest(),
         nodeAntennaInputAssignerTest(),
         outputLogFileWriterTest()
