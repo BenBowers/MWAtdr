@@ -25,8 +25,11 @@ set(LOCAL_TEST_SOURCE_FILES
     "${LOCAL_TEST_SOURCE_DIR}/ReadCoeDataTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/ChannelRemappingTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/CommandLineArgumentsTest.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/SignalProcessingTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/MetadataFileReaderTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/NodeAntennaInputAssignerTest.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/ReadInputFileTest.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/OutputLogFileWriterTest.cpp"
 )
 
 set(MPI_TEST_SOURCE_FILES
@@ -66,7 +69,7 @@ add_library("${COMMON_LIBRARY}" ${COMMON_SOURCE_FILES})
 # Case insensitivity for RUNTIME_SYSTEM.
 string(TOLOWER "$ENV{RUNTIME_SYSTEM}" RUNTIME_SYSTEM)
 
-set(COMPILE_OPTIONS -m64 -pedantic -Wall -Wextra)
+set(COMPILE_OPTIONS -m64 -pedantic -Wall -Wextra -D_FILE_OFFSET_BITS=64)
 if(${RUNTIME_SYSTEM} STREQUAL "garrawarla")
     # If building for Garrawarla, tune to its CPU architecture for optimal performance.
     list(APPEND COMPILE_OPTIONS -march=cascadelake)

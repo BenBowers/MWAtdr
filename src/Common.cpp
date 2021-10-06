@@ -6,11 +6,11 @@ bool operator==(AppConfig const& lhs, AppConfig const& rhs) {
         && lhs.inputDirectoryPath == rhs.inputDirectoryPath
         && lhs.invPolyphaseFilterPath == rhs.invPolyphaseFilterPath
         && lhs.outputDirectoryPath == rhs.outputDirectoryPath
-        && rhs.ignoreErrors == lhs.ignoreErrors;
+        && lhs.ignoreErrors == rhs.ignoreErrors;
 }
 
 bool operator==(AntennaInputPhysID const& lhs, AntennaInputPhysID const& rhs) {
-    return lhs.tile == rhs.tile && lhs.signalChain == rhs.signalChain;
+    return lhs.tile == rhs.tile && lhs.signalChain == rhs.signalChain && lhs.flagged == rhs.flagged;
 }
 
 bool operator==(AntennaConfig const& lhs, AntennaConfig const& rhs) {

@@ -36,9 +36,6 @@ MetadataFileReader::MetadataFileReader(AppConfig const appConfig) {
 
 // Finds all of the observation signal files within the specified input directory path
 std::vector<std::string> MetadataFileReader::findVoltageFiles(AppConfig const appConfig) {
-    // Used to check if voltage files are valid
-    const unsigned long long VOLTAGE_FILE_SIZE = 5275652096;
-
 	std::vector<std::string> voltageFilenames;
     std::regex target (std::to_string(appConfig.observationID) + "_" +
 	                   std::to_string(appConfig.signalStartTime) + "_" + "[0-9]+");
@@ -50,7 +47,7 @@ std::vector<std::string> MetadataFileReader::findVoltageFiles(AppConfig const ap
 			// inputDirectoryPath/observationID_signalStartTime_channel.sub
 			if (path.extension() == ".sub") {
 				if (std::regex_match((std::string) path.stem(), target)) {
-					if (std::filesystem::file_size(path) == VOLTAGE_FILE_SIZE) {
+					if (!std::filesystem::is_empty(path)) {
 				        voltageFilenames.push_back(path);
 					}
 				}
@@ -92,7 +89,8 @@ std::vector<AntennaInputPhysID> MetadataFileReader::getPhysicalAntennaInputs() {
 	std::vector<AntennaInputPhysID> antennaInputs;
 	// Convert each Rfinput to AntennaInputPhysID and add to the vector
 	for (unsigned i = 0; i < metafitsMetadata->num_rf_inputs; i++) {
-		antennaInputs.push_back({metafitsMetadata->rf_inputs[i].tile_id, *(metafitsMetadata->rf_inputs[i].pol)});
+        auto const antenna = metafitsMetadata->rf_inputs[i];
+		antennaInputs.push_back({antenna.tile_id, *(antenna.pol), antenna.flagged});
 	}
 	return antennaInputs;
 }
