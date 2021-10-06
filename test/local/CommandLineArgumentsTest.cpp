@@ -48,7 +48,7 @@ CommandLineArgumentsTest::CommandLineArgumentsTest() : StatelessTestModuleImpl{{
     }},
     {"validateInputDirectoryPath(): Valid path", []() {
         auto const actual = validateInputDirectoryPath("/mnt/test_input/mfr/multi_voltage/");
-        std::string const expected = "/mnt/test_input/";
+        std::string const expected = "/mnt/test_input/mfr/multi_voltage/";
         testAssert(actual.compare(expected) == 0);
     }},
     {"validateObservationID(): Invalid ID", []() {
@@ -125,7 +125,7 @@ CommandLineArgumentsTest::CommandLineArgumentsTest() : StatelessTestModuleImpl{{
         std::string const expected = "/mnt/test_input/inverse_polyphase_filter.bin";
         testAssert(actual.compare(expected) == 0);
     }},
-    {"validateOutputDirectoryPath(): Non-existent directory", []() {
+    {"validateOutputDirectoryPath(): Non-existant directory", []() {
         try {
             validateOutputDirectoryPath("/mnt/non_existant");
             failTest();
