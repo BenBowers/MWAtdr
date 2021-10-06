@@ -24,6 +24,7 @@ set(LOCAL_TEST_SOURCE_FILES
     "${LOCAL_TEST_SOURCE_DIR}/OutSignalWriterTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/ReadCoeDataTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/ChannelRemappingTest.cpp"
+    "${LOCAL_TEST_SOURCE_DIR}/CommandLineArgumentsTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/SignalProcessingTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/MetadataFileReaderTest.cpp"
     "${LOCAL_TEST_SOURCE_DIR}/NodeAntennaInputAssignerTest.cpp"
@@ -49,6 +50,7 @@ set(COMMON_SOURCE_FILES
     "${MAIN_SOURCE_DIR}/OutputLogFileWriter.cpp"
     "${MAIN_SOURCE_DIR}/ReadCoeData.cpp"
     "${MAIN_SOURCE_DIR}/Common.cpp"
+    "${MAIN_SOURCE_DIR}/CommandLineArguments.cpp"
 )
 
 # This must come before adding the build targets, otherwise they won't have any effect.
