@@ -40,27 +40,14 @@ ReadInputFileTest::ReadInputFileTest(){
         }
         //counters for file validation writing
         long j = 1;
-        long k = 1;
-        long l = 1;
         for(long i = 1; i<=2621440000; i++){
             long long iMax = 16384000;
-            std::int8_t sample[2] = {(std::int8_t) rand(),(std::int8_t) rand()};
+            std::int8_t sample[2] = {(std::int8_t) rand()%256,(std::int8_t) rand()%256};
             //antena 0
             if(i <= 64000){
                 testdata0.push_back({sample[0],sample[1]});
                 myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }           
-            //antena 255
-            if(i > 16320000 && i <= 16383999){
-                testdata1.push_back({sample[0],sample[1]});
-                myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }   
-            //antena 256
-            else if(i == 16384000*k){
-                    k++;
-                    testdata1.push_back({sample[0],sample[1]});
-                    myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));    
-            }                                  
+            }                                             
             //antena 0
             else if(i == 16384000*j+64000){
                     j++;
@@ -71,18 +58,55 @@ ReadInputFileTest::ReadInputFileTest(){
             else if(i > 16384000*j && i <= 16384000*j+64000){                
                 testdata0.push_back({sample[0],sample[1]});
                 myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }            
-            //antena 256
-            else if(i > iMax*k-64000 && i <= iMax*k){                
-                testdata1.push_back({sample[0],sample[1]});
-                myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }                                 
+            }                                            
             //all other antena
             else{
                 myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
             }    
         }
-    } 
+    }
+
+    //known good file test for input 256
+    std::ofstream difffile("/tmp/1294797712_1294797716_118.sub",std::ios::out | std::ios::binary);
+    if(difffile.is_open()){
+        myfile << str;
+        for(int i =1; i<= 3533;i++){
+            std::int8_t sample[1] = {0};
+            difffile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
+        }
+        for(long i = 1; i <= 32768000; i++){
+            std::int8_t sample[1] = {0};
+            difffile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
+        }
+        //counters for file validation writing
+        long k = 1;
+        for(long i = 1; i<=2621440000; i++){
+            long long iMax = 16384000;
+            std::int8_t sample[2] = {(std::int8_t) rand()%256,(std::int8_t) rand()%256};          
+            //antena 255
+            if(i > 16320000 && i <= 16383999){
+                testdata1.push_back({sample[0],sample[1]});
+                difffile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
+            }   
+            //antena 255
+            else if(i == 16384000*k){
+                    k++;
+                    testdata1.push_back({sample[0],sample[1]});
+                    difffile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));    
+            }                                             
+            //antena 256
+            else if(i > iMax*k-64000 && i < iMax*k){                
+                testdata1.push_back({sample[0],sample[1]});
+                difffile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
+            }                                 
+            //all other antena
+            else{
+                difffile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
+            }    
+        }
+        
+    }     
+    /*
     std::ofstream invalidfile("/tmp/1294797712_1294797718_118.sub",std::ios::out | std::ios::binary);
     if(invalidfile.is_open()){
         invalidfile << invalidstr;
@@ -118,12 +142,13 @@ ReadInputFileTest::ReadInputFileTest(){
             wrongsize.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));   
         }  
     }
+    */
 }
 
 
 std::vector<TestCase> ReadInputFileTest::getTestCases(){
     return {        
-        
+    /* 
         {"Single Valid Data file(Checking the first all elements are the same) antena 0", []() {
             try{
                 std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",0,256);              
@@ -133,9 +158,10 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
         }},
         {"Single Valid Data file(Checking the first all elements are the same) antena 255", []() {
             try{
-                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",255,256);              
+                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797716_118.sub",255,256);              
                 testAssert(data == testdata1);                                                            
             }
+            std::filesystem::remove("/tmp/1294797712_1294797716_118.sub");
             catch(ReadInputDataException const& e){}
         }},                               
         {"Single Valid Data file(Assert Vector Size is expeted) for 0-50 inputs", []() {
@@ -235,6 +261,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
             }
             catch(ReadInputDataException const& e){}
         }},
+        */
         {"Validate file function Test(Fail) metafits and file dont match", []() {
             try{             
                 testAssert(validateInputData("/tmp/1294797712_1294797717_118.sub",220) == false);
