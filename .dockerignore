@@ -2,8 +2,13 @@
 .git
 .gitattributes
 .gitignore
+.pytest_cache
 .vscode
+*.md
+__pycache__
 /docker_build.*
-/docker_run.*
+/docker_run*
 /LICENSE
-/README.md
+/mwatdr_utils
+/test/input_data
+/test/output_data
