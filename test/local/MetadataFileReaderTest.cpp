@@ -28,10 +28,10 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
 		testAssert (!(lhs == rhs));
 	}},
 	{"Valid metafits and one voltage file", []() {
-		auto mfr = MetadataFileReader({"/mnt/test_input/mfr/one_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
-		auto actual = mfr.getAntennaConfig();
-		AntennaConfig expected = {{}, {109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
-		                               121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132}};
+		AppConfig appConfig = {"/mnt/test_input/mfr/one_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false};
+		auto mfr = MetadataFileReader(appConfig);
+		auto actual = mfr.getAntennaConfig(appConfig);
+		AntennaConfig expected = {{}, {118}};
 		// Populating expected.antennaInputs
 		unsigned tiles[] = {51, 52, 53, 54, 55, 56, 57, 58, 71, 72, 73, 74, 75, 76, 77, 78, 101, 102, 104, 105,
 		                    106, 107, 108, 111, 112, 113, 114, 115, 116, 117, 118, 121, 122, 123, 124, 125, 126,
@@ -56,10 +56,10 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
 		           actual.frequencyChannels == expected.frequencyChannels);
 	}},
     {"Valid metafits and two voltage files", []() {
-		auto mfr = MetadataFileReader({"/mnt/test_input/mfr/two_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
-		auto actual = mfr.getAntennaConfig();
-		AntennaConfig expected = {{}, {109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
-		                               121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132}};
+		AppConfig appConfig = {"/mnt/test_input/mfr/two_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false};
+		auto mfr = MetadataFileReader(appConfig);
+		auto actual = mfr.getAntennaConfig(appConfig);
+		AntennaConfig expected = {{}, {118, 120}};
 		// Populating expected.antennaInputs
 		unsigned tiles[] = {51, 52, 53, 54, 55, 56, 57, 58, 71, 72, 73, 74, 75, 76, 77, 78, 101, 102, 104, 105,
 		                    106, 107, 108, 111, 112, 113, 114, 115, 116, 117, 118, 121, 122, 123, 124, 125, 126,
@@ -84,8 +84,9 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
 		           actual.frequencyChannels == expected.frequencyChannels);
 	}},
     {"Valid metafits and 24 voltage files", []() {
-		auto mfr = MetadataFileReader({"/mnt/test_input/mfr/multi_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
-		auto actual = mfr.getAntennaConfig();
+		AppConfig appConfig = {"/mnt/test_input/mfr/multi_voltage/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false};
+		auto mfr = MetadataFileReader(appConfig);
+		auto actual = mfr.getAntennaConfig(appConfig);
 		AntennaConfig expected = {{}, {109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
 		                               121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132}};
 		// Populating expected.antennaInputs

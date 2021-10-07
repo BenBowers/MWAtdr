@@ -85,6 +85,9 @@ void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]) {
         std::cout << "Node 0 (Primary): " << e.what() << std::endl;
     }
 
+    // Wait for primary to start up
+    primary.synchronise();
+
     // Send startup status to secondary nodes
     primary.sendAppStartupStatus(startupStatus);
 
@@ -95,13 +98,19 @@ void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]) {
 
     std::cout << "Node 0 (Primary): Successful startup" << std::endl;
 
-    // Receive setup status from all secondary nodes
-    auto const secondaryNodeStatus = primary.receiveNodeSetupStatus();
-
     // Send app configuration to secondary nodes
+    std::cout << "Node 0 (Primary): Sending app configuration to secondary nodes" << std::endl;
     primary.sendAppConfig(appConfig);
 
+    // Wait for secondary nodes to set up
+    primary.synchronise();
+
+    // Receive setup status from all secondary nodes
+    std::cout << "Node 0 (Primary): Receiving setup status from secondary nodes" << std::endl;
+    auto const secondaryNodeStatus = primary.receiveNodeSetupStatus();
+
     // Send antenna configuration to secondary nodes
+    std::cout << "Node 0 (Primary): Sending antenna configuration to secondary nodes" << std::endl;
     primary.sendAntennaConfig(antennaConfig);
 
     // Compute frequency channel remapping
@@ -109,29 +118,43 @@ void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]) {
     auto const channelRemapping = computeChannelRemapping(ORIGINAL_SAMPLING_FREQUENCY, antennaConfig.frequencyChannels);
 
     // Send channel remapping to secondary nodes
+    std::cout << "Node 0 (Primary): Sending channel remapping to secondary nodes" << std::endl;
     primary.sendChannelRemapping(channelRemapping);
 
     // Send antenna input assignments to secondary nodes
+    std::cout << "Node 0 (Primary): Sending antenna input assignments to secondary nodes" << std::endl;
     auto const antennaInputRange = communicateNodeAntennaInputAssignment(primary, secondaryNodeStatus, antennaConfig.antennaInputs.size());
 
+    // Wait for all nodes to be ready for signal processing
+    primary.synchronise();
+
     // Read in raw signal, process, and write new signal to file for each assigned antenna input
+    std::cout << "Node 0 (Primary): Starting signal processing" << std::endl;
     auto processingResults = processAssignedAntennaInputs(appConfig, antennaConfig, antennaInputRange,
                                                           coefficients, channelRemapping);
+    std::cout << "Node 0 (Primary): Finished signal processing" << std::endl;
 
     // Wait for all nodes to finish processing
     primary.synchronise();
 
     // Gather processing results from secondary nodes and merge into processingResults
     mergeSecondaryProcessingResults(primary, processingResults);
+    std::cout << "Node 0 (Primary): Received processing results from secondary nodes" << std::endl;
 
     // Write output log file
+    std::cout << "Node 0 (Primary): Writing output log file" << std::endl;
     writeLogFile(appConfig, channelRemapping, processingResults, antennaConfig);
+
+    std::cout << "Node 0 (Primary): Terminated succesfully" << std::endl;
 }
 
 
 // Run by all secondary nodes
 void runNode(SecondaryNodeCommunicator const& secondary, int argc, char* argv[]) {
     bool setupStatus = true;
+
+    // Wait for primary to start up
+    secondary.synchronise();
 
     // Receive primary node startup status
     if (!secondary.receiveAppStartupStatus()) {
@@ -140,14 +163,18 @@ void runNode(SecondaryNodeCommunicator const& secondary, int argc, char* argv[])
                             ": Primary node startup failure, terminating node");
     }
 
-    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
-                 ": Successful startup" << std::endl;
-
     // Receive app configuration from primary node
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Receiving app configuration" << std::endl;
     auto const appConfig = secondary.receiveAppConfig();
 
     // Read in filter coefficients
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Reading in filter coefficients" << std::endl;
     auto const coefficients = createFilterCoefficients(appConfig.invPolyphaseFilterPath, setupStatus);
+
+    // Wait for secondary nodes to set up
+    secondary.synchronise();
 
     // Send setup status to primary node
     secondary.sendNodeSetupStatus(setupStatus);
@@ -158,24 +185,45 @@ void runNode(SecondaryNodeCommunicator const& secondary, int argc, char* argv[])
                             ": startup failure, terminating node");
     }
 
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Successful startup" << std::endl;
+
     // Receive antenna configuration from primary node
 	auto const antennaConfig = secondary.receiveAntennaConfig();
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Received antenna configuration" << std::endl;
 
     // Receive channel remapping from primary node
 	auto const channelRemapping = secondary.receiveChannelRemapping();
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Received channel remapping" << std::endl;
 
     // Receive antenna input assignment from primary node
     auto const antennaInputRange = secondary.receiveAntennaInputAssignment();
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Received antenna input assignment" << std::endl;
+
+    // Wait for all nodes to be ready for signal processing
+    secondary.synchronise();
 
     // Read in raw signal, process, and write new signal to file for each assigned antenna input
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Starting signal processing" << std::endl;
     auto const processingResults = processAssignedAntennaInputs(appConfig, antennaConfig, antennaInputRange,
                                                                 coefficients, channelRemapping);
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Finished signal processing" << std::endl;
 
     // Wait for all nodes to finish processing
     secondary.synchronise();
 
 	// Send processing results to primary node
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Sending processing results" << std::endl;
 	secondary.sendProcessingResults(processingResults);
+    
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Terminated successfully" << std::endl;
 }
 
 
@@ -253,7 +301,7 @@ AntennaConfig createAntennaConfig(AppConfig const& appConfig, bool& success) {
     AntennaConfig antennaConfig;
     try {
 		MetadataFileReader mfr(appConfig);
-		antennaConfig = mfr.getAntennaConfig();
+		antennaConfig = mfr.getAntennaConfig(appConfig);
 	}
 	catch (MetadataException const& e) {
         success = false;
