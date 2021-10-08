@@ -68,6 +68,7 @@ std::vector<std::complex<float>> makeCoeArr(std::vector<std::vector<std::complex
     return coefficantData;
 }
 
+
 // Function that checks if a floating point value is within a certain degree of freedom provided by our SRS
 // Will return true if the signal is accurate enough
 static constexpr bool CheckFloatingPointAccuracy(float known, float unknown) {
@@ -307,11 +308,56 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
     {"processSignals() Zero signal data value, Identity PFB, No remapping", []() {
         std::vector<std::vector<std::complex<float>>> const signalDataIn(filterSize, std::vector<std::complex<float>>(50, { 0.0f, 0.0f }));
         std::vector<unsigned> signalDataMap {};
-        signalDataMap.reserve(signalDataIn.size());
-        ChannelRemapping remappingData{filterSize * 2, {}};
+        signalDataMap.resize(signalDataIn.size());
+        ChannelRemapping remappingData{(filterSize * 2) + 1, {}};
         for(unsigned ii = 0; ii < filterSize; ++ii) {
             signalDataMap[ii] = ii;
             remappingData.channelMap.insert({ii, {ii, false}});
+        }
+        // This filter should do nothing to the data
+        std::vector<std::complex<float>> coefficantArray(filterSize, { 1.0f, 0.0f });
+        std::vector<std::int16_t> signalOut{};
+        std::vector<std::int16_t> expected(25650, 0);
+        processSignal(signalDataIn, signalDataMap, signalOut, coefficantArray, remappingData);
+
+        testAssert(signalOut == expected);
+    }},
+    {"processSignals() Ones signal data value, Zeros PFB array, No remapping", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn(filterSize, std::vector<std::complex<float>>(50, { 0.0f, 0.0f }));
+        std::vector<unsigned> signalDataMap {};
+        signalDataMap.resize(signalDataIn.size());
+        ChannelRemapping remappingData{(filterSize * 2) + 1, {}};
+        for(unsigned ii = 0; ii < filterSize; ++ii) {
+            signalDataMap[ii] = ii;
+            remappingData.channelMap.insert({ii, {ii, false}});
+        }
+        // This filter should do nothing to the data
+        std::vector<std::complex<float>> coefficantArray(filterSize, { 0.0f, 0.0f });
+        std::vector<std::int16_t> signalOut{};
+        std::vector<std::int16_t> expected(25650, 0);
+        processSignal(signalDataIn, signalDataMap, signalOut, coefficantArray, remappingData);
+
+        testAssert(signalOut == expected);
+    }},
+    {"remapChannels() Channel remapping with mapping to value greater than nyquist channel", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn(4, std::vector<std::complex<float>>(8, { 0.0f, 0.0f }));
+        std::vector<unsigned> signalDataMap { 0, 1, 2, 3, 4 };
+        std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping{
+            {0, {0, false}},
+            {1, {8, false}},
+            {2, {2, false}},
+            {3, {3, false}},
+            {4, {4, false}}
+        };
+
+        std::vector<std::complex<float>> signalDataOut{};
+
+        try {
+            remapChannels(signalDataIn, signalDataMap, signalDataOut, channelRemapping, 6);
+            failTest();
+        }
+        catch (std::invalid_argument& e) {
+            // test passed
         }
     }},
     // This test should do nothing to the data as the mapping is exactly the same apart from the nyquist scaling

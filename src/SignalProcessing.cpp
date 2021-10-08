@@ -120,7 +120,6 @@ void processSignal(std::vector<std::vector<std::complex<float>>> const& signalDa
         throw std::invalid_argument("Number of channels present in input signal do not equal number of channels in mapping");
     }
 
-    unsigned const IN_NUM_CHANNELS = signalDataIn.size();
     unsigned const IN_NUM_BLOCKS = signalDataIn[0].size();
 
     for (auto iterator = signalDataIn.begin()++; iterator != signalDataIn.end(); ++iterator) {
@@ -180,7 +179,7 @@ void remapChannels(std::vector<std::vector<std::complex<float>>> const& signalDa
         unsigned const newChannel = mappingIterator->second.newChannel;
         bool const flipped = mappingIterator->second.flipped;
 
-        if (oldChannel > signalDataIn[0].size() || newChannel > nyquistChannel) {
+        if (newChannel > nyquistChannel) {
             throw std::invalid_argument("Channel mapping values greater than the nyquist channel");
         }
 
