@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../TestHelper.hpp"
+#include "TestHelper.hpp"
 
 //unit test for the output file writer module
-TestModule readCoeDataTest();
+TestModule outSignalWriterTest();

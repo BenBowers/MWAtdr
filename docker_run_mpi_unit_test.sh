@@ -11,4 +11,4 @@ fi
 
 nodeCount=$1
 
-exec docker run -t "mwatdr/mpi_unit_test" "$nodeCount"
+exec docker run -t "mwatdr/mpi_unit_test" -n "$nodeCount"

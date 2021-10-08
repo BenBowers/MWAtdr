@@ -1,8 +1,8 @@
 #include "MetadataFileReaderTest.hpp"
 
-#include "../../src/Common.hpp"
-#include "../../src/MetadataFileReader.hpp"
-#include "../TestHelper.hpp"
+#include "Common.hpp"
+#include "MetadataFileReader.hpp"
+#include "TestHelper.hpp"
 
 #include <filesystem>
 #include <set>

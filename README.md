@@ -5,18 +5,13 @@
 The project builds 3 "targets" (executables):
 
 - `main` - The actual application.
-- `local_test` - Runs tests that do not involve MPI.
-- `mpi_test` - Runs tests that do involve MPI.
+- `local_unit_test` - Runs unit tests that do not involve MPI.
+- `mpi_unit_test` - Runs unit tests that do involve MPI.
 
 The project is fully containerised. On your local machine, the project will run with Docker. On Garrawarla, the Docker configuration is converted into a Singularity configuration for running with Singularity.  
 Multiple Docker build stages are used to create appropriate environments for the different targets.
 
-The source code is structured as follows:
-
-- `src/` - Main application source code.
-- `test/` - Test code.
-  - `local/` - Test code specific to the `local_test` target.
-  - `mpi/` - Test code specific to the `mpi_test` target.
+TODO: file/folder structure explanation
 
 The executables are built with CMake.
 
@@ -78,3 +73,7 @@ PowerShell:
 ```powershell
 ./docker_run.ps1 $target
 ```
+
+
+
+TODO: explain integration testing

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../TestHelper.hpp"
+#include "TestHelper.hpp"
 
 // Requires external files to run tests correctly.
 // File location: /mnt/input

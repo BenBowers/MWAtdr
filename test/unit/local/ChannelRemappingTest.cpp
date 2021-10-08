@@ -9,8 +9,8 @@
 #include <tuple>
 #include <vector>
 
-#include "../../src/ChannelRemapping.hpp"
-#include "../TestHelper.hpp"
+#include "ChannelRemapping.hpp"
+#include "TestHelper.hpp"
 
 
 class ChannelRemappingTest : public StatelessTestModuleImpl {
