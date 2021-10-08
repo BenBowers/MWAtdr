@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 #include <numeric>
+#include <random>
 #include <set>
 #include <stdexcept>
 #include <tuple>
@@ -67,7 +68,7 @@ ChannelRemappingTest::ChannelRemappingTest() : StatelessTestModuleImpl{{
     {"Just Nyquist frequency channel", []() {
         auto const actual = computeChannelRemapping(512, {256});
         ChannelRemapping const expected{
-            2 * 256,
+            256,
             {
                 {256, {0, false}}
             }
@@ -77,7 +78,7 @@ ChannelRemappingTest::ChannelRemappingTest() : StatelessTestModuleImpl{{
     {"Single even channel", []() {
         auto const actual = computeChannelRemapping(512, {104});
         ChannelRemapping const expected{
-            2 * 104,
+            104,
             {
                 {104, {0, false}}
             }
@@ -87,7 +88,7 @@ ChannelRemappingTest::ChannelRemappingTest() : StatelessTestModuleImpl{{
     {"Single odd channel", []() {
         auto const actual = computeChannelRemapping(512, {93});
         ChannelRemapping const expected{
-            2 * 93,
+            93,
             {
                 {93, {0, false}}
             }
@@ -143,11 +144,6 @@ ChannelRemappingTest::ChannelRemappingTest() : StatelessTestModuleImpl{{
             failTest();
         }
         catch (std::invalid_argument const&) {}
-        try {
-            computeChannelRemapping(73, {14, 54, 3, 87});
-            failTest();
-        }
-        catch (std::invalid_argument const&) {}
     }},
     {"Invalid channels", []() {
         try {
@@ -156,7 +152,7 @@ ChannelRemappingTest::ChannelRemappingTest() : StatelessTestModuleImpl{{
         }
         catch (std::invalid_argument const&) {}
         try {
-            computeChannelRemapping(512, {403});
+            computeChannelRemapping(511, {403});
             failTest();
         }
         catch (std::invalid_argument const&) {}
@@ -172,9 +168,11 @@ ChannelRemappingTest::ChannelRemappingTest() : StatelessTestModuleImpl{{
 
         for (unsigned i = 0; i < 250; ++i) {
             // Generate a random valid sampling frequency and random valid channels.
-            unsigned const samplingFreq = std::max<unsigned>((testRandomEngine() % 300) * 2, 1);
-            unsigned const channelCount = testRandomEngine() % (1 + samplingFreq / 2);
-            auto const channels = [&]() -> std::set<unsigned> {
+            std::uniform_int_distribution<unsigned> samplingFreqDist{1, 600};
+            unsigned const samplingFreq = samplingFreqDist(testRandomEngine);
+            std::uniform_int_distribution<unsigned> channelCountDist{0, 1 + samplingFreq / 2};
+            unsigned const channelCount = channelCountDist(testRandomEngine);
+            auto const channels = [samplingFreq, channelCount]() -> std::set<unsigned> {
                 std::vector<unsigned> allChannels(1 + samplingFreq / 2);
                 std::iota(allChannels.begin(), allChannels.end(), 0);
                 std::shuffle(allChannels.begin(), allChannels.end(), testRandomEngine);
@@ -186,8 +184,6 @@ ChannelRemappingTest::ChannelRemappingTest() : StatelessTestModuleImpl{{
 
             // New sampling frequency can't be 0 or worse than original sampling frequency.
             testAssert(newSamplingFreq > 0 && newSamplingFreq <= samplingFreq);
-            // New sampling frequency must be even or 1.
-            testAssert(newSamplingFreq % 2 == 0 || newSamplingFreq == 1);
             // New Nyquist frequency must be high enough to fit all channels.
             testAssert(1 + newSamplingFreq / 2 >= channels.size());
             // Must have remapped all channels.

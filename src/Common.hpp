@@ -8,6 +8,9 @@
 // Constant that indicates the amount of coefficients for each filter
 inline const int filterSize = 256;
 
+// Constant for the MWA sampling rate
+constexpr unsigned SAMPLING_RATE = 512;
+
 // Contains the observation details, and input and output file directories
 // Entered as command line arguments
 struct AppConfig {
@@ -23,6 +26,7 @@ struct AppConfig {
 struct AntennaInputPhysID {
 	unsigned tile;
 	char signalChain;
+	bool flagged;
 };
 
 struct AntennaConfig {

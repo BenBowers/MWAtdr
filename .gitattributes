@@ -5,6 +5,7 @@
 *.py    text
 *.sh    text eol=lf
 *.text  text
+*.sub   text eol=lf
 
 Dockerfile  text
 LICENSE text
