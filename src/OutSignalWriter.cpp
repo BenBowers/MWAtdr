@@ -39,7 +39,7 @@ static std::filesystem::path generateFilePath(const AppConfig &observation, cons
     std::string sObsID = std::to_string(observation.observationID);
     std::string sStartTime = std::to_string(observation.signalStartTime);
     std::string sPhysID = std::to_string(physID.tile);
-    std::string sSignalChain = std::to_string(physID.signalChain);
+    std::string sSignalChain(1,physID.signalChain);
 
     //check to see if the file directory is valid
     if(observation.outputDirectoryPath.empty() == false){
