@@ -22,7 +22,7 @@ constexpr std::int16_t MIN_INT16 = std::numeric_limits<std::int16_t>::min();
 // These Function declarations as I don't want them to be publically avalible
 // as they are internal, I've made them non static so I can unit test  them
 void remapChannels(std::vector<std::vector<std::complex<float>>> const& signalDataIn,
-                   std::map<unsigned, unsigned> const& signalDataInMapping,
+                   std::vector<unsigned> const& signalDataInMapping,
                    std::vector<std::complex<float>>& signalDataOut,
                    std::map<unsigned, ChannelRemapping::RemappedChannel> const& channelRemapping,
                    unsigned const outNumChannels);
@@ -85,7 +85,7 @@ class SignalProcessingTest : public StatelessTestModuleImpl {
 SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
     {"processSignals() Empty Channel Remapping", []() {
         std::vector<std::vector<std::complex<float>>> const signalDataIn{};
-        std::map<unsigned, unsigned> const signalDataMap{};
+        std::vector<unsigned> const signalDataMap{};
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping remappingData{};
         std::vector<std::complex<float>> coeData{};
@@ -100,7 +100,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
     }},
     {"processSignals() Different Number of Channels in mappings", []() {
         std::vector<std::vector<std::complex<float>>> const signalDataIn{};
-        std::map<unsigned, unsigned> const signalDataMap{{1, 1}};
+        std::vector<unsigned> const signalDataMap{0};
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
             2,
@@ -121,7 +121,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
     }},
     {"processSignals() Different Number of Channels between signal and mapping", []() {
         std::vector<std::vector<std::complex<float>>> const signalDataIn{};
-        std::map<unsigned, unsigned> const signalDataMap{{0, 0}, {1, 1}};
+        std::vector<unsigned> const signalDataMap{0, 1};
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
             2,
@@ -147,11 +147,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
         };
-        std::map<unsigned, unsigned> const signalDataMap{
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3}};
+        std::vector<unsigned> const signalDataMap{0, 1, 2, 3};
 
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
@@ -178,11 +174,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
         };
-        std::map<unsigned, unsigned> const signalDataMap{
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3}};
+        std::vector<unsigned> const signalDataMap{0, 1, 2, 3};
 
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
@@ -209,11 +201,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }, { 0.0f, 0.0f }}
         };
-        std::map<unsigned, unsigned> const signalDataMap{
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3}};
+        std::vector<unsigned> const signalDataMap{0, 1, 2, 3};
 
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
@@ -233,22 +221,18 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
         } catch (std::invalid_argument& e) {
         }
     }},
-    {"processSignals() New samping frequency invalid", []() {
+    {"processSignals() Empty coefficant data", []() {
         std::vector<std::vector<std::complex<float>>> const signalDataIn{
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
         };
-        std::map<unsigned, unsigned> const signalDataMap{
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3}};
+        std::vector<unsigned> const signalDataMap{0, 1, 2, 3};
 
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
-            8,
+            4,
             {
                 {0, {0, false}},
                 {1, {1, false}},
@@ -271,11 +255,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
         };
-        std::map<unsigned, unsigned> const signalDataMap{
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3}};
+        std::vector<unsigned> const signalDataMap{0, 1, 2, 3};
 
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
@@ -302,11 +282,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
         };
-        std::map<unsigned, unsigned> const signalDataMap{
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3}};
+        std::vector<unsigned> const signalDataMap{0, 1, 2, 3, 4};
 
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
@@ -327,6 +303,17 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
         } catch (std::invalid_argument& e) {
         }
     }},
+
+    {"processSignals() Zero signal data value, Identity PFB, No remapping", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn(filterSize, std::vector<std::complex<float>>(50, { 0.0f, 0.0f }));
+        std::vector<unsigned> signalDataMap {};
+        signalDataMap.reserve(signalDataIn.size());
+        ChannelRemapping remappingData{filterSize * 2, {}};
+        for(unsigned ii = 0; ii < filterSize; ++ii) {
+            signalDataMap[ii] = ii;
+            remappingData.channelMap.insert({ii, {ii, false}});
+        }
+    }},
     // This test should do nothing to the data as the mapping is exactly the same apart from the nyquist scaling
     {"remapChannels() contiguous input ( No Conjagation, No Nyquist channel )", []() {
        std::vector<std::vector<std::complex<float>>> const signalDataIn {
@@ -337,13 +324,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             { { 0.4f, 0.4f }, { 1.4f, 1.4f }, { 2.4f, 2.4f }, { 3.4f, 3.4f }, { 4.4f, 4.4f }, { 5.4f, 5.4f }, { 6.4f, 6.4f }, { 7.4f, 7.4f } }
         };
 
-        std::map<unsigned, unsigned> const signalDataMap {
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3},
-            {4, 4}
-        };
+       std::vector<unsigned> const signalDataMap { 0, 1, 2, 3, 4 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping{
                 {0, {0, false}},
@@ -378,13 +359,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             { { 0.4f, 0.4f }, { 1.4f, 1.4f }, { 2.4f, 2.4f }, { 3.4f, 3.4f }, { 4.4f, 4.4f }, { 5.4f, 5.4f }, { 6.4f, 6.4f }, { 7.4f, 7.4f } }
         };
 
-        std::map<unsigned, unsigned> const signalDataMap {
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3},
-            {4, 4}
-        };
+        std::vector<unsigned> const signalDataMap { 0 , 1, 2, 3, 4 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping{
                 {0, {0, true}},
@@ -420,13 +395,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             { { 0.4f, 0.4f }, { 1.4f, 1.4f }, { 2.4f, 2.4f }, { 3.4f, 3.4f }, { 4.4f, 4.4f }, { 5.4f, 5.4f }, { 6.4f, 6.4f }, { 7.4f, 7.4f } }
         };
 
-        std::map<unsigned, unsigned> const signalDataMap {
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3},
-            {4, 4}
-        };
+        std::vector<unsigned> const signalDataMap { 0, 1, 2, 3, 4 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping{
                 {0, {0, true}},
@@ -482,13 +451,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             }
         };
 
-        std::map<unsigned, unsigned> const signalDataMap {
-            { 3, 0 },
-            { 4, 1 },
-            { 5, 2 },
-            { 6, 3 },
-            { 7, 4 }
-        };
+        std::vector<unsigned> const signalDataMap { 3, 4, 5, 6, 7 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping {
                 {3, {0, false}},
@@ -547,14 +510,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
                 { 12.9f, 12.9f }, { 13.9f, 13.9f }, { 14.9f, 14.9f }, { 15.9f, 15.9f }, { 16.9f, 16.9f }, { 17.9f, 17.9f } }
         };
 
-        std::map<unsigned, unsigned> const signalDataMap {
-            { 5, 0 },
-            { 6, 1 },
-            { 7, 2 },
-            { 8, 3 },
-            { 9, 4 }
-        };
-
+        std::vector<unsigned> const signalDataMap { 5, 6, 7, 8, 9 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping {
             {5, {5, false}},
@@ -596,9 +552,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
                 { 0.5f, 0.5f }, { 1.5f, 1.5f }, { 2.5f, 2.5f }, { 3.5f, 3.5f }, { 4.5f, 4.5f }, { 5.5f, 5.5f }
         }};
 
-        std::map<unsigned, unsigned> signalDataMapping {
-            { 0, 5 }
-        };
+        std::vector<unsigned> signalDataMapping { 5 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping {
             {5, {0, false}},
@@ -621,9 +575,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
                 { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 2.0f, 2.0f }, { 3.0f, 3.0f }, { 4.0f, 4.0f }, { 5.0f, 5.0f }
         }};
 
-        std::map<unsigned, unsigned> signalDataMapping {
-            { 0, 0 }
-        };
+        std::vector<unsigned> signalDataMapping { 0 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping {
             {0, {0, false}},
