@@ -41,11 +41,6 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
     //This is how large the delay meta data block is inside of the file is is dependent on how many tiles are in the observation
     long long DELAYDATALENGTH = NUMTILES*NUMSAMPLES*2;
 
-    //std::cout << NUMTILES << std::endl;
-    //std::cout << NUMSAMPLES << std::endl;
-    //std::cout << DELAYDATALENGTH << std::endl;
-
-
     //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
      
      if(validateInputData(fileName, expectedNInputs) != true){
@@ -56,23 +51,15 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
     // main error handling statement
     if(datafile.is_open()){
         //this gets changed depending on what antean we want to read the data from
-        //per antena per polarisation there is a 64000 bytes of data        
-        std::streamoff offset;
-        if(antenaInput != 0){   
-            offset = NUMSAMPLES*antenaInput;  
-        }
-        else{
-            offset = 0;     
-        }
-        //std::cout << offset << std::endl;        
+        //per antena per polarisation there is a 64000 bytes of data
+        //long long antoffset = antenaInput+1;         
+        std::streamoff offset = NUMSAMPLES*antenaInput*2;              
         //reading the data into the vector
         //known size of data file enteries as per file specification pre allocation to save time later
         datavalues.reserve(NUMSAMPLES*160);        
         //alot of this is dependent on the meta data file reader numbers are subject to change once i figure out what to do
         //seeking to the start of the data portion of the file 
         //this will be antena 0 polarisation x and y sample 1 of 64000
-        datafile.clear();
-        datafile.seekg(offset+metadatasize, std::ios::beg);
         for(int i = 1; i <= 160;i++){
             datafile.seekg(DELAYDATALENGTH*i+offset+metadatasize, std::ios::beg);
             for(long j = 1; j<=NUMSAMPLES;j++){
@@ -83,9 +70,8 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
                 if(datafile.fail()){
                     std::cout << datafile.tellg() <<std::endl;
                     throw ReadInputDataException("Failed to read data byte from file");
-                }
-                
-                datavalues.push_back({rbuffer,ibuffer});
+                } 
+                datavalues.push_back({static_cast<float>(rbuffer),static_cast<float>(ibuffer)});
             }
         }   
     }

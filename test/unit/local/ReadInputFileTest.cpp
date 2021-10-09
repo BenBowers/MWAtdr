@@ -16,6 +16,18 @@ public:
     virtual std::vector<TestCase> getTestCases() override;
 };
 
+// code taken from https://noobtuts.com/cpp/compare-float-values
+//for comaping floats and doubles
+bool cmpf(float x, float y, float epsilon = 0.05f)
+{
+    if(fabs(x - y) < epsilon){
+      return true; //they are same
+    }
+    else{
+        return false; //they are not same
+    }
+}
+
 //antena 0 expected data
 std::vector<std::complex<float>> testdata0;
 //antena 256 expected data
@@ -116,7 +128,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
         {"Single Valid Data file(Checking the first all elements are the same) antena 0", []() {
             try{
                 std::vector<std::complex<float>> actualSignalData = readInputDataFile("/tmp/1294797712_1294797717_118.sub",0,256);              
-                std::int8_t antennaInput = 0;
+                std::uint8_t antennaInput = 0;
                 std::size_t index = 0;
                 for (std::size_t block = 0; block < 160; ++block) {
                     for (std::size_t sample = 0; sample < 64000; ++sample) {
@@ -124,8 +136,8 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                     std::int8_t expectedReal = 7 * block * antennaInput * sample - 8 * block;
                     std::int8_t expectedImaj = block - antennaInput + 3 * sample;
                     std::complex<float> actualValue = actualSignalData.at(index);
-                    testAssert(actualValue.real() == static_cast<float>(expectedReal));
-                    testAssert(actualValue.imag() == static_cast<float>(expectedImaj));
+                    testAssert(cmpf(actualValue.real(),static_cast<float>(expectedReal)) == true);
+                    testAssert(cmpf(actualValue.imag(),static_cast<float>(expectedImaj)) == true);
                     ++index;
                     }
                 }                                                            
@@ -135,7 +147,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
         {"Single Valid Data file(Checking the first all elements are the same) antena 100", []() {
             try{
                 std::vector<std::complex<float>> actualSignalData = readInputDataFile("/tmp/1294797712_1294797717_118.sub",100,256);              
-                std::int8_t antennaInput = 100;
+                std::uint8_t antennaInput = 100;
                 std::size_t index = 0;
                 for (std::size_t block = 0; block < 160; ++block) {
                     for (std::size_t sample = 0; sample < 64000; ++sample) {
@@ -143,18 +155,18 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                     std::int8_t expectedReal = 7 * block * antennaInput * sample - 8 * block;
                     std::int8_t expectedImaj = block - antennaInput + 3 * sample;
                     std::complex<float> actualValue = actualSignalData.at(index);
-                    testAssert(actualValue.real() == static_cast<float>(expectedReal));
-                    testAssert(actualValue.imag() == static_cast<float>(expectedImaj));
+                    testAssert(cmpf(actualValue.real(),static_cast<float>(expectedReal)) == true);
+                    testAssert(cmpf(actualValue.imag(),static_cast<float>(expectedImaj)) == true);
                     ++index;
                     }
                 }                                                            
             }
             catch(ReadInputDataException const& e){}
         }},
-        {"Single Valid Data file(Checking the first all elements are the same) antena 255", []() {
+        {"Single Valid Data file(Checking the first all elements are the same) antena 256", []() {
             try{
                 std::vector<std::complex<float>> actualSignalData = readInputDataFile("/tmp/1294797712_1294797717_118.sub",255,256);              
-                std::int8_t antennaInput = 255;
+                std::uint8_t antennaInput = 255;
                 std::size_t index = 0;
                 for (std::size_t block = 0; block < 160; ++block) {
                     for (std::size_t sample = 0; sample < 64000; ++sample) {
@@ -162,8 +174,8 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                     std::int8_t expectedReal = 7 * block * antennaInput * sample - 8 * block;
                     std::int8_t expectedImaj = block - antennaInput + 3 * sample;
                     std::complex<float> actualValue = actualSignalData.at(index);
-                    testAssert(actualValue.real() == static_cast<float>(expectedReal));
-                    testAssert(actualValue.imag() == static_cast<float>(expectedImaj));
+                    testAssert(cmpf(actualValue.real(),static_cast<float>(expectedReal)) == true);
+                    testAssert(cmpf(actualValue.imag(),static_cast<float>(expectedImaj)) == true);
                     ++index;
                     }
                 }                                                            
@@ -246,7 +258,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
             catch(ReadInputDataException const& e){
             }
         }},
-        {"Metafits and file metadata not the same", []() {
+        {"Metafits and File metadata not the same", []() {
             try{
                 std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797718_118.sub",0,253);              
                 failTest();                                                            
@@ -261,11 +273,10 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
             }
             catch(ReadInputDataException const& e){}
         }},
-        */
         {"Validate file function Test(Fail) metafits and file dont match", []() {
             try{             
                 testAssert(validateInputData("/tmp/1294797712_1294797717_118.sub",220) == false);
-                //std::filesystem::remove("/tmp/1294797712_1294797717_118.sub");                                                            
+                std::filesystem::remove("/tmp/1294797712_1294797717_118.sub");                                                            
             }
             catch(ReadInputDataException const& e){}
         }},                                                                                                            
