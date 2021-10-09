@@ -43,6 +43,9 @@ ObservationProcessingResults processAssignedAntennaInputs(AppConfig const& appCo
                                                           std::optional<AntennaInputRange> const& antennaInputRange,
                                                           std::vector<std::complex<float>> const& coefficients,
                                                           ChannelRemapping const& channelRemapping);
+void readRawSignalFiles(AppConfig const& appConfig, AntennaConfig const& antennaConfig,
+                        std::vector<std::vector<std::complex<float>>>& antennaInputSignals, std::set<unsigned>& usedChannels);
+
 void mergeSecondaryProcessingResults(PrimaryNodeCommunicator const& primary, ObservationProcessingResults& processingResults);
 
 
@@ -242,64 +245,66 @@ ObservationProcessingResults processAssignedAntennaInputs(AppConfig const& appCo
 			std::vector<std::int16_t> processedSignal;
 			// Used to store which channels are used in the processed signal
 			std::set<unsigned> usedChannels;
-            // Used to store which channel index maps to which channel
-            std::map<unsigned, unsigned> channelIndexMapping;
-            unsigned channelIndex = 0;
 
             // Used to store antenna input being processed
             auto const antenna = antennaConfig.antennaInputs.at(index);
 
             if (!antenna.flagged) {
                 // Read in raw signal files from all channels recorded by one antenna input
-                for (auto channel : antennaConfig.frequencyChannels) {
-                    std::filesystem::path dir (appConfig.inputDirectoryPath);
-                    std::filesystem::path filename = std::to_string(appConfig.observationID) + "_" +
-                                                    std::to_string(appConfig.signalStartTime) + "_" +
-                                                    std::to_string(channel) + ".sub";
-                    std::filesystem::path voltageFile = dir / filename;
+                readRawSignalFiles(appConfig, antennaConfig, antennaInputSignals, usedChannels);
 
-                    std::cout << "Here I go reading again!" << std::endl;
+                if (!antennaInputSignals.empty()) {
+                    // Converting set of channels used to vector for use in processSignal()
+                    std::vector<unsigned> channelIndexMapping(usedChannels.begin(), usedChannels.end());
 
+                    // Process signal
+                    std::cout << "Processing tile " << antenna.tile << antenna.signalChain << std::endl;
+                    processSignal(antennaInputSignals, channelIndexMapping, processedSignal, coefficients, channelRemapping);
+
+                    // Write processed antenna input signal to file
                     try {
-                        antennaInputSignals.push_back(readInputDataFile(voltageFile, index, antennaConfig.antennaInputs.size()));
-                        usedChannels.insert(channel);
-
-                        channelIndexMapping.insert({channel, channelIndex});
-                        channelIndex++;
+                        outSignalWriter(processedSignal, appConfig, antenna);
+                        processingResults.results.insert({index, {true, usedChannels}});
+                        std::cout << "Tile " << antenna.tile << antenna.signalChain << " written to file successfully" << std::endl;
                     }
-                    catch (ReadInputDataException const& e) {
-                        std::cout << "Reading error lmao" << std::endl;
+                    catch (OutSignalException const& e) {
+                        processingResults.results.insert({index, {false, usedChannels}});
+                        std::cout << "Tile " << antenna.tile << antenna.signalChain << " writing failed" << std::endl;
                     }
                 }
-
-                std::cout << "I'm gonna process a signal" << std::endl;
-
-                // Process signal
-                processSignal(antennaInputSignals, channelIndexMapping, processedSignal, coefficients, channelRemapping);
-
-                std::cout << "I have processed a signal. antenna " << antenna.tile << antenna.signalChain <<
-                            " to be precise" << std::endl;
-
-                // Write processed antenna input signal to file
-                try {
-                    outSignalWriter(processedSignal, appConfig, antenna);
-                    processingResults.results.insert({index, {true, usedChannels}});
-                    std::cout << "Tile " << antenna.tile << antenna.signalChain << " processed successfully" << std::endl;
-                }
-                catch (OutSignalException const& e) {
+                else {
+                    // Indicate antenna input skipped due to no readable data
                     processingResults.results.insert({index, {false, usedChannels}});
-                    std::cout << "Tile " << antenna.tile << antenna.signalChain << " failed" << std::endl;
-			    }
+                    std::cout << "Tile " << antenna.tile << antenna.signalChain << " not processed (no readable data)" << std::endl;
+                }
             }
             else {
                 // Skip processing for flagged antenna inputs
                 processingResults.results.insert({index, {false, usedChannels}});
-
-                std::cout << "  Skipping flagged tile " << antenna.tile << antenna.signalChain << std::endl;
+                std::cout << "Skipping flagged tile " << antenna.tile << antenna.signalChain << std::endl;
             }
 		}
 	}
 	return processingResults;
+}
+
+void readRawSignalFiles(AppConfig const& appConfig, AntennaConfig const& antennaConfig,
+                        std::vector<std::vector<std::complex<float>>>& antennaInputSignals, std::set<unsigned>& usedChannels) {
+    for (auto channel : antennaConfig.frequencyChannels) {
+        std::filesystem::path dir (appConfig.inputDirectoryPath);
+        std::filesystem::path filename = std::to_string(appConfig.observationID) + "_" +
+                                            std::to_string(appConfig.signalStartTime) + "_" +
+                                            std::to_string(channel) + ".sub";
+        std::filesystem::path voltageFile = dir / filename;
+
+        try {
+            antennaInputSignals.push_back(readInputDataFile(voltageFile, index, antennaConfig.antennaInputs.size()));
+            usedChannels.insert(channel);
+        }
+        catch (ReadInputDataException const& e) {
+            // Skip channel
+        }
+    }
 }
 
 
@@ -351,13 +356,13 @@ std::optional<AntennaInputRange> communicateNodeAntennaInputAssignment(PrimaryNo
 	// Send antenna input assignments to active secondary nodes
     for (auto const& [nodeID, active] : secondaryNodeStatus) {
         if (active) {
-            std::cout << "ASSIGNING node " << nodeID << " | " << antennaInputAssignments.back().value().begin << " - " << antennaInputAssignments.back().value().end << std::endl;
+            std::cout << "Assigning node " << nodeID << " | " << antennaInputAssignments.back().value().begin << " - " << antennaInputAssignments.back().value().end << std::endl;
             primary.sendAntennaInputAssignment(nodeID, antennaInputAssignments.back());
             antennaInputAssignments.pop_back();
         }
     }
 
-    std::cout << "ASSIGNING primary node | " << antennaInputAssignments.back().value().begin << " - " << antennaInputAssignments.back().value().end << std::endl;
+    std::cout << "Assigning primary node | " << antennaInputAssignments.back().value().begin << " - " << antennaInputAssignments.back().value().end << std::endl;
 
     // Return last remaining antenna input assignment to primary node
 	return antennaInputAssignments.back();
