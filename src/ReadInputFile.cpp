@@ -97,7 +97,7 @@ bool validateInputData(std::string fileName, unsigned int expectedNInputs){
     long delaydata = getNInputs(metadata) * getNPols(metadata) * samplebytesize;
     long actualNInputs = getNInputs(metadata) * getNPols(metadata);
     if(actualNInputs != expectedNInputs){
-        throw ReadInputDataException("Observation metadata and file metadata do not match");
+        return false;
     }
     long metadatasize = getMetaDataSize(metadata);
     long long expectedInputSize = metadatasize + delaydata * 161;
