@@ -18,7 +18,7 @@ AppConfig validTestConfig = {"",123456789,123456789,"","/tmp/"}; //input and out
 //Antena input Physical ID the two components of that struct is the first physical id the second is the char representing what signal chain that id is for 
 AntennaInputPhysID testAntenaPhysID = {1,'x'};
 
-std::filesystem::path filename = validTestConfig.outputDirectoryPath + std::to_string(validTestConfig.observationID) + "_" + std::to_string(validTestConfig.signalStartTime) + "_" + std::to_string(testAntenaPhysID.tile) +"_"+ std::to_string(testAntenaPhysID.signalChain)+".bin";
+std::filesystem::path filename = validTestConfig.outputDirectoryPath + std::to_string(validTestConfig.observationID) + "_" + std::to_string(validTestConfig.signalStartTime) + "_" + std::to_string(testAntenaPhysID.tile) +"_"+ std::string(1,testAntenaPhysID.signalChain)+".bin";
 
 
 class OutSignalWriterTest : public StatelessTestModuleImpl {
@@ -30,13 +30,10 @@ public:
 OutSignalWriterTest::OutSignalWriterTest() : StatelessTestModuleImpl{{
     {"Valid Appconfig", []() {
         std::vector<std::int16_t> testData = {1,2,3,4,5,6,7,8,9};
-        
         outSignalWriter(testData,validTestConfig,testAntenaPhysID);
-        
         auto actual = std::filesystem::file_size(filename);
         int expected = testData.size() * sizeof(std::int16_t);
         testAssert(actual == expected);
-        
         std::filesystem::remove(filename);
 	}},     
     
@@ -85,14 +82,23 @@ OutSignalWriterTest::OutSignalWriterTest() : StatelessTestModuleImpl{{
             outSignalWriter(testData,validTestConfig,testAntenaPhysID);
         }
         catch (OutSignalException const& e){}
-         std::ifstream validatefile(filename);
-
+        std::ifstream validatefile(filename);
         while(validatefile.read(reinterpret_cast<char*>(&data), sizeof(int16_t)))
         actual.push_back(data);
         
         testAssert(testData == actual);
         std::filesystem::remove(filename);        
-	}}                
+	}}, 
+    {"Validate File Name is being created correctly", []() {
+        std::vector<std::int16_t> testData = {1,2,3,4,5,6,7,8,9};
+        try {
+            outSignalWriter(testData,validTestConfig,testAntenaPhysID);
+        }
+        catch (OutSignalException const& e){}
+        testAssert(std::filesystem::exists("/tmp/123456789_123456789_1_x.bin") == true);
+        std::filesystem::remove("/tmp/123456789_123456789_1_x.bin");    
+	
+    }},                
 
 }} {}
 
