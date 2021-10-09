@@ -118,7 +118,7 @@ ReadInputFileTest::ReadInputFileTest(){
 
 std::vector<TestCase> ReadInputFileTest::getTestCases(){
     return {              
-        {"Single Valid Data file(Checking the first all elements are the same) antena 0", []() {
+        {"Signal Data file Validation(Checking all elements are expected)", []() {
             for(int i =0; i < 256; i++){
                 std::vector<std::complex<float>> actualSignalData = readInputDataFile("/tmp/1294797712_1294797717_118.sub",i,256);              
                 std::uint8_t antennaInput = i;
