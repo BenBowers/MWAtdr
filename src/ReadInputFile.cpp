@@ -62,18 +62,23 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
         //this will be antena 0 polarisation x and y sample 1 of 64000
         for(int i = 1; i <= 160;i++){
             datafile.seekg(DELAYDATALENGTH*i+offset+metadatasize, std::ios::beg);
-            for(long j = 1; j<=NUMSAMPLES;j++){
-                std::int8_t rbuffer;
-                std::int8_t ibuffer;
-                datafile.read(reinterpret_cast<char*>(&rbuffer),sizeof(std::int8_t));
-                datafile.read(reinterpret_cast<char*>(&ibuffer),sizeof(std::int8_t));
+            //for(long j = 1; j<=NUMSAMPLES;j++){
+                std::vector<std::int8_t> datablock;
+                datablock.clear();
+                datablock.resize(128000);
+                datafile.read(reinterpret_cast<char*>(&datablock[0]),sizeof(std::int8_t)*128000);
                 if(datafile.fail()){
                     std::cout << datafile.tellg() <<std::endl;
                     throw ReadInputDataException("Failed to read data byte from file");
-                } 
-                datavalues.push_back({static_cast<float>(rbuffer),static_cast<float>(ibuffer)});
-            }
-        }   
+                }
+                for(long j = 0; j<datablock.size();){
+                    float real = static_cast<float>(datablock.at(j));
+                    j++;
+                    float imag = static_cast<float>(datablock.at(j));
+                    j++;
+                   datavalues.push_back({real,imag}); 
+                }
+        }  
     }
     else{
         //if file was unable to be opened an exception will be thrown
