@@ -28,13 +28,13 @@ std::vector<std::complex<float>> readCoeData(std::string fileName){
         //obtaining the filter length
         infile.read(reinterpret_cast<char *>(&filterLength),sizeof(filterLength));//first read get the size of the filter exactly 8 bits
         //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
-        if(std::filesystem::file_size(fileName) != 1+filterSize*filterLength*sizeof(float)){
+        if(std::filesystem::file_size(fileName) != 1+MWA_NUM_CHANNELS*filterLength*sizeof(float)){
             throw ReadCoeDataException("Error File size is not expected");
         }
 
         // reading the data into the array
        float rbuffer;
-       result.reserve(filterLength*filterSize);
+       result.reserve(filterLength*MWA_NUM_CHANNELS);
        while(infile.read(reinterpret_cast<char*>(&rbuffer), sizeof(float)))
 
        result.push_back({rbuffer,0.0f});

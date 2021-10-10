@@ -26,7 +26,7 @@ void remapChannels(std::vector<std::vector<std::complex<float>>> const& signalDa
                    std::map<unsigned, ChannelRemapping::RemappedChannel> const& channelRemapping,
                    unsigned const outNumChannels);
 
-static const unsigned PFB_COE_CHANNELS = filterSize;
+static const unsigned PFB_COE_CHANNELS = MWA_NUM_CHANNELS;
 static const unsigned MWA_SAMPLING_RATE = SAMPLING_RATE;
 
 // Performs an inverse polyphase filter bank (PFB) on the signal data, the mapping is required

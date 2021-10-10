@@ -49,7 +49,7 @@ std::vector<std::complex<float>> makeCoeArr(std::vector<std::vector<std::complex
     // Get number of blocks from the width of channels
     unsigned const NUM_OF_BLOCKS = channels[0].size();
     // Get the number of channels from common.hpp
-    unsigned const NUM_OF_CHANNELS = filterSize;
+    unsigned const NUM_OF_CHANNELS = MWA_NUM_CHANNELS;
 
     // Allocate the array with zeros
     std::vector<std::complex<float>> coefficantData(NUM_OF_BLOCKS * NUM_OF_CHANNELS, { 0.0f, 0.0f });
@@ -319,7 +319,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             }
         };
 
-        std::vector<std::complex<float>> coeData(filterSize * 5, { 0.0f, 0.0f } );
+        std::vector<std::complex<float>> coeData(MWA_NUM_CHANNELS * 5, { 0.0f, 0.0f } );
 
         try {
             processSignal(signalDataIn, signalDataMap, signalDataOut, coeData, remappingData);
