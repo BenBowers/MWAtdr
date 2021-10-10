@@ -27,10 +27,15 @@ class NodeException : public std::runtime_error {
 	    NodeException(const std::string& message) : std::runtime_error(message) {}
 };
 
+class IndicateErrorException : public std::runtime_error {
+	public:
+	    IndicateErrorException(const std::string& message) : std::runtime_error(message) {}
+};
+
 
 // Visitor functions for the primary or secondary nodes
-void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]);
-void runNode(SecondaryNodeCommunicator const& secondary, int argc, char* argv[]);
+void runNode(PrimaryNodeCommunicator& primary, int argc, char* argv[]);
+void runNode(SecondaryNodeCommunicator& secondary, int argc, char* argv[]);
 
 AntennaConfig createAntennaConfig(AppConfig const& appConfig, bool& success);
 std::vector<std::complex<float>> createFilterCoefficients(std::string const filterPath, bool& success);
@@ -39,19 +44,21 @@ std::optional<AntennaInputRange> communicateNodeAntennaInputAssignment(PrimaryNo
                                                                        unsigned const numAntennaInputs);
 unsigned getActiveNodeCount(std::map<unsigned, bool> const& secondaryNodeStatus);
 
-ObservationProcessingResults processAssignedAntennaInputs(AppConfig const& appConfig, AntennaConfig const& antennaConfig,
-                                                          std::optional<AntennaInputRange> const& antennaInputRange,
-                                                          std::vector<std::complex<float>> const& coefficients,
-                                                          ChannelRemapping const& channelRemapping);
+void processAntennaInput(AppConfig const& appConfig, AntennaConfig const& antennaConfig,
+                         std::vector<std::complex<float>> const& coefficients, ChannelRemapping const& channelRemapping,
+                         unsigned const index, ObservationProcessingResults& processingResults);
+void readRawSignalFiles(AppConfig const& appConfig, AntennaConfig const& antennaConfig, unsigned const index,
+                        std::vector<std::vector<std::complex<float>>>& antennaInputSignals, std::set<unsigned>& usedChannels);
+
 void mergeSecondaryProcessingResults(PrimaryNodeCommunicator const& primary, ObservationProcessingResults& processingResults);
 
 
 int main(int argc, char* argv[]) {
     // Initialise InternodeCommunicator singleton
     auto const communicatorContext = InternodeCommunicationContext::initialise();
-    auto const communicator = communicatorContext->getCommunicator();
+    auto communicator = communicatorContext->getCommunicator();
 
-	std::visit([argc, argv](auto const& node) {
+	std::visit([argc, argv](auto& node) {
 		try {
 	        runNode(node, argc, argv);
 		}
@@ -63,7 +70,7 @@ int main(int argc, char* argv[]) {
 
 
 // Run by the primary node
-void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]) {
+void runNode(PrimaryNodeCommunicator& primary, int argc, char* argv[]) {
     bool startupStatus = true;
 
     AppConfig appConfig;
@@ -85,6 +92,9 @@ void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]) {
         std::cout << "Node 0 (Primary): " << e.what() << std::endl;
     }
 
+    // Wait for primary to start up
+    primary.synchronise();
+
     // Send startup status to secondary nodes
     primary.sendAppStartupStatus(startupStatus);
 
@@ -95,13 +105,19 @@ void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]) {
 
     std::cout << "Node 0 (Primary): Successful startup" << std::endl;
 
-    // Receive setup status from all secondary nodes
-    auto const secondaryNodeStatus = primary.receiveNodeSetupStatus();
-
     // Send app configuration to secondary nodes
+    std::cout << "Node 0 (Primary): Sending app configuration to secondary nodes" << std::endl;
     primary.sendAppConfig(appConfig);
 
+    // Wait for secondary nodes to set up
+    primary.synchronise();
+
+    // Receive setup status from all secondary nodes
+    std::cout << "Node 0 (Primary): Receiving setup status from secondary nodes" << std::endl;
+    auto const secondaryNodeStatus = primary.receiveNodeSetupStatus();
+
     // Send antenna configuration to secondary nodes
+    std::cout << "Node 0 (Primary): Sending antenna configuration to secondary nodes" << std::endl;
     primary.sendAntennaConfig(antennaConfig);
 
     // Compute frequency channel remapping
@@ -109,29 +125,60 @@ void runNode(PrimaryNodeCommunicator const& primary, int argc, char* argv[]) {
     auto const channelRemapping = computeChannelRemapping(ORIGINAL_SAMPLING_FREQUENCY, antennaConfig.frequencyChannels);
 
     // Send channel remapping to secondary nodes
+    std::cout << "Node 0 (Primary): Sending channel remapping to secondary nodes" << std::endl;
     primary.sendChannelRemapping(channelRemapping);
 
     // Send antenna input assignments to secondary nodes
+    std::cout << "Node 0 (Primary): Sending antenna input assignments to secondary nodes" << std::endl;
     auto const antennaInputRange = communicateNodeAntennaInputAssignment(primary, secondaryNodeStatus, antennaConfig.antennaInputs.size());
 
-    // Read in raw signal, process, and write new signal to file for each assigned antenna input
-    auto processingResults = processAssignedAntennaInputs(appConfig, antennaConfig, antennaInputRange,
-                                                          coefficients, channelRemapping);
+    // Wait for all nodes to be ready for signal processing
+    primary.synchronise();
+
+    std::cout << "Node 0 (Primary): Starting signal processing" << std::endl;
+
+    // Process all assigned antenna inputs (if any)
+    ObservationProcessingResults processingResults;
+    if (antennaInputRange.has_value()) {
+        try {
+		    for (unsigned index = antennaInputRange.value().begin; index <= antennaInputRange.value().end; index++) {
+                if (!primary.getErrorStatus()) {
+                    processAntennaInput(appConfig, antennaConfig, coefficients, channelRemapping, index, processingResults);
+                }
+                else {
+                    throw NodeException("Node 0 (Primary): Other node has signalled an error occurred, terminating node");
+                }
+            }
+        }
+        catch (IndicateErrorException const&) {
+            primary.indicateError();
+            throw NodeException("Node 0 (Primary): Read error has occurred, notifying other nodes... terminating node");
+        }
+    }
+
+    std::cout << "Node 0 (Primary): Finished signal processing" << std::endl;
 
     // Wait for all nodes to finish processing
     primary.synchronise();
 
     // Gather processing results from secondary nodes and merge into processingResults
     mergeSecondaryProcessingResults(primary, processingResults);
+    std::cout << "Node 0 (Primary): Received processing results from secondary nodes" << std::endl;
 
     // Write output log file
+    std::cout << "Node 0 (Primary): Writing output log file" << std::endl;
     writeLogFile(appConfig, channelRemapping, processingResults, antennaConfig);
+
+    std::cout << "Node 0 (Primary): Terminated succesfully" << std::endl;
 }
 
 
 // Run by all secondary nodes
-void runNode(SecondaryNodeCommunicator const& secondary, int argc, char* argv[]) {
+void runNode(SecondaryNodeCommunicator& secondary, int argc, char* argv[]) {
     bool setupStatus = true;
+
+    // Wait for primary to start up
+    secondary.synchronise();
 
     // Receive primary node startup status
     if (!secondary.receiveAppStartupStatus()) {
@@ -140,14 +187,18 @@ void runNode(SecondaryNodeCommunicator const& secondary, int argc, char* argv[])
                             ": Primary node startup failure, terminating node");
     }
 
-    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
-                 ": Successful startup" << std::endl;
-
     // Receive app configuration from primary node
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Receiving app configuration" << std::endl;
     auto const appConfig = secondary.receiveAppConfig();
 
     // Read in filter coefficients
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Reading in filter coefficients" << std::endl;
     auto const coefficients = createFilterCoefficients(appConfig.invPolyphaseFilterPath, setupStatus);
+
+    // Wait for secondary nodes to set up
+    secondary.synchronise();
 
     // Send setup status to primary node
     secondary.sendNodeSetupStatus(setupStatus);
@@ -158,83 +209,137 @@ void runNode(SecondaryNodeCommunicator const& secondary, int argc, char* argv[])
                             ": startup failure, terminating node");
     }
 
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Successful startup" << std::endl;
+
     // Receive antenna configuration from primary node
 	auto const antennaConfig = secondary.receiveAntennaConfig();
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Received antenna configuration" << std::endl;
 
     // Receive channel remapping from primary node
 	auto const channelRemapping = secondary.receiveChannelRemapping();
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Received channel remapping" << std::endl;
 
     // Receive antenna input assignment from primary node
     auto const antennaInputRange = secondary.receiveAntennaInputAssignment();
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Received antenna input assignment" << std::endl;
 
-    // Read in raw signal, process, and write new signal to file for each assigned antenna input
-    auto const processingResults = processAssignedAntennaInputs(appConfig, antennaConfig, antennaInputRange,
-                                                                coefficients, channelRemapping);
+    // Wait for all nodes to be ready for signal processing
+    secondary.synchronise();
+
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Starting signal processing" << std::endl;
+
+    // Process all assigned antenna inputs (if any)
+    ObservationProcessingResults processingResults;
+    if (antennaInputRange.has_value()) {
+        try {
+		    for (unsigned index = antennaInputRange.value().begin; index <= antennaInputRange.value().end; index++) {
+                if (!secondary.getErrorStatus()) {
+                    processAntennaInput(appConfig, antennaConfig, coefficients, channelRemapping, index, processingResults);
+                }
+                else {
+                    throw NodeException("Node " + std::to_string(secondary.getNodeID()) +
+                                        ": Other node has signalled an error occurred, terminating node");
+                }
+            }
+        }
+        catch (IndicateErrorException const&) {
+            secondary.indicateError();
+            throw NodeException("Node " + std::to_string(secondary.getNodeID()) +
+                                ": Read error has occurred, notifying other nodes... terminating node");
+        }
+    }
+
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Finished signal processing" << std::endl;
 
     // Wait for all nodes to finish processing
     secondary.synchronise();
 
 	// Send processing results to primary node
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Sending processing results" << std::endl;
 	secondary.sendProcessingResults(processingResults);
+    
+    std::cout << "Node " + std::to_string(secondary.getNodeID()) +
+                 ": Terminated successfully" << std::endl;
 }
 
 
-ObservationProcessingResults processAssignedAntennaInputs(AppConfig const& appConfig, AntennaConfig const& antennaConfig,
-                                                          std::optional<AntennaInputRange> const& antennaInputRange,
-                                                          std::vector<std::complex<float>> const& coefficients,
-                                                          ChannelRemapping const& channelRemapping) {
-    ObservationProcessingResults processingResults;
+void processAntennaInput(AppConfig const& appConfig, AntennaConfig const& antennaConfig,
+                         std::vector<std::complex<float>> const& coefficients, ChannelRemapping const& channelRemapping,
+                         unsigned const index, ObservationProcessingResults& processingResults) {
+	// Used to store raw signal data from all channels recorded by one antenna input
+    std::vector<std::vector<std::complex<float>>> antennaInputSignals;
+    // Used to store processed signal for one antenna input
+    std::vector<std::int16_t> processedSignal;
+    // Used to store which channels are used in the processed signal
+    std::set<unsigned> usedChannels;
 
-    // Process all assigned antenna inputs (if any)
-    if (antennaInputRange.has_value()) {
-		for (unsigned index = antennaInputRange.value().begin; index <= antennaInputRange.value().end; index++) {
-			// Used to store raw signal data from all channels recorded by one antenna input
-	        std::vector<std::vector<std::complex<float>>> antennaInputSignals;
-			// Used to store processed signal for one antenna input
-			std::vector<std::int16_t> processedSignal;
-			// Used to store which channels are used in the processed signal
-			std::set<unsigned> usedChannels;
-            // Used to store which channel index maps to which channel
-            std::map<unsigned, unsigned> channelIndexMapping;
-            unsigned channelIndex = 0;
+    // Used to store antenna input being processed
+    auto const antenna = antennaConfig.antennaInputs.at(index);
 
-			// Read in raw signal files from all channels recorded by one antenna input
-			for (auto channel : antennaConfig.frequencyChannels) {
-                std::filesystem::path dir (appConfig.inputDirectoryPath);
-				std::filesystem::path filename = std::to_string(appConfig.observationID) + "_" +
-				                                 std::to_string(appConfig.signalStartTime) + "_" +
-									             std::to_string(channel) + ".sub";
-                std::filesystem::path voltageFile = dir / filename;
+    if (!antenna.flagged) {
+        // Read in raw signal files from all channels recorded by one antenna input
+        readRawSignalFiles(appConfig, antennaConfig, index, antennaInputSignals, usedChannels);
 
-				try {
-					antennaInputSignals.push_back(readInputDataFile(voltageFile, index, antennaConfig.antennaInputs.size()));
-                    usedChannels.insert(channel);
+        if (!antennaInputSignals.empty()) {
+            // Converting set of channels used to vector for use in processSignal()
+            std::vector<unsigned> channelIndexMapping(usedChannels.begin(), usedChannels.end());
 
-                    channelIndexMapping.insert({channelIndex, channel});
-                    channelIndex++;
-				}
-                catch (ReadInputDataException const& e) {
-                    // Skip processing
-                }
-			}
+            // Process signal
+            std::cout << "Processing tile " << antenna.tile << antenna.signalChain << std::endl;
+            processSignal(antennaInputSignals, channelIndexMapping, processedSignal, coefficients, channelRemapping);
 
-			// Process signal
-			processSignal(antennaInputSignals, channelIndexMapping, processedSignal, coefficients, channelRemapping);
+            // Write processed antenna input signal to file
+            try {
+                outSignalWriter(processedSignal, appConfig, antenna);
+                processingResults.results.insert({index, {true, usedChannels}});
+                std::cout << "Tile " << antenna.tile << antenna.signalChain << " written to file successfully" << std::endl;
+            }
+            catch (OutSignalException const& e) {
+                processingResults.results.insert({index, {false, usedChannels}});
+                std::cout << "Tile " << antenna.tile << antenna.signalChain << " writing failed" << std::endl;
+            }
+        }
+        else {
+            // Indicate antenna input skipped due to no readable data
+            processingResults.results.insert({index, {false, usedChannels}});
+            std::cout << "Tile " << antenna.tile << antenna.signalChain << " not processed (no readable data)" << std::endl;
+        }
+    }
+    else {
+        // Skip processing for flagged antenna inputs
+        processingResults.results.insert({index, {false, usedChannels}});
+        std::cout << "Skipping flagged tile " << antenna.tile << antenna.signalChain << std::endl;
+    }
+}
 
-            auto const antenna = antennaConfig.antennaInputs.at(index);
-			// Write processed antenna input signal to file
-			try {
-				outSignalWriter(processedSignal, appConfig, antenna);
-				processingResults.results.insert({index, {true, usedChannels}});
-                std::cout << "Tile " << antenna.tile << antenna.signalChain << " processed successfully" << std::endl;
-			}
-			catch (OutSignalException const& e) {
-				processingResults.results.insert({index, {false, usedChannels}});
-                std::cout << "Tile " << antenna.tile << antenna.signalChain << " failed" << std::endl;
-			}
-		}
-	}
-	return processingResults;
+void readRawSignalFiles(AppConfig const& appConfig, AntennaConfig const& antennaConfig, unsigned const index,
+                        std::vector<std::vector<std::complex<float>>>& antennaInputSignals, std::set<unsigned>& usedChannels) {
+    for (auto channel : antennaConfig.frequencyChannels) {
+        std::filesystem::path dir (appConfig.inputDirectoryPath);
+        std::filesystem::path filename = std::to_string(appConfig.observationID) + "_" +
+                                            std::to_string(appConfig.signalStartTime) + "_" +
+                                            std::to_string(channel) + ".sub";
+        std::filesystem::path voltageFile = dir / filename;
+
+        try {
+            antennaInputSignals.push_back(readInputDataFile(voltageFile, index, antennaConfig.antennaInputs.size()));
+            usedChannels.insert(channel);
+        }
+        catch (ReadInputDataException const& e) {
+            // Indicate error has occurred if appConfig.ignoreError flag is false
+            if (!appConfig.ignoreErrors) {
+                std::cout << "Error occurred reading: " << (std::string) voltageFile << std::endl;
+                throw IndicateErrorException("");
+            }
+        }
+    }
 }
 
 
@@ -253,7 +358,7 @@ AntennaConfig createAntennaConfig(AppConfig const& appConfig, bool& success) {
     AntennaConfig antennaConfig;
     try {
 		MetadataFileReader mfr(appConfig);
-		antennaConfig = mfr.getAntennaConfig();
+		antennaConfig = mfr.getAntennaConfig(appConfig);
 	}
 	catch (MetadataException const& e) {
         success = false;
@@ -286,10 +391,13 @@ std::optional<AntennaInputRange> communicateNodeAntennaInputAssignment(PrimaryNo
 	// Send antenna input assignments to active secondary nodes
     for (auto const& [nodeID, active] : secondaryNodeStatus) {
         if (active) {
+            std::cout << "Assigning node " << nodeID << " | " << antennaInputAssignments.back().value().begin << " - " << antennaInputAssignments.back().value().end << std::endl;
             primary.sendAntennaInputAssignment(nodeID, antennaInputAssignments.back());
             antennaInputAssignments.pop_back();
         }
     }
+
+    std::cout << "Assigning primary node | " << antennaInputAssignments.back().value().begin << " - " << antennaInputAssignments.back().value().end << std::endl;
 
     // Return last remaining antenna input assignment to primary node
 	return antennaInputAssignments.back();

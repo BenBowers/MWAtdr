@@ -3,6 +3,7 @@
 #include "../../src/CommandLineArguments.hpp"
 #include "../TestHelper.hpp"
 
+#include <filesystem>
 #include <stdexcept>
 
 
@@ -15,7 +16,7 @@ public:
 CommandLineArgumentsTest::CommandLineArgumentsTest() : StatelessTestModuleImpl{{
     {"validateInputDirectoryPath(): Non-existent directory", []() {
         try {
-            validateInputDirectoryPath("/mnt/non_existant");
+            validateInputDirectoryPath("/mnt/non_existent");
             failTest();
         }
         catch (std::invalid_argument const& e) {
@@ -37,6 +38,9 @@ CommandLineArgumentsTest::CommandLineArgumentsTest() : StatelessTestModuleImpl{{
     }},
     {"validateInputDirectoryPath(): Empty directory", []() {
         try {
+            // Create empty folder if it doesn't already exist
+            std::filesystem::create_directory("/mnt/test_input/empty");
+
             validateInputDirectoryPath("/mnt/test_input/empty");
             failTest();
         }
@@ -90,9 +94,9 @@ CommandLineArgumentsTest::CommandLineArgumentsTest() : StatelessTestModuleImpl{{
         unsigned long long const expected = 1000000008;
         testAssert(actual == expected);
     }},
-    {"validateInvPolyphaseFilterPath(): Non-existant path", []() {
+    {"validateInvPolyphaseFilterPath(): Non-existent path", []() {
         try {
-            validateInvPolyphaseFilterPath("/mnt/non_existant");
+            validateInvPolyphaseFilterPath("/mnt/non_existent");
         }
         catch (std::invalid_argument const& e) {
             if ((int) ((std::string) e.what()).find("does not exist") == -1) {
@@ -125,9 +129,9 @@ CommandLineArgumentsTest::CommandLineArgumentsTest() : StatelessTestModuleImpl{{
         std::string const expected = "/mnt/test_input/inverse_polyphase_filter.bin";
         testAssert(actual.compare(expected) == 0);
     }},
-    {"validateOutputDirectoryPath(): Non-existant directory", []() {
+    {"validateOutputDirectoryPath(): Non-existent directory", []() {
         try {
-            validateOutputDirectoryPath("/mnt/non_existant");
+            validateOutputDirectoryPath("/mnt/non_existent");
             failTest();
         }
         catch (std::invalid_argument const& e) {
