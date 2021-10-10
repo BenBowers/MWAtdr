@@ -103,7 +103,7 @@ void writeProcessingResults(std::ofstream& log, ObservationProcessingResults con
             }
         }
         else {
-            log << "not processed (flagged)" << std::endl;
+            log << "skipped (flagged)" << std::endl;
             log << "-Used channels: N/A";
         }
         log << std::endl << std::endl;
