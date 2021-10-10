@@ -66,7 +66,6 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
             datafile.seekg(DELAYDATALENGTH*i+offset+metadatasize, std::ios::beg);
                 datafile.read(reinterpret_cast<char*>(&datablock[0]),sizeof(std::int8_t)*NUMSAMPLES*2);
                 if(datafile.fail()){
-                    std::cout << datafile.tellg() <<std::endl;
                     throw ReadInputDataException("Failed to read data byte from file");
                 }
                 for(long j = 0; j<datablock.size();){
@@ -115,12 +114,9 @@ bool validateInputData(std::string fileName, unsigned int expectedNInputs){
 std::string getMetaDataString(std::string fileName){
     std::ifstream f(fileName);   
     if (f){
-        f.seekg(4096, std::ios::beg);
-        const auto size = f.tellg();
+        long size = 4096;
         std::string str(size, ' ');
-        f.seekg(0);
         f.read(&str[0], size); 
-        f.close();
         return str;
     }
     else{
