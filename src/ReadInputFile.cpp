@@ -41,11 +41,6 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
     //This is how large the delay meta data block is inside of the file is is dependent on how many tiles are in the observation
     long long DELAYDATALENGTH = NUMTILES*NUMSAMPLES*2;
 
-    //std::cout << NUMTILES << std::endl;
-    //std::cout << NUMSAMPLES << std::endl;
-    //std::cout << DELAYDATALENGTH << std::endl;
-
-
     //error checking to make sure the file is of the right size this is to validate that all the infomation inside atleast of the correct
      
      if(validateInputData(fileName, expectedNInputs) != true){
@@ -56,38 +51,31 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
     // main error handling statement
     if(datafile.is_open()){
         //this gets changed depending on what antean we want to read the data from
-        //per antena per polarisation there is a 64000 bytes of data        
-        std::streamoff offset;
-        if(antenaInput != 0){   
-            offset = NUMSAMPLES*antenaInput;  
-        }
-        else{
-            offset = 0;     
-        }
-        //std::cout << offset << std::endl;        
+        //per antena per polarisation there is a 64000 bytes of data
+        //long long antoffset = antenaInput+1;         
+        std::streamoff offset = NUMSAMPLES*antenaInput*2;              
         //reading the data into the vector
         //known size of data file enteries as per file specification pre allocation to save time later
         datavalues.reserve(NUMSAMPLES*160);        
         //alot of this is dependent on the meta data file reader numbers are subject to change once i figure out what to do
         //seeking to the start of the data portion of the file 
         //this will be antena 0 polarisation x and y sample 1 of 64000
-        datafile.clear();
-        datafile.seekg(offset+metadatasize, std::ios::beg);
+        std::vector<std::int8_t> datablock;
+        datablock.resize(NUMSAMPLES*2);
         for(int i = 1; i <= 160;i++){
             datafile.seekg(DELAYDATALENGTH*i+offset+metadatasize, std::ios::beg);
-            for(long j = 1; j<=NUMSAMPLES;j++){
-                std::int8_t rbuffer;
-                std::int8_t ibuffer;
-                datafile.read(reinterpret_cast<char*>(&rbuffer),sizeof(std::int8_t));
-                datafile.read(reinterpret_cast<char*>(&ibuffer),sizeof(std::int8_t));
+                datafile.read(reinterpret_cast<char*>(&datablock[0]),sizeof(std::int8_t)*NUMSAMPLES*2);
                 if(datafile.fail()){
-                    std::cout << datafile.tellg() <<std::endl;
                     throw ReadInputDataException("Failed to read data byte from file");
                 }
-                
-                datavalues.push_back({rbuffer,ibuffer});
-            }
-        }   
+                for(long j = 0; j<datablock.size();){
+                    float real = static_cast<float>(datablock.at(j));
+                    j++;
+                    float imag = static_cast<float>(datablock.at(j));
+                    j++;
+                   datavalues.push_back({real,imag}); 
+                }
+            }  
     }
     else{
         //if file was unable to be opened an exception will be thrown
@@ -111,7 +99,7 @@ bool validateInputData(std::string fileName, unsigned int expectedNInputs){
     long delaydata = getNInputs(metadata) * getNPols(metadata) * samplebytesize;
     long actualNInputs = getNInputs(metadata) * getNPols(metadata);
     if(actualNInputs != expectedNInputs){
-        throw ReadInputDataException("Observation metadata and file metadata do not match");
+        return false;
     }
     long metadatasize = getMetaDataSize(metadata);
     long long expectedInputSize = metadatasize + delaydata * 161;
@@ -126,12 +114,9 @@ bool validateInputData(std::string fileName, unsigned int expectedNInputs){
 std::string getMetaDataString(std::string fileName){
     std::ifstream f(fileName);   
     if (f){
-        f.seekg(4096, std::ios::beg);
-        const auto size = f.tellg();
+        long size = 4096;
         std::string str(size, ' ');
-        f.seekg(0);
         f.read(&str[0], size); 
-        f.close();
         return str;
     }
     else{

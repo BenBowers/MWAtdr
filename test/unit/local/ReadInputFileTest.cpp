@@ -16,12 +16,17 @@ public:
     virtual std::vector<TestCase> getTestCases() override;
 };
 
-//antena 0 expected data
-std::vector<std::complex<float>> testdata0;
-//antena 256 expected data
-std::vector<std::complex<float>> testdata1;
-//antena 100 expected data
-std::vector<std::complex<float>> testdata2;
+// code taken from https://noobtuts.com/cpp/compare-float-values
+//for comaping floats and doubles
+bool cmpf(float x, float y, float epsilon = 0.00000005f)
+{
+    if(fabs(x - y) < epsilon){
+      return true; //they are same
+    }
+    else{
+        return false; //they are not same
+    }
+}
 ReadInputFileTest::ReadInputFileTest(){ 
     std::string str = "HDR_SIZE 4096\nPOPULATED 1\nOBS_ID 1294797712\nSUBOBS_ID 1294797712\nMODE VOLTAGE_START\nUTC_START 2021-01-16-02:01:34\nOBS_OFFSET 0\nNBIT 8\nNPOL 2\nNTIMESAMPLES 64000\nNINPUTS 256\nNINPUTS_XGPU 256\nAPPLY_PATH_WEIGHTS 0\nAPPLY_PATH_DELAYS 0\nINT_TIME_MSEC 500\nFSCRUNCH_FACTOR 50\nAPPLY_VIS_WEIGHTS 0\nTRANSFER_SIZE 5275648000\nPROJ_ID G0034\nEXPOSURE_SECS 304\nCOARSE_CHANNEL 118\nCORR_COARSE_CHANNEL 10\nSECS_PER_SUBOBS 8\nUNIXTIME 1610762494\nUNIXTIME_MSEC 0\nFINE_CHAN_WIDTH_HZ 10000\nNFINE_CHAN 128\nBANDWIDTH_HZ 1280000\nSAMPLE_RATE 1280000\nMC_IP 0.0.0.0\nMC_PORT 0\nMC_SRC_IP 0.0.0.0\n";
     std::string invalidstr = "HDR_SIZE 4096\nPOPULATED 1\nOBS_ID 1294797712\nSUBOBS_ID 1294797712\nMODE VOLTAGE_START\nUTC_START 2021-01-16-02:01:34\nOBS_OFFSET 0\nNBIT 8\nNPOL 3\nNTIMESAMPLES 64000\nNINPUTS 256\nNINPUTS_XGPU 256\nAPPLY_PATH_WEIGHTS 0\nAPPLY_PATH_DELAYS 0\nINT_TIME_MSEC 500\nFSCRUNCH_FACTOR 50\nAPPLY_VIS_WEIGHTS 0\nTRANSFER_SIZE 5275648000\nPROJ_ID G0034\nEXPOSURE_SECS 304\nCOARSE_CHANNEL 118\nCORR_COARSE_CHANNEL 10\nSECS_PER_SUBOBS 8\nUNIXTIME 1610762494\nUNIXTIME_MSEC 0\nFINE_CHAN_WIDTH_HZ 10000\nNFINE_CHAN 128\nBANDWIDTH_HZ 1280000\nSAMPLE_RATE 1280000\nMC_IP 0.0.0.0\nMC_PORT 0\nMC_SRC_IP 0.0.0.0\n";
@@ -39,30 +44,20 @@ ReadInputFileTest::ReadInputFileTest(){
             myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
         }
         //counters for file validation writing
-        long j = 1;
-        for(long i = 1; i<=2621440000; i++){
-            long long iMax = 16384000;
-            std::int8_t sample[2] = {rand()%256,rand()%256};
-            //antena 0
-            if(i <= 64000){
-                testdata0.push_back({sample[0],sample[1]});
-                myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }                                             
-            //antena 0
-            else if(i == 16384000*j+64000){
-                    j++;
-                    testdata0.push_back({sample[0],sample[1]});
-                    myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));    
-            }            
-            //antena 0
-            else if(i > 16384000*j && i <= 16384000*j+64000){                
-                testdata0.push_back({sample[0],sample[1]});
-                myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }                                            
-            //all other antena
-            else{
-                myfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
-            }    
+        std::vector<std::int8_t> blockValues;
+        blockValues.reserve(256 * 64000);  // Reserve important for performance
+        for (std::size_t block = 0; block < 160; ++block) {
+            blockValues.clear();    // Make vector empty
+            for (std::size_t antennaInput = 0; antennaInput < 256; ++antennaInput) {
+                for (std::size_t sample = 0; sample < 64000; ++sample) {
+                // Put in some math formula here to generate effectively random data.
+                std::int8_t real = 7 * block * antennaInput * sample - 8 * block;
+                std::int8_t imaj = block - antennaInput + 3 * sample;
+                blockValues.push_back(real);
+                blockValues.push_back(imaj);
+                }
+            }
+            myfile.write(reinterpret_cast<char const*>(blockValues.data()),blockValues.size() * sizeof(std::int8_t));
         }   
     }
     std::ofstream invalidfile("/tmp/1294797712_1294797718_118.sub",std::ios::out | std::ios::binary);
@@ -76,13 +71,22 @@ ReadInputFileTest::ReadInputFileTest(){
             std::int8_t sample[1] = {0};
             invalidfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
         }
-        //num tiles
-        for(long i = 1; i<=2621440000; i++){
-            std::int8_t sample[2] = {(std::int8_t) rand(),(std::int8_t) rand()};
-            invalidfile.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));   
-        }  
+        std::vector<std::int8_t> blockValues;
+        blockValues.reserve(256 * 64000);  // Reserve important for performance
+        for (std::size_t block = 0; block < 160; ++block) {
+            blockValues.clear();    // Make vector empty
+            for (std::size_t antennaInput = 0; antennaInput < 256; ++antennaInput) {
+                for (std::size_t sample = 0; sample < 64000; ++sample) {
+                // Put in some math formula here to generate effectively random data.
+                std::int8_t real = 0;
+                std::int8_t imaj = 0;
+                blockValues.push_back(real);
+                blockValues.push_back(imaj);
+                }
+            }
+            invalidfile.write(reinterpret_cast<char const*>(blockValues.data()),blockValues.size() * sizeof(std::int8_t));
+        } 
     }
-    
     std::ofstream wrongsize("/tmp/1294797712_1294797719_118.sub",std::ios::out | std::ios::binary);
     if(wrongsize.is_open()){
         wrongsize << str;
@@ -94,74 +98,43 @@ ReadInputFileTest::ReadInputFileTest(){
             std::int8_t sample[1] = {0};
             wrongsize.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));
         }
-        //num tiles
-        for(long i = 1; i<=2621440001; i++){
-            std::int8_t sample[2] = {(std::int8_t) rand(),(std::int8_t) rand()};
-            wrongsize.write(reinterpret_cast<char const*>(&sample[0]), sizeof(sample));   
+        std::vector<std::int8_t> blockValues;
+        blockValues.reserve(256 * 64000);  // Reserve important for performance
+        for (std::size_t block = 0; block < 160; ++block) {
+            blockValues.clear();    // Make vector empty
+            for (std::size_t antennaInput = 0; antennaInput < 256; ++antennaInput) {
+                for (std::size_t sample = 0; sample < 64000; ++sample) {
+                // Put in some math formula here to generate effectively random data.
+                std::int8_t real = 0;
+                std::int8_t imaj = 0;
+                blockValues.push_back(real);
+                blockValues.push_back(imaj);
+                }
+            }
+            wrongsize.write(reinterpret_cast<char const*>(blockValues.data()),blockValues.size() * sizeof(std::int8_t));
         }  
     }
 }
 
 std::vector<TestCase> ReadInputFileTest::getTestCases(){
-    return {         
-        {"Single Valid Data file(Checking the first all elements are the same) antena 0", []() {
-            try{
-                std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",0,256);              
-                testAssert(data == testdata0);                                                            
-            }
-            catch(ReadInputDataException const& e){}
-        }},                              
-        {"Single Valid Data file(Assert Vector Size is expeted) for 0-50 inputs", []() {
-            try{
-                for(int i = 0; i <= 50; i++){    
-                    std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",i,256);
-                    testAssert(data.size() == 10240000);
-                }                                                          
-            }
-            catch(ReadInputDataException const& e){
-            }
-        }},
-        {"Single Valid Data file(Assert Vector Size is expeted) for 51-100 inputs", []() {
-            try{
-                for(int i = 51; i <= 100; i++){    
-                    std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",i,256);
-                    testAssert(data.size() == 10240000);
-                }                                                          
-            }
-            catch(ReadInputDataException const& e){
-            }
-        }},
-        {"Single Valid Data file(Assert Vector Size is expeted) for 101-150 inputs", []() {
-            try{
-                for(int i = 101; i <= 150; i++){    
-                    std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",i,256);
-                    testAssert(data.size() == 10240000);
-                }                                                          
-            }
-            catch(ReadInputDataException const& e){
-            }
-        }},
-        
-        {"Single Valid Data file(Assert Vector Size is expeted) for 151-200 inputs", []() {
-            try{
-                for(int i = 151; i <= 200; i++){    
-                    std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",i,256);
-                    testAssert(data.size() == 10240000);                    
-                }                                                          
-            }
-            catch(ReadInputDataException const& e){
-            }
-        }},
-        {"Single Valid Data file(Assert Vector Size is expeted) for 201-255 inputs", []() {
-            try{
-                for(int i = 201; i <= 255; i++){    
-                    std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797717_118.sub",i,256);
-                    testAssert(data.size() == 10240000);
+    return {              
+        {"Signal Data file Validation(Checking all elements are expected)", []() {
+            for(int i =0; i <= 255; i++){
+                std::vector<std::complex<float>> actualSignalData = readInputDataFile("/tmp/1294797712_1294797717_118.sub",i,256);              
+                std::uint8_t antennaInput = i;
+                std::size_t index = 0;
+                for (std::size_t block = 0; block < 160; ++block) {
+                    for (std::size_t sample = 0; sample < 64000; ++sample) {
+                    // Put in the same formula as for generating the samples
+                    std::int8_t expectedReal = 7 * block * antennaInput * sample - 8 * block;
+                    std::int8_t expectedImaj = block - antennaInput + 3 * sample;
+                    std::complex<float> actualValue = actualSignalData.at(index);
+                    testAssert(cmpf(actualValue.real(),static_cast<float>(expectedReal)) == true);
+                    testAssert(cmpf(actualValue.imag(),static_cast<float>(expectedImaj)) == true);
+                    ++index;
+                    }
                 }
-                std::filesystem::remove("/tmp/1294797712_1294797717_118.sub");                                                          
-            }
-            catch(ReadInputDataException const& e){
-            }
+            }                                                            
         }},                                    
         {"Single invalid Data file (invalid file size)", []() {
             try{
@@ -187,7 +160,7 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
             catch(ReadInputDataException const& e){
             }
         }},
-        {"Metafits and file metadata not the same", []() {
+        {"Metafits and File metadata not the same", []() {
             try{
                 std::vector<std::complex<float>> data = readInputDataFile("/tmp/1294797712_1294797718_118.sub",0,253);              
                 failTest();                                                            
@@ -196,18 +169,13 @@ std::vector<TestCase> ReadInputFileTest::getTestCases(){
                 std::filesystem::remove("/tmp/1294797712_1294797718_118.sub");
             }
         }},
-        {"Validate file function Test valid input", []() {
-            try{             
+        {"Validate file function Test valid input", []() {            
                 testAssert(validateInputData("/tmp/1294797712_1294797717_118.sub",256) == true);                                                           
-            }
-            catch(ReadInputDataException const& e){}
+
         }},
-        {"Validate file function Test(Fail) metafits and file dont match", []() {
-            try{             
-                testAssert(validateInputData("/tmp/1294797712_1294797717_118.sub",220) == false);
-                std::filesystem::remove("/tmp/1294797712_1294797717_118.sub");                                                            
-            }
-            catch(ReadInputDataException const& e){}
+        {"Validate file function Test(Fail) metafits and file dont match", []() {            
+            testAssert(validateInputData("/tmp/1294797712_1294797717_118.sub",220) == false);
+            std::filesystem::remove("/tmp/1294797712_1294797717_118.sub");                                                            
         }},                                                                                                            
     };
 }

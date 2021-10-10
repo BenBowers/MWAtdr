@@ -15,7 +15,7 @@ public:
 // Function responsible for all the transoformations, filters and downsampling
 // the signal data.
 void processSignal(std::vector<std::vector<std::complex<float>>> const& signalDataIn,
-                               std::map<unsigned, unsigned> const& signalDataInMapping,
+                               std::vector<unsigned> const& signalDataInMapping,
                                std::vector<std::int16_t>& signalDataOut,
                                std::vector<std::complex<float>> const& coefficiantPFB,
                                ChannelRemapping const& remappingData);

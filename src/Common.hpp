@@ -6,10 +6,10 @@
 #include <vector>
 
 // Constant that indicates the amount of coefficients for each filter
-inline const int filterSize = 256;
+inline const int MWA_NUM_CHANNELS = 256;
 
 // Constant for the MWA sampling rate
-constexpr unsigned SAMPLING_RATE = 512;
+constexpr unsigned SAMPLING_RATE = MWA_NUM_CHANNELS*2;
 
 // Contains the observation details, and input and output file directories
 // Entered as command line arguments
