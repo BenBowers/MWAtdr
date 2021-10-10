@@ -60,12 +60,10 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
         //alot of this is dependent on the meta data file reader numbers are subject to change once i figure out what to do
         //seeking to the start of the data portion of the file 
         //this will be antena 0 polarisation x and y sample 1 of 64000
+        std::vector<std::int8_t> datablock;
+        datablock.resize(128000);
         for(int i = 1; i <= 160;i++){
             datafile.seekg(DELAYDATALENGTH*i+offset+metadatasize, std::ios::beg);
-            //for(long j = 1; j<=NUMSAMPLES;j++){
-                std::vector<std::int8_t> datablock;
-                datablock.clear();
-                datablock.resize(128000);
                 datafile.read(reinterpret_cast<char*>(&datablock[0]),sizeof(std::int8_t)*128000);
                 if(datafile.fail()){
                     std::cout << datafile.tellg() <<std::endl;
@@ -78,7 +76,7 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
                     j++;
                    datavalues.push_back({real,imag}); 
                 }
-        }  
+            }  
     }
     else{
         //if file was unable to be opened an exception will be thrown
