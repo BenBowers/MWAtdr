@@ -61,10 +61,10 @@ std::vector<std::complex<float>> readInputDataFile(std::string fileName,int ante
         //seeking to the start of the data portion of the file 
         //this will be antena 0 polarisation x and y sample 1 of 64000
         std::vector<std::int8_t> datablock;
-        datablock.resize(128000);
+        datablock.resize(NUMSAMPLES*2);
         for(int i = 1; i <= 160;i++){
             datafile.seekg(DELAYDATALENGTH*i+offset+metadatasize, std::ios::beg);
-                datafile.read(reinterpret_cast<char*>(&datablock[0]),sizeof(std::int8_t)*128000);
+                datafile.read(reinterpret_cast<char*>(&datablock[0]),sizeof(std::int8_t)*NUMSAMPLES*2);
                 if(datafile.fail()){
                     std::cout << datafile.tellg() <<std::endl;
                     throw ReadInputDataException("Failed to read data byte from file");
