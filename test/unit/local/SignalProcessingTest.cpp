@@ -22,7 +22,7 @@ constexpr std::int16_t MIN_INT16 = std::numeric_limits<std::int16_t>::min();
 // These Function declarations as I don't want them to be publically avalible
 // as they are internal, I've made them non static so I can unit test  them
 void remapChannels(std::vector<std::vector<std::complex<float>>> const& signalDataIn,
-                   std::map<unsigned, unsigned> const& signalDataInMapping,
+                   std::vector<unsigned> const& signalDataInMapping,
                    std::vector<std::complex<float>>& signalDataOut,
                    std::map<unsigned, ChannelRemapping::RemappedChannel> const& channelRemapping,
                    unsigned const outNumChannels);
@@ -68,6 +68,7 @@ std::vector<std::complex<float>> makeCoeArr(std::vector<std::vector<std::complex
     return coefficantData;
 }
 
+
 // Function that checks if a floating point value is within a certain degree of freedom provided by our SRS
 // Will return true if the signal is accurate enough
 static constexpr bool CheckFloatingPointAccuracy(float known, float unknown) {
@@ -85,7 +86,7 @@ class SignalProcessingTest : public StatelessTestModuleImpl {
 SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
     {"processSignals() Empty Channel Remapping", []() {
         std::vector<std::vector<std::complex<float>>> const signalDataIn{};
-        std::map<unsigned, unsigned> const signalDataMap{};
+        std::vector<unsigned> const signalDataMap{};
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping remappingData{};
         std::vector<std::complex<float>> coeData{};
@@ -100,7 +101,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
     }},
     {"processSignals() Different Number of Channels in mappings", []() {
         std::vector<std::vector<std::complex<float>>> const signalDataIn{};
-        std::map<unsigned, unsigned> const signalDataMap{{1, 1}};
+        std::vector<unsigned> const signalDataMap{0};
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
             2,
@@ -121,7 +122,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
     }},
     {"processSignals() Different Number of Channels between signal and mapping", []() {
         std::vector<std::vector<std::complex<float>>> const signalDataIn{};
-        std::map<unsigned, unsigned> const signalDataMap{{0, 0}, {1, 1}};
+        std::vector<unsigned> const signalDataMap{0, 1};
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
             2,
@@ -147,11 +148,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
         };
-        std::map<unsigned, unsigned> const signalDataMap{
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3}};
+        std::vector<unsigned> const signalDataMap{0, 1, 2, 3};
 
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
@@ -178,11 +175,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
         };
-        std::map<unsigned, unsigned> const signalDataMap{
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3}};
+        std::vector<unsigned> const signalDataMap{0, 1, 2, 3};
 
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
@@ -209,11 +202,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }, { 0.0f, 0.0f }}
         };
-        std::map<unsigned, unsigned> const signalDataMap{
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3}};
+        std::vector<unsigned> const signalDataMap{0, 1, 2, 3};
 
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
@@ -233,22 +222,18 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
         } catch (std::invalid_argument& e) {
         }
     }},
-    {"processSignals() New samping frequency invalid", []() {
+    {"processSignals() Empty coefficant data", []() {
         std::vector<std::vector<std::complex<float>>> const signalDataIn{
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
         };
-        std::map<unsigned, unsigned> const signalDataMap{
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3}};
+        std::vector<unsigned> const signalDataMap{0, 1, 2, 3};
 
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
-            8,
+            4,
             {
                 {0, {0, false}},
                 {1, {1, false}},
@@ -271,11 +256,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
         };
-        std::map<unsigned, unsigned> const signalDataMap{
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3}};
+        std::vector<unsigned> const signalDataMap{0, 1, 2, 3};
 
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
@@ -302,11 +283,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }},
             {{ 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0 }}
         };
-        std::map<unsigned, unsigned> const signalDataMap{
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3}};
+        std::vector<unsigned> const signalDataMap{0, 1, 2, 3, 4};
 
         std::vector<int16_t> signalDataOut{};
         ChannelRemapping const remappingData{
@@ -327,6 +304,99 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
         } catch (std::invalid_argument& e) {
         }
     }},
+
+    {"processSignals() Zero signal data value, Identity PFB, No remapping", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn(filterSize, std::vector<std::complex<float>>(50, { 0.0f, 0.0f }));
+        std::vector<unsigned> signalDataMap {};
+        signalDataMap.resize(signalDataIn.size());
+        ChannelRemapping remappingData{(filterSize * 2) + 1, {}};
+        for(unsigned ii = 0; ii < filterSize; ++ii) {
+            signalDataMap[ii] = ii;
+            remappingData.channelMap.insert({ii, {ii, false}});
+        }
+        // This filter should do nothing to the data
+        std::vector<std::complex<float>> coefficantArray(filterSize, { 1.0f, 0.0f });
+        std::vector<std::int16_t> signalOut{};
+        std::vector<std::int16_t> expected(25650, 0);
+        processSignal(signalDataIn, signalDataMap, signalOut, coefficantArray, remappingData);
+
+        testAssert(signalOut == expected);
+    }},
+    {"processSignals() Ones signal data value, Zeros PFB array, No remapping", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn(filterSize, std::vector<std::complex<float>>(50, { 0.0f, 0.0f }));
+        std::vector<unsigned> signalDataMap {};
+        signalDataMap.resize(signalDataIn.size());
+        ChannelRemapping remappingData{(filterSize * 2) + 1, {}};
+        for(unsigned ii = 0; ii < filterSize; ++ii) {
+            signalDataMap[ii] = ii;
+            remappingData.channelMap.insert({ii, {ii, false}});
+        }
+        // This filter should do nothing to the data
+        std::vector<std::complex<float>> coefficantArray(filterSize, { 0.0f, 0.0f });
+        std::vector<std::int16_t> signalOut{};
+        std::vector<std::int16_t> expected(25650, 0);
+        processSignal(signalDataIn, signalDataMap, signalOut, coefficantArray, remappingData);
+
+        testAssert(signalOut == expected);
+    }},
+    {"processSignals() Realistic signal calculated with numpy", []() {
+        unsigned const NUM_OF_BLOCKS = 32;
+        std::vector<std::vector<std::complex<float>>> const signalDataIn {
+            std::vector<std::complex<float>> (NUM_OF_BLOCKS, { 20.0f, 0.0f }),
+            std::vector<std::complex<float>> (NUM_OF_BLOCKS, { 75.0f, 0.0f }),
+            std::vector<std::complex<float>> (NUM_OF_BLOCKS, { 42.0f, 0.0f }),
+            std::vector<std::complex<float>> (NUM_OF_BLOCKS, { 21.0f, 0.0f }),
+            std::vector<std::complex<float>> (NUM_OF_BLOCKS, { 60.0f, 0.0f }),
+            std::vector<std::complex<float>> (NUM_OF_BLOCKS, { 23.0f, 0.0f }),
+            std::vector<std::complex<float>> (NUM_OF_BLOCKS, { 42.0f, 0.0f }),
+            std::vector<std::complex<float>> (NUM_OF_BLOCKS, { 11.0f, 0.0f }),
+            std::vector<std::complex<float>> (NUM_OF_BLOCKS, { 48.0f, 0.0f }),
+            std::vector<std::complex<float>> (NUM_OF_BLOCKS, { 32.0f, 0.0f }),
+            std::vector<std::complex<float>> (NUM_OF_BLOCKS, { 88.0f, 0.0f }),
+        };
+        std::vector<unsigned> const signalDataMap { 4, 7, 10, 23, 24, 25, 66, 87, 90, 92, 150 };
+        ChannelRemapping const remappingData {
+            46, {
+            {4, {4, false}},
+            {7, {7, false}},
+            {10, {10, false}},
+            {23, {23, false}},
+            {24, {22, true}},
+            {25, {21, true}},
+            {66, {20, false}},
+            {87, {5, true}},
+            {90, {2, true}},
+            {92, {0, false}},
+            {150, {12, false}}
+        }};
+        std::vector<std::int16_t> expected { 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17, 924, 17, 121, -251, 335, -57, 0, 122, 172, -78, -248, 13, 129, 11, 95, 50, -102, -309, 67, 482, 203, 50, -17, 404, -17, 50, 203, 482, 67, -309, -102, 50, 95, 11, 129, 13, -248, -78, 172, 122, 0, -57, 335, -251, 121, 17 };
+        std::vector<std::complex<float>> coefficantArray(filterSize, { 1.0f, 0.0f });
+        std::vector<std::int16_t> signalOut{};
+        processSignal(signalDataIn, signalDataMap, signalOut, coefficantArray, remappingData);
+
+        testAssert(expected == signalOut);
+    }},
+    {"remapChannels() Channel remapping with mapping to value greater than nyquist channel", []() {
+        std::vector<std::vector<std::complex<float>>> const signalDataIn(4, std::vector<std::complex<float>>(8, { 0.0f, 0.0f }));
+        std::vector<unsigned> signalDataMap { 0, 1, 2, 3, 4 };
+        std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping{
+            {0, {0, false}},
+            {1, {8, false}},
+            {2, {2, false}},
+            {3, {3, false}},
+            {4, {4, false}}
+        };
+
+        std::vector<std::complex<float>> signalDataOut{};
+
+        try {
+            remapChannels(signalDataIn, signalDataMap, signalDataOut, channelRemapping, 6);
+            failTest();
+        }
+        catch (std::invalid_argument& e) {
+            // test passed
+        }
+    }},
     // This test should do nothing to the data as the mapping is exactly the same apart from the nyquist scaling
     {"remapChannels() contiguous input ( No Conjagation, No Nyquist channel )", []() {
        std::vector<std::vector<std::complex<float>>> const signalDataIn {
@@ -337,13 +407,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             { { 0.4f, 0.4f }, { 1.4f, 1.4f }, { 2.4f, 2.4f }, { 3.4f, 3.4f }, { 4.4f, 4.4f }, { 5.4f, 5.4f }, { 6.4f, 6.4f }, { 7.4f, 7.4f } }
         };
 
-        std::map<unsigned, unsigned> const signalDataMap {
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3},
-            {4, 4}
-        };
+       std::vector<unsigned> const signalDataMap { 0, 1, 2, 3, 4 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping{
                 {0, {0, false}},
@@ -378,13 +442,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             { { 0.4f, 0.4f }, { 1.4f, 1.4f }, { 2.4f, 2.4f }, { 3.4f, 3.4f }, { 4.4f, 4.4f }, { 5.4f, 5.4f }, { 6.4f, 6.4f }, { 7.4f, 7.4f } }
         };
 
-        std::map<unsigned, unsigned> const signalDataMap {
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3},
-            {4, 4}
-        };
+        std::vector<unsigned> const signalDataMap { 0 , 1, 2, 3, 4 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping{
                 {0, {0, true}},
@@ -420,13 +478,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             { { 0.4f, 0.4f }, { 1.4f, 1.4f }, { 2.4f, 2.4f }, { 3.4f, 3.4f }, { 4.4f, 4.4f }, { 5.4f, 5.4f }, { 6.4f, 6.4f }, { 7.4f, 7.4f } }
         };
 
-        std::map<unsigned, unsigned> const signalDataMap {
-            {0, 0},
-            {1, 1},
-            {2, 2},
-            {3, 3},
-            {4, 4}
-        };
+        std::vector<unsigned> const signalDataMap { 0, 1, 2, 3, 4 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping{
                 {0, {0, true}},
@@ -482,13 +534,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             }
         };
 
-        std::map<unsigned, unsigned> const signalDataMap {
-            { 3, 0 },
-            { 4, 1 },
-            { 5, 2 },
-            { 6, 3 },
-            { 7, 4 }
-        };
+        std::vector<unsigned> const signalDataMap { 3, 4, 5, 6, 7 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping {
                 {3, {0, false}},
@@ -547,14 +593,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
                 { 12.9f, 12.9f }, { 13.9f, 13.9f }, { 14.9f, 14.9f }, { 15.9f, 15.9f }, { 16.9f, 16.9f }, { 17.9f, 17.9f } }
         };
 
-        std::map<unsigned, unsigned> const signalDataMap {
-            { 5, 0 },
-            { 6, 1 },
-            { 7, 2 },
-            { 8, 3 },
-            { 9, 4 }
-        };
-
+        std::vector<unsigned> const signalDataMap { 5, 6, 7, 8, 9 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping {
             {5, {5, false}},
@@ -596,9 +635,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
                 { 0.5f, 0.5f }, { 1.5f, 1.5f }, { 2.5f, 2.5f }, { 3.5f, 3.5f }, { 4.5f, 4.5f }, { 5.5f, 5.5f }
         }};
 
-        std::map<unsigned, unsigned> signalDataMapping {
-            { 0, 5 }
-        };
+        std::vector<unsigned> signalDataMapping { 5 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping {
             {5, {0, false}},
@@ -621,9 +658,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
                 { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 2.0f, 2.0f }, { 3.0f, 3.0f }, { 4.0f, 4.0f }, { 5.0f, 5.0f }
         }};
 
-        std::map<unsigned, unsigned> signalDataMapping {
-            { 0, 0 }
-        };
+        std::vector<unsigned> signalDataMapping { 0 };
 
         std::map<unsigned, ChannelRemapping::RemappedChannel> const channelRemapping {
             {0, {0, false}},
@@ -972,7 +1007,6 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
         testAssert( signalDataIn == expected );
     }},
     {"performDFT() Three blocks of cosine waves", []() {
-        unsigned const IN_SAMPLING_FREQ = 8;
         unsigned const NUM_CHANNELS = 2;
         unsigned const NUM_BLOCKS = 3;
         unsigned const OUT_SAMPLES = 2;
@@ -996,13 +1030,10 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
         };
 
         std::vector<float> expected {
-            1.0f, 1.0f,
-            1.0f, 1.0f,
-            1.0f, 1.0f,
+            8.0f, 8.0f,
+            8.0f, 8.0f,
+            8.0f, 8.0f,
         };
-
-        // Scale data as the IDFT will scale it based of the MWA sampling rate
-        cblas_sscal(expected.size(), static_cast<float>(IN_SAMPLING_FREQ)/static_cast<float>(SAMPLING_RATE), expected.data(), 1);
 
 	    std::vector<float> actual {};
 
@@ -1011,7 +1042,6 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
         testAssert(actual == expected);
     }},
     {"performDFT() Three blocks of sine waves", []() {
-        unsigned const IN_SAMPLING_FREQ = 8;
         unsigned const NUM_CHANNELS = 2;
         unsigned const NUM_BLOCKS = 3;
         unsigned const OUT_SAMPLES = 2;
@@ -1040,9 +1070,6 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
             0.0f, 0.0f,
         };
 
-        // Scale data as the IDFT will scale it based of the MWA sampling rate
-        cblas_sscal(expected.size(), static_cast<float>(IN_SAMPLING_FREQ)/static_cast<float>(SAMPLING_RATE), expected.data(), 1);
-
 	    std::vector<float> actual {};
 
         performDFT(inData, actual, OUT_SAMPLES, NUM_BLOCKS, NUM_CHANNELS);
@@ -1051,7 +1078,6 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
         testAssert(actual == expected);
     }},
     {"performDFT() Conjagated remap", []() {
-        unsigned const IN_SAMPLING_FREQ = 10;
         unsigned const NUM_CHANNELS = 6;
         unsigned const NUM_BLOCKS = 3;
         unsigned const OUT_SAMPLES = 8;
@@ -1063,13 +1089,10 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
 	};
 
 	    std::vector<float> expected {
-		    0.4f, 0.0f, 0.0f, 0.0f, -0.4f, 0.0f, 0.0f, 0.0f,
-		    0.4f, 0.0f, 0.0f, 0.0f, -0.4f, 0.0f, 0.0f, 0.0f,
-		    0.4f, 0.0f, 0.0f, 0.0f, -0.4f, 0.0f, 0.0f, 0.0f
+		    4.0f, 0.0f, 0.0f, 0.0f, -4.0f, 0.0f, 0.0f, 0.0f,
+		    4.0f, 0.0f, 0.0f, 0.0f, -4.0f, 0.0f, 0.0f, 0.0f,
+		    4.0f, 0.0f, 0.0f, 0.0f, -4.0f, 0.0f, 0.0f, 0.0f
 	    };
-
-        // Scale data as the IDFT will scale it based of the MWA sampling rate
-        cblas_sscal(expected.size(), static_cast<float>(IN_SAMPLING_FREQ)/static_cast<float>(SAMPLING_RATE), expected.data(), 1);
 
 	    std::vector<float> actual {};
 
@@ -1079,8 +1102,7 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
     }},
     // This test was generated with numpy and assuemes that numpy produces a 100% accurate result even though this is not true due to floating point calculations it still falls within
     // the accuracy requirement set out in the SRS
-    {"performDFT() Large Signal", []() {
-        unsigned const IN_SAMPLING_FREQ = 512;
+    {"performDFT() Large Signal, Generated with numpy", []() {
         unsigned const NUM_CHANNELS = 18;
         unsigned const NUM_BLOCKS = 7;
         unsigned const OUT_SAMPLES = 30;
@@ -1095,15 +1117,13 @@ SignalProcessingTest::SignalProcessingTest() : StatelessTestModuleImpl{{
 	};
 
 	std::vector<float> expected {
-		0.12109375f, -0.041899124190383524f, -0.024147191707553597f, 0.027804820268554273f, 0.019625087850314905f, -0.048828125f, 0.02780482026855428f, -0.019182507945289213f, 7.250826761362981e-05f, 0.019070179731445723f, -0.0019531249999999983f, -0.004229848443893611f, 0.01907017973144572f, -0.022579144420433645f, -0.013128529410374937f, 0.003906250000000002f, -0.013128529410374935f, -0.02257914442043365f, 0.01907017973144572f, -0.004229848443893611f, -0.0019531249999999965f, 0.019070179731445723f, 7.250826761362635e-05f, -0.019182507945289216f, 0.02780482026855428f, -0.048828125f, 0.0196250878503149f, 0.027804820268554277f, -0.024147191707553597f, -0.041899124190383524f,
-		0.12109375f, -0.041899124190383524f, -0.024147191707553597f, 0.027804820268554273f, 0.019625087850314905f, -0.048828125f, 0.02780482026855428f, -0.019182507945289213f, 7.250826761362981e-05f, 0.019070179731445723f, -0.0019531249999999983f, -0.004229848443893611f, 0.01907017973144572f, -0.022579144420433645f, -0.013128529410374937f, 0.003906250000000002f, -0.013128529410374935f, -0.02257914442043365f, 0.01907017973144572f, -0.004229848443893611f, -0.0019531249999999965f, 0.019070179731445723f, 7.250826761362635e-05f, -0.019182507945289216f, 0.02780482026855428f, -0.048828125f, 0.0196250878503149f, 0.027804820268554277f, -0.024147191707553597f, -0.041899124190383524f,
-		0.12109375f, -0.041899124190383524f, -0.024147191707553597f, 0.027804820268554273f, 0.019625087850314905f, -0.048828125f, 0.02780482026855428f, -0.019182507945289213f, 7.250826761362981e-05f, 0.019070179731445723f, -0.0019531249999999983f, -0.004229848443893611f, 0.01907017973144572f, -0.022579144420433645f, -0.013128529410374937f, 0.003906250000000002f, -0.013128529410374935f, -0.02257914442043365f, 0.01907017973144572f, -0.004229848443893611f, -0.0019531249999999965f, 0.019070179731445723f, 7.250826761362635e-05f, -0.019182507945289216f, 0.02780482026855428f, -0.048828125f, 0.0196250878503149f, 0.027804820268554277f, -0.024147191707553597f, -0.041899124190383524f,
-		0.12109375f, -0.041899124190383524f, -0.024147191707553597f, 0.027804820268554273f, 0.019625087850314905f, -0.048828125f, 0.02780482026855428f, -0.019182507945289213f, 7.250826761362981e-05f, 0.019070179731445723f, -0.0019531249999999983f, -0.004229848443893611f, 0.01907017973144572f, -0.022579144420433645f, -0.013128529410374937f, 0.003906250000000002f, -0.013128529410374935f, -0.02257914442043365f, 0.01907017973144572f, -0.004229848443893611f, -0.0019531249999999965f, 0.019070179731445723f, 7.250826761362635e-05f, -0.019182507945289216f, 0.02780482026855428f, -0.048828125f, 0.0196250878503149f, 0.027804820268554277f, -0.024147191707553597f, -0.041899124190383524f,
-		0.12109375f, -0.041899124190383524f, -0.024147191707553597f, 0.027804820268554273f, 0.019625087850314905f, -0.048828125f, 0.02780482026855428f, -0.019182507945289213f, 7.250826761362981e-05f, 0.019070179731445723f, -0.0019531249999999983f, -0.004229848443893611f, 0.01907017973144572f, -0.022579144420433645f, -0.013128529410374937f, 0.003906250000000002f, -0.013128529410374935f, -0.02257914442043365f, 0.01907017973144572f, -0.004229848443893611f, -0.0019531249999999965f, 0.019070179731445723f, 7.250826761362635e-05f, -0.019182507945289216f, 0.02780482026855428f, -0.048828125f, 0.0196250878503149f, 0.027804820268554277f, -0.024147191707553597f, -0.041899124190383524f,
+		62.0f, -21.452351585476364f, -12.363362154267442f, 14.236067977499788f, 10.048044979361231f, -25.0f, 14.236067977499792f, -9.821444067988077f, 0.037124233018178465f, 9.76393202250021f, -0.9999999999999991f, -2.1656824032735287f, 9.763932022500208f, -11.560521943262026f, -6.721807058111968f, 2.000000000000001f, -6.721807058111967f, -11.560521943262028f, 9.763932022500208f, -2.1656824032735287f, -0.9999999999999982f, 9.76393202250021f, 0.03712423301817669f, -9.821444067988079f, 14.236067977499792f, -25.0f, 10.04804497936123f, 14.23606797749979f, -12.363362154267442f, -21.452351585476364f,
+		62.0f, -21.452351585476364f, -12.363362154267442f, 14.236067977499788f, 10.048044979361231f, -25.0f, 14.236067977499792f, -9.821444067988077f, 0.037124233018178465f, 9.76393202250021f, -0.9999999999999991f, -2.1656824032735287f, 9.763932022500208f, -11.560521943262026f, -6.721807058111968f, 2.000000000000001f, -6.721807058111967f, -11.560521943262028f, 9.763932022500208f, -2.1656824032735287f, -0.9999999999999982f, 9.76393202250021f, 0.03712423301817669f, -9.821444067988079f, 14.236067977499792f, -25.0f, 10.04804497936123f, 14.23606797749979f, -12.363362154267442f, -21.452351585476364f,
+		62.0f, -21.452351585476364f, -12.363362154267442f, 14.236067977499788f, 10.048044979361231f, -25.0f, 14.236067977499792f, -9.821444067988077f, 0.037124233018178465f, 9.76393202250021f, -0.9999999999999991f, -2.1656824032735287f, 9.763932022500208f, -11.560521943262026f, -6.721807058111968f, 2.000000000000001f, -6.721807058111967f, -11.560521943262028f, 9.763932022500208f, -2.1656824032735287f, -0.9999999999999982f, 9.76393202250021f, 0.03712423301817669f, -9.821444067988079f, 14.236067977499792f, -25.0f, 10.04804497936123f, 14.23606797749979f, -12.363362154267442f, -21.452351585476364f,
+		62.0f, -21.452351585476364f, -12.363362154267442f, 14.236067977499788f, 10.048044979361231f, -25.0f, 14.236067977499792f, -9.821444067988077f, 0.037124233018178465f, 9.76393202250021f, -0.9999999999999991f, -2.1656824032735287f, 9.763932022500208f, -11.560521943262026f, -6.721807058111968f, 2.000000000000001f, -6.721807058111967f, -11.560521943262028f, 9.763932022500208f, -2.1656824032735287f, -0.9999999999999982f, 9.76393202250021f, 0.03712423301817669f, -9.821444067988079f, 14.236067977499792f, -25.0f, 10.04804497936123f, 14.23606797749979f, -12.363362154267442f, -21.452351585476364f,
+		62.0f, -21.452351585476364f, -12.363362154267442f, 14.236067977499788f, 10.048044979361231f, -25.0f, 14.236067977499792f, -9.821444067988077f, 0.037124233018178465f, 9.76393202250021f, -0.9999999999999991f, -2.1656824032735287f, 9.763932022500208f, -11.560521943262026f, -6.721807058111968f, 2.000000000000001f, -6.721807058111967f, -11.560521943262028f, 9.763932022500208f, -2.1656824032735287f, -0.9999999999999982f, 9.76393202250021f, 0.03712423301817669f, -9.821444067988079f, 14.236067977499792f, -25.0f, 10.04804497936123f, 14.23606797749979f, -12.363362154267442f, -21.452351585476364f,
 		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f
 	};
-        // Scale data as the IDFT will scale it based of the MWA sampling rate
-        cblas_sscal(expected.size(), static_cast<float>(IN_SAMPLING_FREQ)/static_cast<float>(SAMPLING_RATE), expected.data(), 1);
 
 	    std::vector<float> actual {};
 
