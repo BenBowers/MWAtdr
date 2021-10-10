@@ -333,9 +333,10 @@ void readRawSignalFiles(AppConfig const& appConfig, AntennaConfig const& antenna
             usedChannels.insert(channel);
         }
         catch (ReadInputDataException const& e) {
-            // Indicate error has occurred if ignoreError flag is false
+            // Indicate error has occurred if appConfig.ignoreError flag is false
             if (!appConfig.ignoreErrors) {
-                throw IndicateErrorException("Read error occurred, indicate error to other nodes");
+                std::cout << "Error occurred reading: " << (std::string) voltageFile << std::endl;
+                throw IndicateErrorException("");
             }
         }
     }
