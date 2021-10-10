@@ -34,6 +34,11 @@ std::string validateInputDirectoryPath(std::string const inputDirectoryPath) {
 	else if (std::filesystem::is_empty(directory)) {
 		throw std::invalid_argument {"Invalid input directory path, is empty"};
 	}
+
+	if (inputDirectoryPath.back() != '/') {
+		directory += "/";
+	}
+
 	return (std::string) directory;
 }
 

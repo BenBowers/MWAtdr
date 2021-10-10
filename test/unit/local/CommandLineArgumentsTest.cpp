@@ -158,7 +158,7 @@ CommandLineArgumentsTest::CommandLineArgumentsTest() : StatelessTestModuleImpl{{
     }},
     {"validateIgnoreErrors(): Invalid", []() {
         try {
-            auto const actual = validateIgnoreErrors("yes");
+            validateIgnoreErrors("yes");
             failTest();
         }
         catch (std::invalid_argument const&) {}
@@ -188,7 +188,7 @@ CommandLineArgumentsTest::CommandLineArgumentsTest() : StatelessTestModuleImpl{{
         catch (std::invalid_argument const&) {}
     }},
     {"createAppConfig(): Valid", []() {
-        char* arguments[] = {"main", "/mnt/test_input/", "1000000000", "1000000008",
+        char* arguments[] = {"main", "/mnt/test_input", "1000000000", "1000000008",
                              "/mnt/test_input/inverse_polyphase_filter.bin",
                              "/mnt/test_output", "true"};
         auto const actual = createAppConfig(7, arguments);

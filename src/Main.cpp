@@ -40,7 +40,6 @@ void runNode(SecondaryNodeCommunicator& secondary, int argc, char* argv[]);
 AntennaConfig createAntennaConfig(AppConfig const& appConfig, bool& success);
 std::vector<std::complex<float>> createFilterCoefficients(std::string const filterPath, bool& success);
 std::optional<AntennaInputRange> communicateNodeAntennaInputAssignment(PrimaryNodeCommunicator const& primary,
-                                                                       std::map<unsigned, bool> const& secondaryNodeStatus,
                                                                        unsigned const numAntennaInputs);
 unsigned getActiveNodeCount(std::map<unsigned, bool> const& secondaryNodeStatus);
 
@@ -63,7 +62,7 @@ int main(int argc, char* argv[]) {
 	        runNode(node, argc, argv);
 		}
 		catch (NodeException const& e) {
-			std::cout << e.what() << std::endl;
+			std::cerr << e.what() << std::endl;
 		}
 	}, communicator);
 }
@@ -89,11 +88,8 @@ void runNode(PrimaryNodeCommunicator& primary, int argc, char* argv[]) {
     }
     catch (std::invalid_argument const& e) {
         startupStatus = false;
-        std::cout << "Node 0 (Primary): " << e.what() << std::endl;
+        std::cerr << "Node 0 (Primary): " << e.what() << std::endl;
     }
-
-    // Wait for primary to start up
-    primary.synchronise();
 
     // Send startup status to secondary nodes
     primary.sendAppStartupStatus(startupStatus);
@@ -109,20 +105,22 @@ void runNode(PrimaryNodeCommunicator& primary, int argc, char* argv[]) {
     std::cout << "Node 0 (Primary): Sending app configuration to secondary nodes" << std::endl;
     primary.sendAppConfig(appConfig);
 
-    // Wait for secondary nodes to set up
-    primary.synchronise();
-
     // Receive setup status from all secondary nodes
     std::cout << "Node 0 (Primary): Receiving setup status from secondary nodes" << std::endl;
     auto const secondaryNodeStatus = primary.receiveNodeSetupStatus();
+
+    // If any nodes fail startup, indicate error and terminate node
+    if (getActiveNodeCount(secondaryNodeStatus) < primary.getNodeCount()) {
+        primary.indicateError();
+        throw NodeException("Node 0 (Primary): Not all nodes had a successful startup, terminating node");
+    }
 
     // Send antenna configuration to secondary nodes
     std::cout << "Node 0 (Primary): Sending antenna configuration to secondary nodes" << std::endl;
     primary.sendAntennaConfig(antennaConfig);
 
     // Compute frequency channel remapping
-    const unsigned ORIGINAL_SAMPLING_FREQUENCY = 512;
-    auto const channelRemapping = computeChannelRemapping(ORIGINAL_SAMPLING_FREQUENCY, antennaConfig.frequencyChannels);
+    auto const channelRemapping = computeChannelRemapping(MWA_NUM_CHANNELS * 2, antennaConfig.frequencyChannels);
 
     // Send channel remapping to secondary nodes
     std::cout << "Node 0 (Primary): Sending channel remapping to secondary nodes" << std::endl;
@@ -130,10 +128,7 @@ void runNode(PrimaryNodeCommunicator& primary, int argc, char* argv[]) {
 
     // Send antenna input assignments to secondary nodes
     std::cout << "Node 0 (Primary): Sending antenna input assignments to secondary nodes" << std::endl;
-    auto const antennaInputRange = communicateNodeAntennaInputAssignment(primary, secondaryNodeStatus, antennaConfig.antennaInputs.size());
-
-    // Wait for all nodes to be ready for signal processing
-    primary.synchronise();
+    auto const antennaInputRange = communicateNodeAntennaInputAssignment(primary, antennaConfig.antennaInputs.size());
 
     std::cout << "Node 0 (Primary): Starting signal processing" << std::endl;
 
@@ -158,16 +153,18 @@ void runNode(PrimaryNodeCommunicator& primary, int argc, char* argv[]) {
 
     std::cout << "Node 0 (Primary): Finished signal processing" << std::endl;
 
-    // Wait for all nodes to finish processing
-    primary.synchronise();
-
     // Gather processing results from secondary nodes and merge into processingResults
     mergeSecondaryProcessingResults(primary, processingResults);
     std::cout << "Node 0 (Primary): Received processing results from secondary nodes" << std::endl;
 
     // Write output log file
-    std::cout << "Node 0 (Primary): Writing output log file" << std::endl;
-    writeLogFile(appConfig, channelRemapping, processingResults, antennaConfig);
+    try {
+        writeLogFile(appConfig, channelRemapping, processingResults, antennaConfig);
+        std::cout << "Node 0 (Primary): Finished writing output log file" << std::endl;
+    }
+    catch (LogWriterException const& e) {
+        std::cerr << "Node 0 (Primary): " << e.what() << std::endl;
+    }
 
     std::cout << "Node 0 (Primary): Terminated succesfully" << std::endl;
 }
@@ -176,9 +173,6 @@ void runNode(PrimaryNodeCommunicator& primary, int argc, char* argv[]) {
 // Run by all secondary nodes
 void runNode(SecondaryNodeCommunicator& secondary, int argc, char* argv[]) {
     bool setupStatus = true;
-
-    // Wait for primary to start up
-    secondary.synchronise();
 
     // Receive primary node startup status
     if (!secondary.receiveAppStartupStatus()) {
@@ -197,9 +191,6 @@ void runNode(SecondaryNodeCommunicator& secondary, int argc, char* argv[]) {
                  ": Reading in filter coefficients" << std::endl;
     auto const coefficients = createFilterCoefficients(appConfig.invPolyphaseFilterPath, setupStatus);
 
-    // Wait for secondary nodes to set up
-    secondary.synchronise();
-
     // Send setup status to primary node
     secondary.sendNodeSetupStatus(setupStatus);
 
@@ -207,6 +198,12 @@ void runNode(SecondaryNodeCommunicator& secondary, int argc, char* argv[]) {
     if (!setupStatus) {
         throw NodeException("Node " + std::to_string(secondary.getNodeID()) +
                             ": startup failure, terminating node");
+    }
+
+    // If any nodes fail startup, terminate node
+    if (secondary.getErrorStatus()) {
+        throw NodeException("Node " + std::to_string(secondary.getNodeID()) +
+                            ": Not all nodes had a successful startup, terminating node");
     }
 
     std::cout << "Node " + std::to_string(secondary.getNodeID()) +
@@ -226,9 +223,6 @@ void runNode(SecondaryNodeCommunicator& secondary, int argc, char* argv[]) {
     auto const antennaInputRange = secondary.receiveAntennaInputAssignment();
     std::cout << "Node " + std::to_string(secondary.getNodeID()) +
                  ": Received antenna input assignment" << std::endl;
-
-    // Wait for all nodes to be ready for signal processing
-    secondary.synchronise();
 
     std::cout << "Node " + std::to_string(secondary.getNodeID()) +
                  ": Starting signal processing" << std::endl;
@@ -256,9 +250,6 @@ void runNode(SecondaryNodeCommunicator& secondary, int argc, char* argv[]) {
 
     std::cout << "Node " + std::to_string(secondary.getNodeID()) +
                  ": Finished signal processing" << std::endl;
-
-    // Wait for all nodes to finish processing
-    secondary.synchronise();
 
 	// Send processing results to primary node
     std::cout << "Node " + std::to_string(secondary.getNodeID()) +
@@ -303,13 +294,13 @@ void processAntennaInput(AppConfig const& appConfig, AntennaConfig const& antenn
             }
             catch (OutSignalException const& e) {
                 processingResults.results.insert({index, {false, usedChannels}});
-                std::cout << "Tile " << antenna.tile << antenna.signalChain << " writing failed" << std::endl;
+                std::cerr << "Tile " << antenna.tile << antenna.signalChain << " writing failed" << std::endl;
             }
         }
         else {
             // Indicate antenna input skipped due to no readable data
             processingResults.results.insert({index, {false, usedChannels}});
-            std::cout << "Tile " << antenna.tile << antenna.signalChain << " not processed (no readable data)" << std::endl;
+            std::cerr << "Tile " << antenna.tile << antenna.signalChain << " not processed (no readable data)" << std::endl;
         }
     }
     else {
@@ -329,13 +320,16 @@ void readRawSignalFiles(AppConfig const& appConfig, AntennaConfig const& antenna
         std::filesystem::path voltageFile = dir / filename;
 
         try {
+            if (index == 3) {
+                throw ReadInputDataException("");
+            }
             antennaInputSignals.push_back(readInputDataFile(voltageFile, index, antennaConfig.antennaInputs.size()));
             usedChannels.insert(channel);
         }
         catch (ReadInputDataException const& e) {
             // Indicate error has occurred if appConfig.ignoreError flag is false
             if (!appConfig.ignoreErrors) {
-                std::cout << "Error occurred reading: " << (std::string) voltageFile << std::endl;
+                std::cerr << "Error occurred reading: " << (std::string) voltageFile << std::endl;
                 throw IndicateErrorException("");
             }
         }
@@ -362,7 +356,7 @@ AntennaConfig createAntennaConfig(AppConfig const& appConfig, bool& success) {
 	}
 	catch (MetadataException const& e) {
         success = false;
-		std::cout << "Error creating antenna configuration: " << e.what() << std::endl;
+		std::cerr << "Error creating antenna configuration: " << e.what() << std::endl;
 	}
     return antennaConfig;
 }
@@ -376,32 +370,31 @@ std::vector<std::complex<float>> createFilterCoefficients(std::string const filt
     }
     catch (ReadCoeDataException const& e) {
         success = false;
-        std::cout << "Error creating filter coefficients: " << e.what() << std::endl;
+        std::cerr << "Error creating filter coefficients: " << e.what() << std::endl;
     }
     return coefficients;
 }
 
 
 std::optional<AntennaInputRange> communicateNodeAntennaInputAssignment(PrimaryNodeCommunicator const& primary,
-                                                                       std::map<unsigned, bool> const& secondaryNodeStatus,
                                                                        unsigned const numAntennaInputs) {
     // Calculate range of antenna inputs for each node to process
-    auto antennaInputAssignments = assignNodeAntennaInputs(getActiveNodeCount(secondaryNodeStatus), numAntennaInputs);
+    auto antennaInputAssignments = assignNodeAntennaInputs(primary.getNodeCount(), numAntennaInputs);
 
-	// Send antenna input assignments to active secondary nodes
-    for (auto const& [nodeID, active] : secondaryNodeStatus) {
-        if (active) {
-            std::cout << "Assigning node " << nodeID << " | " << antennaInputAssignments.back().value().begin << " - " << antennaInputAssignments.back().value().end << std::endl;
-            primary.sendAntennaInputAssignment(nodeID, antennaInputAssignments.back());
-            antennaInputAssignments.pop_back();
-        }
+	// Send antenna input assignments to all secondary nodes
+    for (unsigned nodeID = 1; nodeID < primary.getNodeCount(); nodeID++) {
+        auto const range = antennaInputAssignments.at(nodeID);
+        std::cout << "Assigning node " << nodeID << " antennas | " << range.value().begin << " - " << range.value().end << std::endl;
+
+        primary.sendAntennaInputAssignment(nodeID, range);
     }
 
-    std::cout << "Assigning primary node | " << antennaInputAssignments.back().value().begin << " - " << antennaInputAssignments.back().value().end << std::endl;
+    auto const range = antennaInputAssignments.at(0);
+    std::cout << "Assigning primary node antennas | " << range.value().begin << " - " << range.value().end << std::endl;
 
-    // Return last remaining antenna input assignment to primary node
-	return antennaInputAssignments.back();
+ 	return range;
 }
+
 
 // Return the total number of active nodes (nodes that didn't fail on startup)
 unsigned getActiveNodeCount(std::map<unsigned, bool> const& secondaryNodeStatus) {
