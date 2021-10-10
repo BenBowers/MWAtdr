@@ -261,7 +261,6 @@ void performDFT(std::vector<std::complex<float>>& signalData,
     handleMKLError(DftiSetValue(hand, DFTI_PACKED_FORMAT, DFTI_CCE_FORMAT));
     handleMKLError(DftiSetValue(hand, DFTI_PLACEMENT, DFTI_NOT_INPLACE));
     handleMKLError(DftiSetValue(hand, DFTI_CONJUGATE_EVEN_STORAGE,  DFTI_COMPLEX_COMPLEX));
-    handleMKLError(DftiSetValue(hand, DFTI_BACKWARD_SCALE, 1.0f / static_cast<float>(MWA_SAMPLING_RATE)));
     handleMKLError(DftiSetValue(hand, DFTI_NUMBER_OF_TRANSFORMS, static_cast<MKL_LONG>(numOfBlocks)));
     handleMKLError(DftiSetValue(hand, DFTI_INPUT_DISTANCE, numOfChannels));
     handleMKLError(DftiSetValue(hand, DFTI_OUTPUT_DISTANCE, samplingFreq));
