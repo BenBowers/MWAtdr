@@ -27,8 +27,8 @@ OutputLogFileWriterTest::OutputLogFileWriterTest() : StatelessTestModuleImpl {{
 													        {3, {true, {5, 6, 8, 9}}},
 													        {4, {true, {5, 6, 7, 8, 9}}},
 													        {5, {true, {5, 6, 7, 8, 9}}} }};
-		    AntennaConfig const antennaConfig = {{ {67, 'X'}, {67, 'Y'}, {68, 'X'}, {68, 'Y'},
-                                                   {71, 'X'}, {71, 'Y'}, {93, 'X'}, {93, 'Y'}},
+		    AntennaConfig const antennaConfig = {{ {67, 'X', false}, {67, 'Y', false}, {68, 'X', true}, {68, 'Y', true},
+                                                   {71, 'X', false}, {71, 'Y', false}, {93, 'X', false}, {93, 'Y', false}},
 		                                         {98, 100, 101, 103, 104, 106,
                                                   107, 108, 109, 110, 111, 112}};
 		    writeLogFile(appConfig, channelRemapping, results, antennaConfig);
