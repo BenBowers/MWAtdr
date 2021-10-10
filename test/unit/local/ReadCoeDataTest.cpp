@@ -38,7 +38,7 @@ ReadCoeDataTest::ReadCoeDataTest() {
 
         myfile.write(reinterpret_cast<const char*>(&filterlength),sizeof(uint8_t));
 
-        for(int i = 0; i < filterSize*128; i++){
+        for(int i = 0; i < MWA_NUM_CHANNELS*128; i++){
             myfile.write(reinterpret_cast<const char*>(&testcoeficent),sizeof(float));
         }   
     }
@@ -48,7 +48,7 @@ ReadCoeDataTest::ReadCoeDataTest() {
 
         badfile.write(reinterpret_cast<const char*>(&filterlength),sizeof(uint8_t));
 
-        for(int i = 0; i < filterSize*30; i++){
+        for(int i = 0; i < MWA_NUM_CHANNELS*30; i++){
             badfile.write(reinterpret_cast<const char*>(&testcoeficent),sizeof(float));
         }   
     }
@@ -58,7 +58,7 @@ ReadCoeDataTest::ReadCoeDataTest() {
 
         multiNumber.write(reinterpret_cast<const char*>(&filterlength),sizeof(uint8_t));
 
-        for(int i = 0; i < filterSize*128; i++){
+        for(int i = 0; i < MWA_NUM_CHANNELS*128; i++){
             float newtest = testcoeficent+(float)i;
             multiNumber.write(reinterpret_cast<const char*>(&newtest),sizeof(float));
         }   
@@ -70,7 +70,7 @@ std::vector<TestCase> ReadCoeDataTest::getTestCases() {
     return {
         {"Valid InputFile", []() {
             std::vector<std::complex<float>> actual = readCoeData(FILENAME);
-            testAssert(actual.size() % filterSize == 0);
+            testAssert(actual.size() % MWA_NUM_CHANNELS == 0);
         }},
 
         {"Invalid InputFile(wrong size of data inside the file)", []() {
@@ -91,7 +91,7 @@ std::vector<TestCase> ReadCoeDataTest::getTestCases() {
             std::vector<std::complex<float>> expected; 
         
             float coeficent =1.0;
-            for(int i = 0; i < filterSize*128; i++){
+            for(int i = 0; i < MWA_NUM_CHANNELS*128; i++){
                 expected.push_back({coeficent+i,0.0f});
             }        
                 
