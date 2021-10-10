@@ -120,7 +120,7 @@ void processSignal(std::vector<std::vector<std::complex<float>>> const& signalDa
         throw std::invalid_argument("Number of channels present in input signal do not equal number of channels in mapping");
     }
 
-    unsigned const IN_NUM_BLOCKS = signalDataIn[0].size();
+    unsigned const IN_NUM_BLOCKS = signalDataIn.at(0).size();
 
     for (auto iterator = signalDataIn.begin()++; iterator != signalDataIn.end(); ++iterator) {
         if (iterator->size() != IN_NUM_BLOCKS) {
@@ -141,7 +141,7 @@ void processSignal(std::vector<std::vector<std::complex<float>>> const& signalDa
                 + std::to_string(PFB_COE_CHANNELS));
     }
 
-    if ( (coefficiantPFB.size() / PFB_COE_CHANNELS) > signalDataIn[0].size() ) {
+    if ( (coefficiantPFB.size() / PFB_COE_CHANNELS) > signalDataIn.at(0).size() ) {
         throw std::invalid_argument("The PFB Array must contain the same number or less blocks as the signal data");
     }
 
@@ -163,49 +163,52 @@ void remapChannels(std::vector<std::vector<std::complex<float>>> const& signalDa
                    std::map<unsigned, ChannelRemapping::RemappedChannel> const& channelRemapping,
                    unsigned const nyquistChannel) {
 
-    unsigned const NUM_OF_BLOCKS = signalDataIn[0].size();
+    unsigned const NUM_OF_BLOCKS = signalDataIn.at(0).size();
     // Tell the vector it's size and fill with zeros
     signalDataOut.resize(nyquistChannel * NUM_OF_BLOCKS);
 
     // Work over each element of the mapping
     for (unsigned unmappedChannel = 0; unmappedChannel < signalDataInMapping.size(); ++unmappedChannel) {
         // Get the variables
-        unsigned const oldChannel = signalDataInMapping[unmappedChannel];
+        unsigned const oldChannel = signalDataInMapping.at(unmappedChannel);
 
-        auto const mappingIterator = channelRemapping.find(oldChannel);
-        if (mappingIterator == channelRemapping.end()) {
+        try {
+            auto const mappingIterator = channelRemapping.at(oldChannel);
+            unsigned const newChannel = mappingIterator.newChannel;
+            bool const flipped = mappingIterator.flipped;
+
+            if (newChannel > nyquistChannel) {
+                throw std::invalid_argument("Channel mapping values greater than the nyquist channel");
+            }
+
+            // Grab the correct channel vector based on the mapping
+            std::vector<std::complex<float>> const& channelVector = signalDataIn.at(unmappedChannel);
+
+            if (flipped) {
+                // Do a strided conjugated copy over it
+                vcConjI(NUM_OF_BLOCKS,
+                        reinterpret_cast<const MKL_Complex8*>(channelVector.data()), 1,
+                        reinterpret_cast<MKL_Complex8*>(signalDataOut.data() + newChannel), nyquistChannel);
+            }
+            else {
+                // Do a strided copy over it
+                cblas_ccopy(NUM_OF_BLOCKS,
+                            channelVector.data(), 1,
+                            signalDataOut.data() + newChannel, nyquistChannel);
+            }
+
+            // I would've liked to do this outside of the loop so it only needs to be done once but due
+            // to the fact that the mapping is indexed by the original channel this is not possible!
+            // Scale by two for these edge cases
+            if ( (newChannel == nyquistChannel - 1) || // If nyquist frequency
+               (newChannel == 0 && oldChannel != 0) // If something was remapped to zero
+                ) {
+                cblas_csscal(NUM_OF_BLOCKS, 2, signalDataOut.data() + newChannel, nyquistChannel);
+
+            }
+        }
+        catch ( std::out_of_range& e) {
             throw std::invalid_argument("Signal mapping and Channel mapping do not match");
-        }
-        unsigned const newChannel = mappingIterator->second.newChannel;
-        bool const flipped = mappingIterator->second.flipped;
-
-        if (newChannel > nyquistChannel) {
-            throw std::invalid_argument("Channel mapping values greater than the nyquist channel");
-        }
-
-        // Grab the correct channel vector based on the mapping
-        std::vector<std::complex<float>> const& channelVector = signalDataIn[unmappedChannel];
-
-        if (flipped) {
-            // Do a strided conjugated copy over it
-            vcConjI(NUM_OF_BLOCKS,
-                    reinterpret_cast<const MKL_Complex8*>(channelVector.data()), 1,
-                    reinterpret_cast<MKL_Complex8*>(signalDataOut.data() + newChannel), nyquistChannel);
-        }
-        else {
-            // Do a strided copy over it
-            cblas_ccopy(NUM_OF_BLOCKS,
-                        channelVector.data(), 1,
-                        signalDataOut.data() + newChannel, nyquistChannel);
-        }
-
-        // I would've liked to do this outside of the loop so it only needs to be done once but due
-        // to the fact that the mapping is indexed by the original channel this is not possible!
-        // Scale by two for these edge cases
-        if ( (newChannel == nyquistChannel - 1) || // If nyquist frequency
-             (newChannel == 0 && oldChannel != 0) // If something was remapped to zero
-            ) {
-            cblas_csscal(NUM_OF_BLOCKS, 2, signalDataOut.data() + newChannel, nyquistChannel);
         }
     }
 }
@@ -278,6 +281,6 @@ void doPostProcessing(std::vector<float> const& signalData,
     signalDataOut.resize(signalData.size());
 
     tbb::parallel_for(size_t{0}, signalData.size(), [&signalData, &signalDataOut](size_t ii) {
-        signalDataOut[ii] = clamp(signalData[ii]);
+        signalDataOut.at(ii) = clamp(signalData.at(ii));
     });
 }
