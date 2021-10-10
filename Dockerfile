@@ -1,4 +1,13 @@
-# Base image for all the executables.
+# The type of build to do with CMake. See here: https://cmake.org/cmake/help/v3.10/variable/CMAKE_BUILD_TYPE.html
+ARG BUILD_TYPE=Release
+
+# Indicates what container we are in at runtime. Options are 'docker' or 'singularity'.
+ARG CONTAINER_RUNTIME=singularity
+
+
+
+
+# Installs all the required packages and configures the system.
 FROM debian:bullseye-slim AS base
 
 WORKDIR /tmp
@@ -33,67 +42,93 @@ RUN apt-get update -qq && \
 # Clean up files and packages no longer required.
 	apt-get purge --auto-remove -qq -y ca-certificates gnupg2 wget lbzip2 && \
 	apt-get clean -qq -y && \
-	rm -rf ./* /var/lib/apt/lists/*
+	rm -rf ./* /var/lib/apt/lists/* /etc/apt/sources.list.d/oneAPI.list
 
 # Set up Intel OneAPI library environment variables required for code compilation.
 ENV MKLROOT="/opt/intel/oneapi/mkl/latest"
 ENV TBBROOT="/opt/intel/oneapi/tbb/latest"
 
+# Create a new user so the application doesn't run as root (also MPI doesn't like to be run as root).
+RUN adduser --system --group app
+
+RUN mkdir /app
+RUN chown -R app:app /app
+
 WORKDIR /app
 
-# Change user so application doesn't run as root (also MPI doesn't like to be run as root).
-RUN adduser --system --group app && \
-	chown -R app:app /app
 USER app
 
-# Copy project resources.
-COPY --chown=app:app CMakeLists.txt ./
-COPY --chown=app:app src/ src/
-COPY --chown=app:app test/ test/
 
-# The type of build to do with CMake. See here: https://cmake.org/cmake/help/v3.10/variable/CMAKE_BUILD_TYPE.html
-ARG BUILD_TYPE=Release
+
+
+# Imports the application source and configures the build.
+FROM base AS app_base
+ARG BUILD_TYPE
+
+COPY CMakeLists.txt ./
+COPY src/ src/
+COPY test/unit/ test/unit/
 
 # The system on which the application will be running. Options are 'personal' or 'garrawarla'.
 ARG RUNTIME_SYSTEM=garrawarla
 ENV RUNTIME_SYSTEM=${RUNTIME_SYSTEM}
 
 # Just configure the CMake build at this stage.
+# Unfortunately for the configure to work, all source files built by CMake must be present. We can't include only the
+# required source files on a per-target basis.
 RUN mkdir build && \
 	cd build && \
 	cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ..
 
-# Indicates what container we are in at runtime. Options are 'docker' or 'singularity'.
-ARG CONTAINER_RUNTIME=singularity
+# Can build the common library now so it's cached for the other build stages.
+RUN cd build && \
+	cmake --build . --target mwatdr_common
+
+
+
+
+# Image for non-MPI unit tests.
+FROM base AS local_unit_test
+
+COPY --from=app_base --chown=app:app /app/ /app/
+
+RUN cd build && \
+	cmake --build . --target local_unit_test
+
+ENTRYPOINT ["/app/build/local_unit_test"]
+
+
+
+
+# Image for MPI unit tests.
+FROM base AS mpi_unit_test
+ARG CONTAINER_RUNTIME
+
+COPY --from=app_base --chown=app:app /app/ /app/
+
+RUN chmod +x test/unit/mpi/entrypoint.sh
+
+RUN cd build && \
+	cmake --build . --target mpi_unit_test
+
 ENV CONTAINER_RUNTIME=${CONTAINER_RUNTIME}
 
-
-# Image for non-MPI tests.
-FROM base AS local_test
-
-# Build "local_test" CMake target only.
-RUN cd build && \
-	cmake --build . --target local_test
-
-ENTRYPOINT ["./build/local_test"]
+ENTRYPOINT ["/app/test/unit/mpi/entrypoint.sh"]
 
 
-# Image for MPI tests.
-FROM base AS mpi_test
-
-# Build "mpi_test" CMake target only.
-RUN cd build && \
-	cmake --build . --target mpi_test
-
-RUN chmod +x ./test/mpi/run.sh
-ENTRYPOINT ["./test/mpi/run.sh"]
 
 
 # Image for main application executable.
 FROM base AS main
 
-# Build "main" CMake target only.
+COPY --chown=app:app entrypoint.sh ./
+RUN chmod +x entrypoint.sh
+
+COPY --from=app_base --chown=app:app /app/ /app/
+
 RUN cd build && \
 	cmake --build . --target main
 
-ENTRYPOINT ["mpirun", "./build/main"]
+ENV CONTAINER_RUNTIME=${CONTAINER_RUNTIME}
+
+ENTRYPOINT ["/app/entrypoint.sh"]

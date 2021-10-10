@@ -26,6 +26,7 @@ struct AppConfig {
 struct AntennaInputPhysID {
 	unsigned tile;
 	char signalChain;
+	bool flagged;
 };
 
 struct AntennaConfig {

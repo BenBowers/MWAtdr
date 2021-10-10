@@ -253,10 +253,11 @@ void PrimaryNodeCommunicator::sendAntennaConfig(AntennaConfig const& antennaConf
     // Next we send the antenna inputs and frequency channels.
     // We can represent it all as an array of unsigned.
     std::vector<unsigned> part2Buffer;
-    part2Buffer.reserve((2 * antennaConfig.antennaInputs.size() + antennaConfig.frequencyChannels.size()));
+    part2Buffer.reserve((3 * antennaConfig.antennaInputs.size() + antennaConfig.frequencyChannels.size()));
     for (auto const& antennaInputID : antennaConfig.antennaInputs) {
         part2Buffer.push_back(antennaInputID.tile);
-        part2Buffer.push_back(static_cast<char>(antennaInputID.signalChain));
+        part2Buffer.push_back(static_cast<unsigned>(antennaInputID.signalChain));
+        part2Buffer.push_back(static_cast<unsigned>(antennaInputID.flagged));
     }
     for (auto const channel : antennaConfig.frequencyChannels) {
         part2Buffer.push_back(channel);
@@ -449,18 +450,19 @@ AntennaConfig SecondaryNodeCommunicator::receiveAntennaConfig() const {
     auto const [antennaInputCount, channelCount] = part1Buffer;
 
     // Then we receive the antenna input and frequency channel data.
-    std::vector<unsigned> part2Buffer(2 * antennaInputCount + channelCount);
+    std::vector<unsigned> part2Buffer(3 * antennaInputCount + channelCount);
     assertMPISuccess(MPI_Bcast(part2Buffer.data(), part2Buffer.size(), MPI_UNSIGNED, 0, MPI_COMM_WORLD));
 
     AntennaConfig result{};
     result.antennaInputs.reserve(antennaInputCount);
     for (std::size_t i = 0; i < antennaInputCount; ++i) {
-        auto const tile = part2Buffer.at(2 * i);
-        auto const signalChain = part2Buffer.at(2 * i + 1);
-        result.antennaInputs.push_back({tile, static_cast<char>(signalChain)});
+        auto const tile = part2Buffer.at(3 * i);
+        auto const signalChain = part2Buffer.at(3 * i + 1);
+        auto const flagged = part2Buffer.at(3 * i + 2);
+        result.antennaInputs.push_back({tile, static_cast<char>(signalChain), static_cast<bool>(flagged)});
     }
     for (std::size_t i = 0; i < channelCount; ++i) {
-        auto const channel = part2Buffer.at(2 * antennaInputCount + i);
+        auto const channel = part2Buffer.at(3 * antennaInputCount + i);
         result.frequencyChannels.insert(channel);
     }
     return result;
