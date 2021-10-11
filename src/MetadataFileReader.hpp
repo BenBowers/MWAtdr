@@ -23,6 +23,7 @@ class MetadataFileReader {
 	public:
 	    MetadataFileReader(AppConfig const& appConfig);
         AntennaConfig getAntennaConfig(AppConfig const& appConfig);
+		std::set<unsigned> getFrequencyChannels();
 		~MetadataFileReader();
 };
 

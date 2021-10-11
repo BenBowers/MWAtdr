@@ -107,6 +107,17 @@ std::set<unsigned> MetadataFileReader::getAvailableFrequencyChannelsUsed(AppConf
 }
 
 
+std::set<unsigned> MetadataFileReader::getFrequencyChannels() {
+    std::set<unsigned> frequencyChannels;
+
+    // Add each frequency channel number recorded in the observation
+    for (unsigned i = 0; i < metafitsMetadata->num_metafits_coarse_chans; i++) {
+        frequencyChannels.insert(metafitsMetadata->metafits_coarse_chans[i].rec_chan_number);
+    }
+    return frequencyChannels;
+}
+
+
 MetadataFileReader::~MetadataFileReader() {
 	freeMetadata();
 }

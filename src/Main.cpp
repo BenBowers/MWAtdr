@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 		}
 		catch (NodeException const& e) {
 			std::cerr << e.what() << std::endl;
-            return 1;
+            return 78;
 		}
 	}, communicator);
 }
@@ -90,6 +90,11 @@ void runNode(PrimaryNodeCommunicator& primary, int argc, char* argv[]) {
     catch (std::invalid_argument const& e) {
         startupStatus = false;
         std::cerr << "Node 0 (Primary): " << e.what() << std::endl;
+    }
+    catch (IndicateErrorException const& e) {
+        // Don't use indicateError() since sendAppStartupStatus() will terminate all nodes
+        startupStatus = false;
+        std::cerr << "Node 0 (Primary): Not all observation voltage files are in input directory (error)" << std::endl;
     }
 
     // Send startup status to secondary nodes
@@ -329,14 +334,11 @@ void readRawSignalFiles(AppConfig const& appConfig, AntennaConfig const& antenna
         std::filesystem::path voltageFile = dir / filename;
 
         try {
-            if (index == 3) {
-                throw ReadInputDataException("");
-            }
             antennaInputSignals.push_back(readInputDataFile(voltageFile, index, antennaConfig.antennaInputs.size()));
             usedChannels.insert(channel);
         }
         catch (ReadInputDataException const& e) {
-            // Indicate error has occurred if appConfig.ignoreError flag is false
+            // Indicate reading error has occurred if not ignoring errors
             if (!appConfig.ignoreErrors) {
                 std::cerr << "Error occurred reading: " << (std::string) voltageFile << std::endl;
                 throw IndicateErrorException("");
@@ -362,6 +364,13 @@ AntennaConfig createAntennaConfig(AppConfig const& appConfig, bool& success) {
     try {
 		MetadataFileReader mfr(appConfig);
 		antennaConfig = mfr.getAntennaConfig(appConfig);
+
+        // Indicate files missing error has occurred if not ignoring errors
+        if (!appConfig.ignoreErrors) {
+            if (mfr.getFrequencyChannels() != antennaConfig.frequencyChannels) {
+                throw IndicateErrorException("");
+            }
+        }
 	}
 	catch (MetadataException const& e) {
         success = false;
