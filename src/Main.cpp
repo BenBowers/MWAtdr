@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
     auto const communicatorContext = InternodeCommunicationContext::initialise();
     auto communicator = communicatorContext->getCommunicator();
 
-	std::visit([argc, argv](auto& node) {
+	return std::visit([argc, argv](auto& node) {
 		try {
 	        runNode(node, argc, argv);
 		}
@@ -206,12 +206,6 @@ void runNode(SecondaryNodeCommunicator& secondary, int argc, char* argv[]) {
 
     // Send setup status to primary node
     secondary.sendNodeSetupStatus(setupStatus);
-
-    // Terminate node on startup failure
-    if (!setupStatus) {
-        throw NodeException("Node " + std::to_string(secondary.getNodeID()) +
-                            ": startup failure, terminating node");
-    }
 
     // Receive secondary node startup status (phase two)
     if (!secondary.receiveAppStartupStatus()) {
