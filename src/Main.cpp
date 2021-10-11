@@ -63,6 +63,7 @@ int main(int argc, char* argv[]) {
 		}
 		catch (NodeException const& e) {
 			std::cerr << e.what() << std::endl;
+            return 1;
 		}
 	}, communicator);
 }
@@ -109,10 +110,17 @@ void runNode(PrimaryNodeCommunicator& primary, int argc, char* argv[]) {
     std::cout << "Node 0 (Primary): Receiving setup status from secondary nodes" << std::endl;
     auto const secondaryNodeStatus = primary.receiveNodeSetupStatus();
 
-    // If any nodes fail startup, indicate error and terminate node
+    // If secondary nodes fail startup (phase two)
     if (getActiveNodeCount(secondaryNodeStatus) < primary.getNodeCount()) {
-        primary.indicateError();
-        throw NodeException("Node 0 (Primary): Not all nodes had a successful startup, terminating node");
+        startupStatus = false;
+    }
+
+    // Send phase two startup status to secondary nodes
+    primary.sendAppStartupStatus(startupStatus);
+
+    // Terminate node on phase two startup failure
+    if (!startupStatus) {
+        throw NodeException("Node 0 (Primary): Secondary node startup failure, terminating node");
     }
 
     // Send antenna configuration to secondary nodes
@@ -200,10 +208,11 @@ void runNode(SecondaryNodeCommunicator& secondary, int argc, char* argv[]) {
                             ": startup failure, terminating node");
     }
 
-    // If any nodes fail startup, terminate node
-    if (secondary.getErrorStatus()) {
+    // Receive secondary node startup status (phase two)
+    if (!secondary.receiveAppStartupStatus()) {
+        // Terminate node on secondary startup failure
         throw NodeException("Node " + std::to_string(secondary.getNodeID()) +
-                            ": Not all nodes had a successful startup, terminating node");
+                            ": Secondary node startup failure, terminating node");
     }
 
     std::cout << "Node " + std::to_string(secondary.getNodeID()) +
