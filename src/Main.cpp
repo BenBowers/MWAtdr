@@ -60,6 +60,7 @@ int main(int argc, char* argv[]) {
 	return std::visit([argc, argv](auto& node) {
 		try {
 	        runNode(node, argc, argv);
+            return 0;
 		}
 		catch (NodeException const& e) {
 			std::cerr << e.what() << std::endl;
