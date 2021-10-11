@@ -94,7 +94,7 @@ void runNode(PrimaryNodeCommunicator& primary, int argc, char* argv[]) {
     catch (IndicateErrorException const& e) {
         // Don't use indicateError() since sendAppStartupStatus() will terminate all nodes
         startupStatus = false;
-        std::cerr << "Node 0 (Primary): Not all observation voltage files are in input directory (error)" << std::endl;
+        std::cerr << "Node 0 (Primary): Not all channel voltage files are in input directory (error)" << std::endl;
     }
 
     // Send startup status to secondary nodes
