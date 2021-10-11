@@ -44,26 +44,38 @@ std::string validateInputDirectoryPath(std::string const inputDirectoryPath) {
 
 
 unsigned long long validateObservationID(std::string const observationID) {
-	auto id = std::stoull(observationID);
+	auto id = std::stoll(observationID);
 
-	if (id % 8 != 0) {
+	if (id == 0) {
+		throw std::invalid_argument {"Invalid observation ID, error occurred (expecting GPS time)"};
+	}
+	else if (id < 0) {
+		throw std::invalid_argument {"Invalid observation ID, must be positive"};
+	}
+	else if (id % 8 != 0) {
 		throw std::invalid_argument {"Invalid observation ID, must be divisible by 8"};
 	}
-	return id;
+	return (unsigned long long) id;
 }
 
 
 unsigned long long validateSignalStartTime(std::string const observationID, std::string signalStartTime) {
-	auto id = std::stoull(observationID);
-	auto time = std::stoull(signalStartTime);
+	auto id = std::stoll(observationID);
+	auto time = std::stoll(signalStartTime);
 
-	if (time % 8 != 0) {
+	if (time == 0) {
+		throw std::invalid_argument {"Invalid signal start time, error occurred (expecting GPS time)"};
+	}
+	else if (time < 0) {
+		throw std::invalid_argument {"Invalid signal start time, must be positive"};
+	}
+	else if (time % 8 != 0) {
 		throw std::invalid_argument {"Invalid signal start time, must be divisible by 8"};
 	}
 	else if (time < id) {
 		throw std::invalid_argument {"Invalid signal start time, must be greater than or equal to observation ID"};
 	}
-	return time;
+	return (unsigned long long) time;
 }
 
 

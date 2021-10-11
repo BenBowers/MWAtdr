@@ -55,17 +55,79 @@ CommandLineArgumentsTest::CommandLineArgumentsTest() : StatelessTestModuleImpl{{
         std::string const expected = "/mnt/test_input/mfr/multi_voltage/";
         testAssert(actual.compare(expected) == 0);
     }},
-    {"validateObservationID(): Invalid ID", []() {
+    {"validateObservationID(): Invalid ID (non-number input)", []() {
+        try {
+            validateObservationID("7300_F");
+            failTest();
+        }
+        catch (std::invalid_argument const&) {}
+    }},
+    {"validateObservationID(): Invalid ID (error occurred)", []() {
+        try {
+            validateObservationID("0");
+            failTest();
+        }
+        catch (std::invalid_argument const& e) {
+            if ((int) ((std::string) e.what()).find("error occurred") == -1) {
+                failTest();
+            }
+        }
+    }},
+    {"validateObservationID(): Invalid ID (negative value)", []() {
+        try {
+            validateObservationID("-5");
+            failTest();
+        }
+        catch (std::invalid_argument const& e) {
+            if ((int) ((std::string) e.what()).find("must be positive") == -1) {
+                failTest();
+            }
+        }
+    }},
+    {"validateObservationID(): Invalid ID (not divisible by 8)", []() {
         try {
             validateObservationID("1000000001");
             failTest();
         }
-        catch (std::invalid_argument const&) {}
+        catch (std::invalid_argument const& e) {
+            if ((int) ((std::string) e.what()).find("8") == -1) {
+                failTest();
+            }
+        }
     }},
     {"validateObservationID(): Valid ID", []() {
         auto const actual = validateObservationID("1000000000");
         unsigned long long const expected = 1000000000;
         testAssert(actual == expected);
+    }},
+    {"validateSignalStartTime(): Invalid start time (non-number input)", []() {
+        try {
+            validateSignalStartTime("1000000000", "asdf");
+            failTest();
+        }
+        catch (std::invalid_argument const&) {}
+    }},
+    {"validateSignalStartTime(): Invalid start time (error occurred)", []() {
+        try {
+            validateSignalStartTime("1000000000", "0");
+            failTest();
+        }
+        catch (std::invalid_argument const& e) {
+            if ((int) ((std::string) e.what()).find("error occurred") == -1) {
+                failTest();
+            }
+        }
+    }},
+    {"validateSignalStartTime(): Invalid start time (negative value)", []() {
+        try {
+            validateSignalStartTime("1000000000", "-9999");
+            failTest();
+        }
+        catch (std::invalid_argument const& e) {
+            if ((int) ((std::string) e.what()).find("must be positive") == -1) {
+                failTest();
+            }
+        }
     }},
     {"validateSignalStartTime(): Invalid start time (not divisible by 8)", []() {
         try {
