@@ -52,8 +52,6 @@ def test_zero_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
     output_dir = working_dir / 'output_dir'
     output_dir.mkdir(exist_ok=False, parents=True)
 
-    # TODO? check if files are modifed by application? May be too slow though
-
     result = run_application(run_script, input_dir, '1294797712', '1294797712', inv_polyphase_filter_path, output_dir, 'false')
     
     assert result.returncode == 0
@@ -71,13 +69,13 @@ def test_zero_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
     ]
     tile_output_filenames = []
     for tile in tiles:
-        tile_output_filenames.append(f'1294797712_1294797712_{tile}_x.bin')
-        tile_output_filenames.append(f'1294797712_1294797712_{tile}_y.bin')
+        tile_output_filenames.append(f'1294797712_1294797712_{tile}_X.bin')
+        tile_output_filenames.append(f'1294797712_1294797712_{tile}_Y.bin')
 
     log_file_name = '1294797712_1294797712_outputlog.txt'
 
     output_dir_contents = [entry.name for entry in output_dir.iterdir()]
-    assert set(output_dir_contents) == set(tile_output_filenames + log_file_name)
+    assert set(output_dir_contents) == set(tile_output_filenames + [log_file_name])
 
     for filename in tile_output_filenames:
         signal = read_output_signal(output_dir / filename)
