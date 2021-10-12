@@ -74,12 +74,17 @@ def test_zero_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
 
     log_file_name = '1294797712_1294797712_outputlog.txt'
 
+    # Check there's output for all the tiles and polarisations, plus the log file.
     output_dir_contents = [entry.name for entry in output_dir.iterdir()]
     assert set(output_dir_contents) == set(tile_output_filenames + [log_file_name])
 
+    # Note: need to manually inspect output log file.
+
     for filename in tile_output_filenames:
         signal = read_output_signal(output_dir / filename)
-        assert signal.min() == 0 and signal.max() == 0      # All zeros
-        # New sampling frequency = 54
+        # Check signal is all zeros. Note this checks the accuracy of the output signal to as high precision as is
+        # possible, stricter than the SRS requirement.
+        assert signal.min() == 0 and signal.max() == 0
+        # Check that the output downsampling is as expected. The new sampling frequency is 54, manually calculated.
         assert len(signal) == 160 * 64000 * 54
         del signal      # Really don't want big array hanging around
