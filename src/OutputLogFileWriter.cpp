@@ -31,13 +31,13 @@ void writeLogFile(AppConfig const& appConfig, ChannelRemapping const& channelRem
 
         // Check if error occurred while writing
         if (log.fail()) {
-            throw LogWriterException("Error occurred writing to log file");
+            throw LogWriterException("Error occurred writing to output log file");
         }
 
 	    log.close();
 	}
 	else {
-        throw LogWriterException("Error opening log file");
+        throw LogWriterException("Error occurred opening output log file");
 	}
 }
 

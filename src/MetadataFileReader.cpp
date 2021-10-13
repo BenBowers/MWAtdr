@@ -5,7 +5,7 @@
 #include <regex>
 
 // Constructor which creates internal MetafitsMetadata (based on VoltageContext)
-MetadataFileReader::MetadataFileReader(AppConfig const appConfig) {
+MetadataFileReader::MetadataFileReader(AppConfig const& appConfig) {
 	// Verify metafits file exists at specified input directory path (and is not empty)
 	validateMetafits(appConfig);
 	// Verify which voltage files exist at specified input directory path
@@ -35,7 +35,7 @@ MetadataFileReader::MetadataFileReader(AppConfig const appConfig) {
 }
 
 // Finds all of the observation signal files within the specified input directory path
-std::vector<std::string> MetadataFileReader::findVoltageFiles(AppConfig const appConfig) {
+std::vector<std::string> MetadataFileReader::findVoltageFiles(AppConfig const& appConfig) {
 	std::vector<std::string> voltageFilenames;
     std::regex target (std::to_string(appConfig.observationID) + "_" +
 	                   std::to_string(appConfig.signalStartTime) + "_" + "[0-9]+");
@@ -61,7 +61,7 @@ std::vector<std::string> MetadataFileReader::findVoltageFiles(AppConfig const ap
 }
 
 // Checks if metafits file exists and is valid (not-empty)
-void MetadataFileReader::validateMetafits(AppConfig const appConfig) {
+void MetadataFileReader::validateMetafits(AppConfig const& appConfig) {
 	std::filesystem::path dir (appConfig.inputDirectoryPath);
 	std::filesystem::path file (std::to_string(appConfig.observationID) + ".metafits");
 	std::filesystem::path metafits = dir / file;
@@ -76,12 +76,12 @@ void MetadataFileReader::validateMetafits(AppConfig const appConfig) {
 
 
 // Gathers antenna configuration from the metadata
-AntennaConfig MetadataFileReader::getAntennaConfig() {
+AntennaConfig MetadataFileReader::getAntennaConfig(AppConfig const& appConfig) {
     AntennaConfig config;
 	// Storing the logical to physical antenna mappings
     config.antennaInputs = getPhysicalAntennaInputs();
 	// Storing the frequency channels recorded in the observation
-	config.frequencyChannels = getFrequencyChannelsUsed();
+	config.frequencyChannels = getAvailableFrequencyChannelsUsed(appConfig);
 	return config;
 }
 
@@ -95,13 +95,26 @@ std::vector<AntennaInputPhysID> MetadataFileReader::getPhysicalAntennaInputs() {
 	return antennaInputs;
 }
 
-std::set<unsigned> MetadataFileReader::getFrequencyChannelsUsed() {
+std::set<unsigned> MetadataFileReader::getAvailableFrequencyChannelsUsed(AppConfig const& appConfig) {
 	std::set<unsigned> frequencyChannels;
-	// Add each frequency channel number recorded in the observation
-    for (unsigned i = 0; i < metafitsMetadata->num_metafits_coarse_chans; i++) {
-		frequencyChannels.insert(metafitsMetadata->metafits_coarse_chans[i].rec_chan_number);
+	// Add each frequency channel number whose file is present in input directory
+	auto const voltageFiles = findVoltageFiles(appConfig);
+	for (auto i : voltageFiles) {
+		auto const channel = std::stoul(i.substr(i.find_last_of("_") + 1, (i.find_last_of(".")) - (i.find_last_of("_") + 1)), nullptr, 0);
+		frequencyChannels.insert(channel);
 	}
 	return frequencyChannels;
+}
+
+
+std::set<unsigned> MetadataFileReader::getFrequencyChannels() {
+    std::set<unsigned> frequencyChannels;
+
+    // Add each frequency channel number recorded in the observation
+    for (unsigned i = 0; i < metafitsMetadata->num_metafits_coarse_chans; i++) {
+        frequencyChannels.insert(metafitsMetadata->metafits_coarse_chans[i].rec_chan_number);
+    }
+    return frequencyChannels;
 }
 
 
