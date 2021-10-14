@@ -10,5 +10,16 @@
 module load singularity
 export pawseyRepository=/astro/mwavcs/capstone/
 export containerImage=$pawseyRepository/local-test.sif
+export repoDir = /astro/mwavcs/capstone/repo/
 
-srun --export=all singularity exec --pwd=/app -B $pawseyRepository:/tmp $containerImage $ROOT/app/build/local_test
+export hostTempDir="$(pawseyRepository)/tmp/"
+export hostInputDir="$(repoDir)/test/input_data"
+export hostOutputDir="$(repoDir)/test/output_data"
+export containerInputDir="/mnt/test_input"
+export containerOutputDir="/mnt/test_output"
+
+srun --export=all singularity exec --pwd=/app\
+     -B $pawseyRepository:/tmp:rw,\
+        $hostInputDir:$containerInputDir:ro,\
+        $hostOutputDir:$containerOutputDir:rw \
+    $containerImage $ROOT/app/build/local_test
