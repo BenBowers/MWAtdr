@@ -17,9 +17,9 @@ def test_all_one_signal_zero_pfb(run_script: Path, working_dir: Path) -> None:
     write_inv_polyphase_filter(inv_polyphase_filter_path, inv_polyphase_filter)
 
 
-def test_all_one_signal(run_script: Path, working_dir: Path) -> None:
+def test_all_one_pfb(run_script: Path, working_dir: Path) -> None:
     input_dir = working_dir / 'input_data'
-    inverse_polyphase_filter_file = working_dir / 'inverse_polyphase_filter_2.bin'
+    inverse_polyphase_filter_file = working_dir / 'inverse_polyphase_filter_2.bin' / 'inverse_polyphase_filter_2.bin'
     input_dir.mkdir(exist_ok=False, parents=True)
     shutil.copyfile(TEST_DATA_PATH / '1294797712.metafits', input_dir / '1294797712.metafits')
     input_file_metadata = \
@@ -72,8 +72,6 @@ def test_all_one_signal(run_script: Path, working_dir: Path) -> None:
 
     for filename in tile_output_filenames:
         signal = read_output_signal(output_dir / filename)
-        # Check signal is all zeros. Note this checks the accuracy of the output signal to as high precision as is
+        # Check signal is all zeros.
         assert signal.min() == 0 and signal.max() == 0
-        # Check that the output downsampling is as expected. The new sampling frequency is 54, manually calculated.
-        assert len(signal) == 160 * 64000 * 54
         del signal
