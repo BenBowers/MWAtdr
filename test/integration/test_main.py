@@ -7,7 +7,8 @@ from mwatdr_utils import read_output_signal, write_inv_polyphase_filter
 
 # Assume we are in project root directory.
 TEST_DATA_PATH = Path('./test/input_data/integration')
-def test_all_one_signal_zero_pfb(run_script: Path, working_dir: Path) -> None:
+
+def test_all_one_pfb(run_script: Path, working_dir: Path) -> None:
     # Test of valid input data, with all ones signal data and the polyphase filter is to be all zeros.
     working_dir = working_dir / 'one_signal_zero_pfb'
     working_dir.mkdir(exist_ok=False, parents=True)
@@ -15,11 +16,9 @@ def test_all_one_signal_zero_pfb(run_script: Path, working_dir: Path) -> None:
     inv_polyphase_filter_path = working_dir / 'inverse_polyphase_filter_2.bin'
     inv_polyphase_filter = numpy.ones((13, 256), dtype=numpy.float32)
     write_inv_polyphase_filter(inv_polyphase_filter_path, inv_polyphase_filter)
-
-
-def test_all_one_pfb(run_script: Path, working_dir: Path) -> None:
+    
     input_dir = working_dir / 'input_data'
-    inverse_polyphase_filter_file = working_dir / 'inverse_polyphase_filter_2.bin' / 'inverse_polyphase_filter_2.bin'
+    inverse_polyphase_filter_file = working_dir / 'inverse_polyphase_filter_2.bin'
     input_dir.mkdir(exist_ok=False, parents=True)
     shutil.copyfile(TEST_DATA_PATH / '1294797712.metafits', input_dir / '1294797712.metafits')
     input_file_metadata = \
