@@ -120,6 +120,7 @@ ENTRYPOINT ["/app/test/unit/mpi/entrypoint.sh"]
 
 # Image for main application executable.
 FROM base AS main
+ARG CONTAINER_RUNTIME
 
 COPY --chown=app:app entrypoint.sh ./
 RUN chmod +x entrypoint.sh
