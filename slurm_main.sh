@@ -1,12 +1,12 @@
-#!/bin/sbatch
+#!/bin/bash -l
 
 #SBATCH --partition=workq
 #SBATCH --account=mwavcs
 #SBATCH --job-name=mwatdr
 #SBATCH --ntasks=128
-#SBATCH --ntasks-per-node=2
-#SBATCH --mem=14G
-#SBATCH --time=00:15:00
+#SBATCH --ntasks-per-node=8
+#SBATCH --mem=128G
+#SBATCH --time=00:05:00
 #SBATCH --export=none
 
 module load singularity-openmpi
