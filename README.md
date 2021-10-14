@@ -16,21 +16,21 @@ See also `InversePolyphaseFilterFileSpec.md` and `OutputSignalFileSpec.md` for d
 
 The application is fully containerised with Docker and Singularity.
 
-There are 3 "targets" corresponding to Docker build stages:
+There are three build "targets" corresponding to Docker build stages:
 
-- `main` - The main application (if you are a standard user, probably what you are interested in). (Also used for integration testing.)
+- `main` - The main application (if you are a standard user, probably what you are interested in).
 - `local_unit_test` - Unit tests that do not involve parallelism.
 - `mpi_unit_test` - Unit tests that do involve parallelism.
 
 Building the application works roughly as follows:
 
-1. First, build with Docker to produce a Docker image.
-2. Second, use Singularity to convert that Docker image into a Singularity image for running on Garrawarla.
+1. Build with Docker to produce a Docker image.
+2. Use Singularity to convert that Docker image into a Singularity image for running on Garrawarla.
 
 Running the application works roughly as follows:
 
-- For usage on your personal machine, just run the Docker image.
 - For usage on Garrawarla, use SLURM to schedule a job that uses `srun` to invoke the Singularity image.
+- For usage on your personal machine, just run the Docker image.
 
 Please see the sections below for detailed instruction on how to build and run the application for various use cases.
 
@@ -38,7 +38,7 @@ Please see the sections below for detailed instruction on how to build and run t
 
 For building:
 
-- Docker. Any new-ish version with support for multi-stage builds should work, e.g. Docker Engine 20.x.
+- Docker. Any recent version with support for multi-stage builds should work, e.g. Docker Engine 20.x.
 - Singularity. Targeted version 3.5.3. (Not required for building on personal machine.)
 
 For running on Garrawarla:
@@ -51,6 +51,7 @@ For integration testing:
 
 - Python. Targeted version 3.8.2.
 - Pytest. Targeted version 4.6.9.
+- `mwatdr_utils`. Please see `mwatdr_utils/README.md` for its requirements.
 
 ## Building and Running `main` for Use on Garrawarla
 
@@ -66,7 +67,7 @@ First, build the `main` target with Docker on your personal machine (since Garra
 
 This invokes Docker to build the main application image, using a configuration optimised for high performance on Garrawarla, and designed to run with Singularity.
 The name of the image is `mwatdr/main`.  
-Note that you MUST perform this step on an x86 machine, to match the CPU architecture of Garrawarla.
+Note that you must perform this step on an x86 machine, to match the CPU architecture of Garrawarla.
 By default, Docker build will use base images which match the current system architecture.
 You can modify the Dockerfile to manually specify the architecture if you wish to build on other types of systems.
 
@@ -74,7 +75,7 @@ The build will probably take quite a while the first time, due to some large lib
 Do not be alarmed if it takes over 20 minutes.
 
 Next, you need to convert the Docker image to a Singularity image.  
-There are a few options of which system to perform the conversion on:
+There are a few options for which system to perform the conversion on:
 
 - Use Singularity installed on your personal machine. Installation of Singularity is easy if you use Linux or Mac, but difficult for Windows.
 - Use Singularity already installed on Garrawarla, either on the login nodes or on the compute nodes with an interactive SLURM job. Using the compute nodes is likely fastest to build, but it does require transferring the >5GB Docker image to Garrawarla first.
@@ -91,7 +92,7 @@ Then ensure `main.tar` is in the current directory on your chosen machine, and b
 singularity build --tmpdir=<some_dir> main.sif docker-archive://main.tar
 ```
 
-This takes the `main.tar` Docker image we just saved and produces `main.sif`, the corresponding Singularity image.
+This takes the `main.tar` Docker image you just saved and produces `main.sif`, the corresponding Singularity image.
 
 By default, Singularity uses the system temporary directory for working space, and may use a few gigabytes of space, which may be an issue for some systems - particularly Linux, where `/tmp` may be in RAM.  
 Therefore it is highly recommended to set `<some_dir>` to somewhere on disk.
@@ -112,11 +113,11 @@ sbatch slurm_main.sh <args>
 
 `slurm_main.sh` uses a node configuration which we believe to be sensible/optimal. Feel free to modify it or create your own script to suit your needs, if you require.
 
-## Building and Running for Use on Personal Machine
+## Building and Running `main` for Use on Personal Machine
 
-NOTE: the application is designed to run on Garrawarla, and your personal machine may not be powerful enough to feasibly run the `main` target.  
+NOTE: The application is designed to run on Garrawarla, and your personal machine may not be powerful enough to feasibly run the `main` target.  
 For 24 frequency channels and 256 antenna inputs, we found `main` requires approximately 8GB of memory per process, and running with a few processes will take on the order of a few hours to complete.  
-It is possible to manually specify the number of processes to `mpirun` in `entrypoint.sh`, but there will still be a tradeoff between memory usage and run time.
+It is possible to manually specify the number of processes to `mpirun` in `entrypoint.sh`, but there will be a tradeoff between memory usage and run time.
 
 The instructions here are for building and running the main application for use on your personal, standard computer.
 This may be useful for testing purposes.
@@ -127,7 +128,7 @@ First, build the `main` target with Docker, using the provided script:
 ./docker_build.sh main Release personal docker
 ```
 
-This invokes Docker to build the main application image, configured for a standard computer, and designed to run with Docker.
+That invokes Docker to build the main application image, configured for a standard computer, and designed to run with Docker.
 
 Then simply run the `main` target with Docker, using the provided script:
 
@@ -150,7 +151,7 @@ The `main` target has the following positional command line arguments:
 
 Note that when running on Garrawarla, `<inputDir>`, `<invPolyphaseFilterFile>`, and `<outputDir>` must be accessible and shared on all nodes which run the application, e.g. network attached storage.  
 Additionally, the container requires permissions to access these directories and files.
-If you have particularly restrictive file permissions set (e.g. on Linux, deny read/write to "other"), you may need to relax them.
+If you have particularly restrictive file permissions set (e.g. on Linux, denying read/write to "other"), you may need to relax them.
 
 ## Testing
 
@@ -221,14 +222,11 @@ docker build --target "$target" -t "mwatdr/$target" --build-arg BUILD_TYPE=$buil
 `$target` is the application target: `main`, `local_unit_test`, or `mpi_unit_test`.
 
 `$buildType` is the [CMake build type](https://cmake.org/cmake/help/v3.10/variable/CMAKE_BUILD_TYPE.html).
-If not specified, defaults to `Release`, which is an optimised build suitable for real-world use.
 
 `$runtimeSystem` is the environment in which the application will run.
-Options are `personal` (standard computer) or `garrawarla` (Garrawarla supercomputer),
-If not specified, defaults to `garrawarla`.
+Options are `personal` (standard computer) or `garrawarla` (Garrawarla supercomputer).
 
 `$containerRuntime` indicates what containerisation environment will be used to run the build. Options are `docker` or `singularity`.
-If not specified, defaults to `singularity`.
 
 The name of the built Docker image is `mwatdr/$target`.
 
@@ -266,10 +264,10 @@ Files of note in the root directory:
 `src/` directory - Application source code.
 
 `test/` directory - Test code.  
-`test/integration/` directory - Integration test code.  
 `test/unit/` directory - Unit test code.  
 `test/unit/local/` directory - Nonparallelised unit test code.  
 `test/unit/mpi/` directory - Parallelised unit test code.  
+`test/integration/` directory - Integration test code.  
 `test/input_data/` directory - Test data. See `test/README.md` for details.
 
 `mwatdr_utils/` directory - Utility library. See `mwatdr_utils/README.md` for details.
