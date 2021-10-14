@@ -34,8 +34,7 @@ def test_all_one_pfb(run_script: Path, working_dir: Path) -> None:
     for i, channel in enumerate(range(109, 132 + 1)):
         metadata = input_file_metadata.format(channel, i + 1).encode('ascii')
         metadata_padding = bytes(4096 - len(metadata))
-        one_block = numpy.full((64000*256,2),(1,1), dtype=nump.unit8)
-        one_byte_block = one_block.tobytes()
+        one_block = numpy.ones(256*64000*2,dtype=numpy.int8).to_bytes()
         zero_block = bytes(256 * 64000 * 2)
         file_path = input_dir / f'1294797712_1294797712_{channel}.sub'
         with open(file_path, 'wb') as file:
@@ -43,7 +42,7 @@ def test_all_one_pfb(run_script: Path, working_dir: Path) -> None:
             file.write(metadata_padding)
             file.write(zero_block)
             for _ in range(160):
-                file.write(one_byte_block)
+                file.write(one_block)
 
     output_dir = working_dir / 'output_dir'
     output_dir.mkdir(exist_ok=False, parents=True)
