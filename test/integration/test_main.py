@@ -13,6 +13,8 @@ TEST_DATA_PATH = Path('./test/input_data/integration')
 
 
 def test_no_data(run_script: Path, working_dir: Path) -> None:
+    # Tests with no signal data, but a valid metafits and coefficients filter
+
     working_dir = working_dir / 'no_data'
     working_dir.mkdir(exist_ok=False, parents=True)
 
@@ -28,8 +30,6 @@ def test_no_data(run_script: Path, working_dir: Path) -> None:
     output_dir = working_dir / 'output_dir'
     output_dir.mkdir(exist_ok=False, parents=True)
 
-
-    # Tests with no signal data, but a valid metafits and coefficients filter
     # Ignore errors
     result = run_application(run_script, input_dir, '1294797712', '1294797712', inv_polyphase_filter_path, output_dir, 'true')
     assert result.returncode == 78
@@ -43,11 +43,70 @@ def test_no_data(run_script: Path, working_dir: Path) -> None:
     assert os.listdir(output_dir) == 0
 
 
-    # Tests with no metafits, but a valid signal file and coefficients filter
-    # Delete metafits
-    del input_dir / '1294797712.metafits'
+def test_no_metafits(run_script: Path, working_dir: Path) -> None:
+    # Tests with no metafits, but a voltage file and coefficients filter
 
-    # Write a signal file
+    working_dir = working_dir / 'no_metafits'
+    working_dir.mkdir(exist_ok=False, parents=True)
+
+    inv_polyphase_filter_path = working_dir / 'inverse_polyphase_filter.bin'
+    inv_polyphase_filter = numpy.zeros((13, 256), dtype=numpy.float32)
+    inv_polyphase_filter[:, -1] = 1      # Identity
+    write_inv_polyphase_filter(inv_polyphase_filter_path, inv_polyphase_filter)
+
+    input_dir = working_dir / 'input_data'
+    input_dir.mkdir(exist_ok=False, parents=True)
+
+    output_dir = working_dir / 'output_dir'
+    output_dir.mkdir(exist_ok=False, parents=True)
+
+    # Write a voltage file
+    input_file_metadata_template = \
+        "HDR_SIZE 4096\nPOPULATED 1\nOBS_ID 1294797712\nSUBOBS_ID 1294797712\nMODE VOLTAGE_START\n" \
+        "UTC_START 2021-01-16-02:01:34\nOBS_OFFSET 0\nNBIT 8\nNPOL 2\nNTIMESAMPLES 64000\nNINPUTS 256\n" \
+        "NINPUTS_XGPU 256\nAPPLY_PATH_WEIGHTS 0\nAPPLY_PATH_DELAYS 0\nINT_TIME_MSEC 500\nFSCRUNCH_FACTOR 50\n" \
+        "APPLY_VIS_WEIGHTS 0\nTRANSFER_SIZE 5275648000\nPROJ_ID G0034\nEXPOSURE_SECS 304\nCOARSE_CHANNEL {}\n" \
+        "CORR_COARSE_CHANNEL {}\nSECS_PER_SUBOBS 8\nUNIXTIME 1610762494\nUNIXTIME_MSEC 0\nFINE_CHAN_WIDTH_HZ 10000\n" \
+        "NFINE_CHAN 128\nBANDWIDTH_HZ 1280000\nSAMPLE_RATE 1280000\nMC_IP 0.0.0.0\nMC_PORT 0\nMC_SRC_IP 0.0.0.0\n"
+    for i, channel in enumerate(range(109, 109 + 1)):
+        metadata = input_file_metadata_template.format(channel, i + 1).encode('ascii')
+        metadata_padding = bytes(4096 - len(metadata))
+        zero_block = bytes(256 * 64000 * 2)
+        file_path = input_dir / f'1294797712_1294797712_{channel}.sub'
+        with open(file_path, 'wb') as file:
+            file.write(metadata)
+            file.write(metadata_padding)
+            file.write(zero_block)
+            for _ in range(160):
+                file.write(zero_block)
+
+    # Ignore errors
+    result = run_application(run_script, input_dir, '1294797712', '1294797712', inv_polyphase_filter_path, output_dir, 'true')
+    assert result.returncode == 78
+    # Check if output_dir is empty
+    assert os.listdir(output_dir) == 0
+
+    # Don't ignore errors
+    result = run_application(run_script, input_dir, '1294797712', '1294797712', inv_polyphase_filter_path, output_dir, 'false')
+    assert result.returncode == 78
+    # Check if output_dir is empty
+    assert os.listdir(output_dir) == 0
+
+
+def test_no_coefficients(run_script: Path, working_dir: Path) -> None:
+    # Tests with no coefficients, but a metafits file and voltage file
+
+    working_dir = working_dir / 'no_coefficients'
+    working_dir.mkdir(exist_ok=False, parents=True)
+
+    input_dir = working_dir / 'input_data'
+    input_dir.mkdir(exist_ok=False, parents=True)
+    shutil.copyfile(TEST_DATA_PATH / '1294797712.metafits', input_dir / '1294797712.metafits')
+
+    output_dir = working_dir / 'output_dir'
+    output_dir.mkdir(exist_ok=False, parents=True)
+
+    # Write a voltage file
     input_file_metadata_template = \
         "HDR_SIZE 4096\nPOPULATED 1\nOBS_ID 1294797712\nSUBOBS_ID 1294797712\nMODE VOLTAGE_START\n" \
         "UTC_START 2021-01-16-02:01:34\nOBS_OFFSET 0\nNBIT 8\nNPOL 2\nNTIMESAMPLES 64000\nNINPUTS 256\n" \
