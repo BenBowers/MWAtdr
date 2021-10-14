@@ -85,7 +85,6 @@ def test_54_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
         assert len(signal) == 160 * 64000 * 54
         del signal
 
-
 def test_zero_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
     # Test of valid input data, with all zeros signal data and the identity inverse polyphase filter.
     # Expected output signal is all zeros.
