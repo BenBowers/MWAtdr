@@ -31,13 +31,13 @@ void writeLogFile(AppConfig const& appConfig, ChannelRemapping const& channelRem
 
         // Check if error occurred while writing
         if (log.fail()) {
-            throw LogWriterException("Error occurred writing to log file");
+            throw LogWriterException("Error occurred writing to output log file");
         }
 
 	    log.close();
 	}
 	else {
-        throw LogWriterException("Error opening log file");
+        throw LogWriterException("Error occurred opening output log file");
 	}
 }
 
@@ -86,19 +86,25 @@ void writeProcessingResults(std::ofstream& log, ObservationProcessingResults con
         auto antenna = antennaConfig.antennaInputs.at(index);
         log << "(#" << index << ") " << "Tile " << antenna.tile << antenna.signalChain << ": ";
 
-        if (outcome.success) {
-            log << "success" << std::endl;
-		    log << "-Used channels: ";
-		    for (auto const& i : outcome.usedChannels) {
-			    log << i;
-                if (i != *outcome.usedChannels.rbegin()) {
-                    log << ", ";
+        if (!antenna.flagged) {
+            if (outcome.success) {
+                log << "success" << std::endl;
+                log << "-Used channels: ";
+                for (auto const& i : outcome.usedChannels) {
+                    log << i;
+                    if (i != *outcome.usedChannels.rbegin()) {
+                        log << ", ";
+                    }
                 }
+            }
+            else {
+                log << "fail" << std::endl;
+                log << "-Used channels: N/A";
             }
         }
         else {
-            log << "fail" << std::endl;
-		    log << "-Used channels: N/A";
+            log << "skipped (flagged)" << std::endl;
+            log << "-Used channels: N/A";
         }
         log << std::endl << std::endl;
     }
