@@ -2,6 +2,7 @@ from pathlib import Path
 import shutil
 
 import numpy
+import os
 
 from helpers import run_application
 from mwatdr_utils import read_output_signal, write_inv_polyphase_filter
@@ -16,7 +17,7 @@ def test_invalid_command_line_arguments(run_script: Path, working_dir: Path) -> 
     working_dir.mkdir(exist_ok=False, parents=True)
 
     inv_polyphase_filter_path = working_dir / 'inverse_polyphase_filter.bin'
-    inv_polyphase_filter = numpy.zeros((12, 256), dtype=numpy.float32)
+    inv_polyphase_filter = numpy.zeros((20, 256), dtype=numpy.float32)
     inv_polyphase_filter[:, -1] = 1      # Identity
     write_inv_polyphase_filter(inv_polyphase_filter_path, inv_polyphase_filter)
 
@@ -75,6 +76,9 @@ def test_invalid_command_line_arguments(run_script: Path, working_dir: Path) -> 
     result = run_application(run_script, input_dir, '1294797712', '1294797712', inv_polyphase_filter_path, output_dir, 'maybe')
     assert result.returncode == 78
 
+    # Check if directory is empty
+    assert len(os.listdir(output_dir)) == 0
+
 
 def test_no_data(run_script: Path, working_dir: Path) -> None:
     # Tests with no signal data, but a valid metafits and coefficients filter
@@ -101,6 +105,9 @@ def test_no_data(run_script: Path, working_dir: Path) -> None:
     # Don't ignore errors
     result = run_application(run_script, input_dir, '1294797712', '1294797712', inv_polyphase_filter_path, output_dir, 'false')
     assert result.returncode == 78
+
+    # Check if directory is empty
+    assert len(os.listdir(output_dir)) == 0
 
 
 def test_no_metafits(run_script: Path, working_dir: Path) -> None:
@@ -148,6 +155,9 @@ def test_no_metafits(run_script: Path, working_dir: Path) -> None:
     result = run_application(run_script, input_dir, '1294797712', '1294797712', inv_polyphase_filter_path, output_dir, 'false')
     assert result.returncode == 78
 
+    # Check if directory is empty
+    assert len(os.listdir(output_dir)) == 0
+
 
 def test_no_coefficients(run_script: Path, working_dir: Path) -> None:
     # Tests with no coefficients, but a metafits file and voltage file
@@ -189,6 +199,9 @@ def test_no_coefficients(run_script: Path, working_dir: Path) -> None:
     # Don't ignore errors
     result = run_application(run_script, input_dir, '1294797712', '1294797712', input_dir, output_dir, 'false')
     assert result.returncode == 78
+
+    # Check if directory is empty
+    assert len(os.listdir(output_dir)) == 0
 
 
 def test_zero_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
