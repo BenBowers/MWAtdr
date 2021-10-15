@@ -39,9 +39,9 @@ CommandLineArgumentsTest::CommandLineArgumentsTest() : StatelessTestModuleImpl{{
     {"validateInputDirectoryPath(): Empty directory", []() {
         try {
             // Create empty folder if it doesn't already exist
-            std::filesystem::create_directory("/mnt/test_input/empty");
+            std::filesystem::create_directory("/tmp/empty");
 
-            validateInputDirectoryPath("/mnt/test_input/empty");
+            validateInputDirectoryPath("/tmp/empty");
             failTest();
         }
         catch (std::invalid_argument const& e) {
