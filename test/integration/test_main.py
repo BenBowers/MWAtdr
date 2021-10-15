@@ -9,17 +9,13 @@ from mwatdr_utils import read_output_signal, write_inv_polyphase_filter
 
 # Assume we are in project root directory.
 TEST_DATA_PATH = Path('./test/input_data/integration')
-
-def test_54_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
-    # Uses observation 1294797712, with signal data starting at 1294797712,
-    # signal with 54 as the input
-
-    working_dir = working_dir / '54_signal_identity_ipfb'
+def test_many_signal_one_pfb(run_script: Path, working_dir: Path) -> None:
+    # Uses observation 1294797712, with signal data starting at 1294797712
+    working_dir = working_dir / '4_signals_identity_ipfb'
     working_dir.mkdir(exist_ok=False, parents=True)
 
     inv_polyphase_filter_path = working_dir / 'inverse_polyphase_filter.bin'
-    inv_polyphase_filter = numpy.zeros((13, 256), dtype=numpy.float32)
-    inv_polyphase_filter[:, -1] = 1      # Identity
+    inv_polyphase_filter = numpy.ones((1, 256), dtype=numpy.float32)
     write_inv_polyphase_filter(inv_polyphase_filter_path, inv_polyphase_filter)
 
     input_dir = working_dir / 'input_data'
@@ -29,15 +25,17 @@ def test_54_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
         "HDR_SIZE 4096\nPOPULATED 1\nOBS_ID 1294797712\nSUBOBS_ID 1294797712\nMODE VOLTAGE_START\n" \
         "UTC_START 2021-01-16-02:01:34\nOBS_OFFSET 0\nNBIT 8\nNPOL 2\nNTIMESAMPLES 64000\nNINPUTS 256\n" \
         "NINPUTS_XGPU 256\nAPPLY_PATH_WEIGHTS 0\nAPPLY_PATH_DELAYS 0\nINT_TIME_MSEC 500\nFSCRUNCH_FACTOR 50\n" \
-        "APPLY_VIS_WEIGHTS 0\nTRANSFER_SIZE 5275648000\nPROJ_ID G0034\nEXPOSURE_SECS 304\nCOARSE_CHANNEL 113\n" \
-        "CORR_COARSE_CHANNEL {}\nSECS_PER_SUBOBS 8\nUNIXTIME 1610762494\nUNIXTIME_MSEC 0\nFINE_CHAN_WIDTH_HZ 10000\n" \
+        "APPLY_VIS_WEIGHTS 0\nTRANSFER_SIZE 5275648000\nPROJ_ID G0034\nEXPOSURE_SECS 304\nCOARSE_CHANNEL 116\n" \
+        "CORR_COARSE_CHANNEL 116\nSECS_PER_SUBOBS 8\nUNIXTIME 1610762494\nUNIXTIME_MSEC 0\nFINE_CHAN_WIDTH_HZ 10000\n" \
         "NFINE_CHAN 128\nBANDWIDTH_HZ 1280000\nSAMPLE_RATE 1280000\nMC_IP 0.0.0.0\nMC_PORT 0\nMC_SRC_IP 0.0.0.0\n"
 
     metadata = input_file_metadata_template.encode('ascii')
     metadata_padding = bytes(4096 - len(metadata))
-    data_block = numpy.full((64000*256,2),(54,0),dtype=numpy.uint8)
-    print(data_block)
-    data_bytes_block = data_block.tobytes()
+    #equasions from discord
+    data_block1 = numpy.full((64000*256,2),(54,0),dtype=numpy.uint8).tobytes()
+    data_block2 = numpy.full((64000*256,2),(-80,0),dtype=numpy.uint8).tobytes()
+    data_block3 = numpy.full((64000*256,2),(173,8),dtype=numpy.uint8).tobytes()
+    data_block4 = numpy.full((64000*256,2),(2,-29),dtype=numpy.uint8).tobytes()
     zero_block = bytes(256 * 64000 * 2)
     file_path = input_dir / f'1294797712_1294797712_113.sub'
     with open(file_path, 'wb') as file:
@@ -45,13 +43,33 @@ def test_54_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
         file.write(metadata_padding)
         file.write(zero_block)
         for _ in range(160):
-            file.write(data_bytes_block)
+            file.write(data_block1)
+    file_path = input_dir / f'1294797712_1294797712_114.sub'    
+    with open(file_path, 'wb') as file:
+        file.write(metadata)
+        file.write(metadata_padding)
+        file.write(zero_block)
+        for _ in range(160):
+            file.write(data_block2)   
+    file_path = input_dir / f'1294797712_1294797712_116.sub'    
+    with open(file_path, 'wb') as file:
+        file.write(metadata)
+        file.write(metadata_padding)
+        file.write(zero_block)
+        for _ in range(160):
+            file.write(data_block3)   
+    file_path = input_dir / f'1294797712_1294797712_118.sub'    
+    with open(file_path, 'wb') as file:
+        file.write(metadata)
+        file.write(metadata_padding)
+        file.write(zero_block)
+        for _ in range(160):
+            file.write(data_block4)                    
 
     output_dir = working_dir / 'output_dir'
     output_dir.mkdir(exist_ok=False, parents=True)
 
     result = run_application(run_script, input_dir, '1294797712', '1294797712', inv_polyphase_filter_path, output_dir, 'false')
-    
     assert result.returncode == 0
 
     # Note: these tiles are flagged as faulty and will be skipped: 102, 115, 151, 164, 999, 2013, 2017, 2044, 2047
@@ -80,9 +98,8 @@ def test_54_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
 
     for filename in tile_output_filenames:
         signal = read_output_signal(output_dir / filename)
-        assert signal.min() == 0 and signal.max() == 0
-        # Check that the output downsampling is as expected. The new sampling frequency is 54, manually calculated.
-        assert len(signal) == 160 * 64000 * 54
+        expected = [42,255,115,0,167,255,246,255,188,255,118,1,82,254,46,1,59,255,246,255,39,0,187,0]
+        assert set(expected) <= set(signal)
         del signal
 
 def test_zero_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
@@ -162,4 +179,7 @@ def test_zero_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
         # Check that the output downsampling is as expected. The new sampling frequency is 54, manually calculated.
         assert len(signal) == 160 * 64000 * 54
         del signal      # Really don't want big array hanging around
+
+
+
 
