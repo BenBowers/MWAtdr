@@ -1,5 +1,5 @@
 #pragma once
 
-#include "../TestHelper.hpp"
+#include "TestHelper.hpp"
 
 TestModule nodeAntennaInputAssignerTest();

@@ -1,11 +1,10 @@
 *.cpp   text
 *.hpp   text
 *.md    text
-*.ps1   text eol=crlf
 *.py    text
 *.sh    text eol=lf
-*.text  text
 *.sub   text eol=lf
+*.txt  text
 
 Dockerfile  text
 LICENSE text

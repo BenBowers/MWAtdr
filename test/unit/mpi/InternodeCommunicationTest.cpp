@@ -8,11 +8,11 @@
 #include <thread>
 #include <utility>
 
-#include "../../src/ChannelRemapping.hpp"
-#include "../../src/Common.hpp"
-#include "../../src/InternodeCommunication.hpp"
-#include "../../src/NodeAntennaInputAssigner.hpp"
-#include "../TestHelper.hpp"
+#include "ChannelRemapping.hpp"
+#include "Common.hpp"
+#include "InternodeCommunication.hpp"
+#include "NodeAntennaInputAssigner.hpp"
+#include "TestHelper.hpp"
 
 
 class InternodeCommunicationTest : public StatelessTestModuleImpl {
@@ -111,7 +111,8 @@ InternodeCommunicationTest::InternodeCommunicationTest(PrimaryNodeCommunicator c
     {"sendAntennaConfig()", [communicator]() {
         AntennaConfig const antennaConfig{
             {
-                {0, 'X'}, {0, 'Y'}, {1, 'X'}, {1, 'Y'}, {2, 'X'}, {3, 'Y'}, {76, 'Y'}, {76, 'X'}
+                {0, 'X', false}, {0, 'Y', true}, {1, 'X', true}, {1, 'Y', false},
+                {2, 'X', true}, {3, 'Y', false}, {76, 'Y', false}, {76, 'X', false}
             },
             {0, 3, 7, 4, 87, 231}
         };
@@ -290,7 +291,8 @@ InternodeCommunicationTest::InternodeCommunicationTest(SecondaryNodeCommunicator
         auto const actual = communicator.receiveAntennaConfig();
         AntennaConfig const expected{
             {
-                {0, 'X'}, {0, 'Y'}, {1, 'X'}, {1, 'Y'}, {2, 'X'}, {3, 'Y'}, {76, 'Y'}, {76, 'X'}
+                {0, 'X', false}, {0, 'Y', true}, {1, 'X', true}, {1, 'Y', false},
+                {2, 'X', true}, {3, 'Y', false}, {76, 'Y', false}, {76, 'X', false}
             },
             {0, 3, 7, 4, 87, 231}
         };

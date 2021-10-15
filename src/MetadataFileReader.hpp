@@ -14,15 +14,16 @@ class MetadataFileReader {
 	    VoltageContext* voltageContext;
 	    MetafitsMetadata* metafitsMetadata;
 
-        void validateMetafits(AppConfig const appConfig);
-        std::vector<std::string> findVoltageFiles(AppConfig const appConfig);
+        void validateMetafits(AppConfig const& appConfig);
+        std::vector<std::string> findVoltageFiles(AppConfig const& appConfig);
 	    std::vector<AntennaInputPhysID> getPhysicalAntennaInputs();
-        std::set<unsigned> getFrequencyChannelsUsed();
+        std::set<unsigned> getAvailableFrequencyChannelsUsed(AppConfig const& appConfig);
 		void freeMetadata();
 
 	public:
-	    MetadataFileReader(AppConfig const appConfig);
-        AntennaConfig getAntennaConfig();
+	    MetadataFileReader(AppConfig const& appConfig);
+        AntennaConfig getAntennaConfig(AppConfig const& appConfig);
+		std::set<unsigned> getFrequencyChannels();
 		~MetadataFileReader();
 };
 

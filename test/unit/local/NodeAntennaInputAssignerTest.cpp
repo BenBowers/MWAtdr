@@ -1,7 +1,7 @@
 #include "NodeAntennaInputAssignerTest.hpp"
 
-#include "../../src/NodeAntennaInputAssigner.hpp"
-#include "../TestHelper.hpp"
+#include "NodeAntennaInputAssigner.hpp"
+#include "TestHelper.hpp"
 
 #include <memory>
 #include <optional>
