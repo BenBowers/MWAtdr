@@ -75,7 +75,7 @@ def test_many_signal_one_pfb(run_script: Path, working_dir: Path) -> None:
     output_dir = working_dir / 'output_dir'
     output_dir.mkdir(exist_ok=False, parents=True)
 
-    result = run_application(run_script, input_dir, '1294797712', '1294797712', inv_polyphase_filter_path, output_dir, 'false')
+    result = run_application(run_script, input_dir, '1294797712', '1294797712', inv_polyphase_filter_path, output_dir, 'true')
     assert result.returncode == 0
 
     # Note: these tiles are flagged as faulty and will be skipped: 102, 115, 151, 164, 999, 2013, 2017, 2044, 2047
@@ -104,7 +104,7 @@ def test_many_signal_one_pfb(run_script: Path, working_dir: Path) -> None:
 
     for filename in tile_output_filenames:
         signal = read_output_signal(output_dir / filename)
-        expected = [42,255,115,0,167,255,246,255,188,255,118,1,82,254,46,1,59,255,246,255,39,0,187,0]*64000*160
+        expected = [42,255,115,0,167,255,246,255,188,255,118,1,82,254,46,1,59,255,246,255,39,0,187,0]*10240000
         signallist = signal.tolist()
         assert signallist == expected
         del signal
