@@ -137,7 +137,7 @@ MetadataFileReaderTest::MetadataFileReaderTest() : StatelessTestModuleImpl {{
     }},
     {"No metafits file", []() {
 		try {
-			auto mfr = MetadataFileReader({"/mnt/test_input/empty/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
+			auto mfr = MetadataFileReader({"/tmp/empty/", TEST_OBSERVATION_ID, TEST_OBSERVATION_ID, "", "", false});
 			failTest();
 		}
 		catch (MetadataException const& e) {
