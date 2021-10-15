@@ -27,8 +27,8 @@ def test_many_signal_one_pfb(run_script: Path, working_dir: Path) -> None:
         "HDR_SIZE 4096\nPOPULATED 1\nOBS_ID 1294797712\nSUBOBS_ID 1294797712\nMODE VOLTAGE_START\n" \
         "UTC_START 2021-01-16-02:01:34\nOBS_OFFSET 0\nNBIT 8\nNPOL 2\nNTIMESAMPLES 64000\nNINPUTS 256\n" \
         "NINPUTS_XGPU 256\nAPPLY_PATH_WEIGHTS 0\nAPPLY_PATH_DELAYS 0\nINT_TIME_MSEC 500\nFSCRUNCH_FACTOR 50\n" \
-        "APPLY_VIS_WEIGHTS 0\nTRANSFER_SIZE 5275648000\nPROJ_ID G0034\nEXPOSURE_SECS 304\nCOARSE_CHANNEL 116\n" \
-        "CORR_COARSE_CHANNEL 116\nSECS_PER_SUBOBS 8\nUNIXTIME 1610762494\nUNIXTIME_MSEC 0\nFINE_CHAN_WIDTH_HZ 10000\n" \
+        "APPLY_VIS_WEIGHTS 0\nTRANSFER_SIZE 5275648000\nPROJ_ID G0034\nEXPOSURE_SECS 304\nCOARSE_CHANNEL {}\n" \
+        "CORR_COARSE_CHANNEL {}\nSECS_PER_SUBOBS 8\nUNIXTIME 1610762494\nUNIXTIME_MSEC 0\nFINE_CHAN_WIDTH_HZ 10000\n" \
         "NFINE_CHAN 128\nBANDWIDTH_HZ 1280000\nSAMPLE_RATE 1280000\nMC_IP 0.0.0.0\nMC_PORT 0\nMC_SRC_IP 0.0.0.0\n"
 
     metadata = input_file_metadata_template.encode('ascii')
@@ -39,6 +39,7 @@ def test_many_signal_one_pfb(run_script: Path, working_dir: Path) -> None:
     data_block3 = numpy.full((64000*256,2),(173,8),dtype=numpy.uint8).tobytes()
     data_block4 = numpy.full((64000*256,2),(2,-29),dtype=numpy.uint8).tobytes()
     zero_block = bytes(256 * 64000 * 2)
+    metadata = input_file_metadata_template.format(113,1).encode('ascii')
     file_path = input_dir / f'1294797712_1294797712_113.sub'
     with open(file_path, 'wb') as file:
         file.write(metadata)
@@ -46,20 +47,23 @@ def test_many_signal_one_pfb(run_script: Path, working_dir: Path) -> None:
         file.write(zero_block)
         for _ in range(160):
             file.write(data_block1)
+    metadata = input_file_metadata_template.format(114,2).encode('ascii')       
     file_path = input_dir / f'1294797712_1294797712_114.sub'    
     with open(file_path, 'wb') as file:
         file.write(metadata)
         file.write(metadata_padding)
         file.write(zero_block)
         for _ in range(160):
-            file.write(data_block2)   
+            file.write(data_block2)
+    metadata = input_file_metadata_template.format(116,3).encode('ascii')           
     file_path = input_dir / f'1294797712_1294797712_116.sub'    
     with open(file_path, 'wb') as file:
         file.write(metadata)
         file.write(metadata_padding)
         file.write(zero_block)
         for _ in range(160):
-            file.write(data_block3)   
+            file.write(data_block3)
+    metadata = input_file_metadata_template.format(118,4).encode('ascii')           
     file_path = input_dir / f'1294797712_1294797712_118.sub'    
     with open(file_path, 'wb') as file:
         file.write(metadata)
@@ -104,7 +108,7 @@ def test_many_signal_one_pfb(run_script: Path, working_dir: Path) -> None:
         signallist = signal.tolist()
         assert signallist == expected
         del signal
-        
+
 def test_invalid_command_line_arguments(run_script: Path, working_dir: Path) -> None:
     working_dir = working_dir / 'invalid_command_line_arguments'
     working_dir.mkdir(exist_ok=False, parents=True)
