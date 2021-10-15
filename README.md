@@ -103,7 +103,7 @@ The Singularity build may take several minutes to complete.
 
 Running the application on Garrawarla is done with SLURM and `srun`.
 
-On the Garrawarla login nodes, ensure that the `main.sif` Singularity image created in the previous steps is present in the current directory. Then queue the job using the provided SLURM script:
+On the Garrawarla login nodes, move the `main.sif` Singularity image created in the previous steps to `/astro/mwavcs/capstone/images/`. Then queue the job using the provided SLURM script:
 
 ```bash
 sbatch slurm_main.sh <args>
@@ -155,7 +155,7 @@ If you have particularly restrictive file permissions set (e.g. on Linux, denyin
 
 ## Testing
 
-The project contains various tests which were used in developed to verify that the application works.
+The project contains various tests which were used in development to verify that the application works.
 As a standard user, you probably don't need to care about testing, but a brief overview will be given here anyway.
 
 There are two types of tests: unit tests and integration tests.  
@@ -249,6 +249,8 @@ For multithreading, the Intel Threading Building Blocks library is used (install
 Open MPI is installed within the container for parallelisation.  
 When running with Docker, the parallelism occurs inside a single container instance.
 On Garrawarla, parallelism is achieved outside the containerisation with Singularity and SLURM, and Singularity swaps out the Open MPI binaries inside the container for those running on the host machines.
+
+For reading the observation metadata, [mwalib](https://github.com/MWATelescope/mwalib) is used.
 
 ## Project Structure
 
