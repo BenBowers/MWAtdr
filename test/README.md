@@ -20,4 +20,6 @@ These tests do not require any input data, and do not output any data.
 
 ## Integration tests
 
-TODO: explain in here what test input files need to be present for integration tests.
+All files included should be sufficient for running the integration tests correctly.
+
+The integration tests will also generate temporary data and output data in the specified working directory; please see the main README for details.
