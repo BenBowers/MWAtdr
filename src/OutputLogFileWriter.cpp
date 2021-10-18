@@ -59,7 +59,7 @@ void writeProcessingDetails(std::ofstream& log, ChannelRemapping const& channelR
 	double samplingPeriod = (1.0 / sampleRate) * 1000.0;
 
     log << "SIGNAL PROCESSING DETAILS" << std::endl;
-    log << "Output raw sampling frequency: " << channelRemapping.newSamplingFreq << std::endl;
+    log << "Integer length of Fourier transform: " << channelRemapping.newSamplingFreq << std::endl;
     log << "Output sample rate: " << roundThreeDecimalPlace(sampleRate) << " MHz" << std::endl;
     log << "Output sampling period: " << roundThreeDecimalPlace(samplingPeriod) << " ns\n" << std::endl;
 }
