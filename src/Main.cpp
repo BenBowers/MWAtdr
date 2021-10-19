@@ -180,7 +180,7 @@ void runNode(PrimaryNodeCommunicator& primary, int argc, char* argv[]) {
         std::cerr << "Node 0 (Primary): " << e.what() << std::endl;
     }
 
-    std::cout << "Node 0 (Primary): Terminated succesfully" << std::endl;
+    std::cout << "Node 0 (Primary): Terminated successfully" << std::endl;
 }
 
 
