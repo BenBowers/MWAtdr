@@ -349,8 +349,7 @@ def test_all_one_pfb(run_script: Path, working_dir: Path) -> None:
 		148, 152, 153, 154, 155, 156, 157, 158, 161, 162, 163, 165, 166, 167, 168,
 		2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2014,
 		2015, 2016, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029,
-		2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040, 2041, 2042, 2043,
-		2045, 2046, 2048, 2049, 2050, 2051, 2052, 2053, 2054, 2055, 2056
+		2030, 2031, 2032, 2033, 2034, 2035, 2036, 2037, 2038, 2039, 2040, 2041, 2042, 2043, 2045, 2046, 2048, 2049, 2050, 2051, 2052, 2053, 2054, 2055, 2056
     ]
     tile_output_filenames = []
     for tile in tiles:
@@ -449,7 +448,7 @@ def test_zero_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
         del signal      # Really don't want big array hanging around
 
 def test_complex_pfb(run_script: Path, working_dir: Path) -> None:
-    # Test of valid input data, with all ones signal data and the polyphase filter is to be all zeros.
+    # Test of all one input data with a pfb that contains complex values on channel 120
     working_dir = working_dir / 'one_signal_complex_pfb'
     working_dir.mkdir(exist_ok=False, parents=True)
 
@@ -463,7 +462,7 @@ def test_complex_pfb(run_script: Path, working_dir: Path) -> None:
     write_inv_polyphase_filter(inv_polyphase_filter_path, inv_polyphase_filter)
 
     input_dir = working_dir / 'input_data'
-    input_dir.mkdir(exist_ok=False, parents=True)
+    input_dir.mkdir(mode=777, exist_ok=False, parents=True)
     shutil.copyfile(TEST_DATA_PATH / '1294797712.metafits', input_dir / '1294797712.metafits')
     input_file_metadata_template = \
         "HDR_SIZE 4096\nPOPULATED 1\nOBS_ID 1294797712\nSUBOBS_ID 1294797712\nMODE VOLTAGE_START\n" \
@@ -490,7 +489,7 @@ def test_complex_pfb(run_script: Path, working_dir: Path) -> None:
 
 
     output_dir = working_dir / 'output_dir'
-    output_dir.mkdir(exist_ok=False, parents=True)
+    output_dir.mkdir(mode=777, exist_ok=False, parents=True)
 
     result = run_application(run_script, input_dir, '1294797712', '1294797712', inv_polyphase_filter_path, output_dir, 'true')
     assert result.returncode == 0
@@ -521,20 +520,27 @@ def test_complex_pfb(run_script: Path, working_dir: Path) -> None:
     # Note: need to manually inspect output log file.
     remapped_row = numpy.zeros(28, dtype=numpy.complex64)
     remapped_row[12] = 1.0+2.0j
-    remapped_arr = numpy.full((160*6400,28), remapped_row, dtype=numpy.complex64)
+    remapped_arr = numpy.full((160*64000,28), remapped_row, dtype=numpy.complex64)
     remapped_arr[:,12] = numpy.convolve(remapped_arr[:,12], filterVals, 'same')
-    timeDomain = numpy.zeros((6400*160,28), dtype=numpy.int16)
-    for ii in range(160*6400) :
+    timeDomain = numpy.zeros((64000*160,54), dtype=numpy.int16)
+    for ii in range(160*64000) :
        timeDomain[ii] = numpy.fft.irfft(remapped_arr[ii], norm="forward")
+
+    timeDomain = timeDomain.flatten()
+    std_deviation = numpy.std(timeDomain)
 
     for filename in tile_output_filenames:
         signal = read_output_signal(output_dir / filename)
         # Check that the output downsampling is as expected. The new sampling frequency is 54, manually calculated.
         assert len(signal) == 160 * 64000 * 54
-
         error_sum = 0
-        for ii in range(160*6400*54):
-             error_sum = error_sum + pow(abs(signal[ii] - timeDomain[ii]), 2)/pow(abs(timeDomain[ii]), 2)
-        assert error_sum/(160*6400*54) <= 0.005
+        deviation_count = 0
+        for ii in range(160*64000*54):
+            abs_diff = abs(signal[ii]-timeDomain[ii])
+            error_sum = error_sum + pow(abs_diff, 2)/pow(abs(timeDomain[ii]), 2)
+            if ( abs_diff > std_deviation ):
+                deviation_count = deviation_count + 1
+        assert deviation_count/(160*6400*54) <= 0.00001
+        assert error_sum/(160*64000*54) <= 0.005
 
         del signal      # Really don't want big array hanging around
