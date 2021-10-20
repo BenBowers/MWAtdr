@@ -104,9 +104,10 @@ def test_many_signal_one_pfb(run_script: Path, working_dir: Path) -> None:
 
     for filename in tile_output_filenames:
         signal = read_output_signal(output_dir / filename)
-        expected = [42,255,115,0,167,255,246,255,188,255,118,1,82,254,46,1,59,255,246,255,39,0,187,0]*10240000
         signallist = signal.tolist()
-        assert signallist == expected
+        expected = numpy.fft.irfft([0,0,2+29j,0,-83-8j,54,-160], norm=None)*12
+        expectedfull = numpy.full(1280000,array,dtype=numpy.int16)
+        assert signallist == expectedfull
         del signal
 
 def test_invalid_command_line_arguments(run_script: Path, working_dir: Path) -> None:
