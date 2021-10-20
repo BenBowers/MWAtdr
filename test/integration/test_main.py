@@ -102,7 +102,7 @@ def test_many_signal_one_pfb(run_script: Path, working_dir: Path) -> None:
 
     # Note: need to manually inspect output log file.
         expected = numpy.fft.irfft([0,0,2+29j,0,-83-8j,54,-160], norm=None)*12
-        expectedfull = numpy.full(1280000,expected,dtype=numpy.int16)
+        expectedfull = numpy.full((160*64000,12),expected)
         expectedfull = expectedfull.flatten()
 
     for filename in tile_output_filenames:
