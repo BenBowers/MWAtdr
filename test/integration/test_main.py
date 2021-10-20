@@ -478,7 +478,7 @@ def test_complex_pfb(run_script: Path, working_dir: Path) -> None:
         metadata = input_file_metadata_template.format(channel, i + 1).encode('ascii')
         metadata_padding = bytes(4096 - len(metadata))
         zero_block = bytes(256 * 64000 * 2)
-        one_block = numpy.full((64000*256,2), (1, 0), dtype=numpy.uint8).tobytes()
+        one_block = numpy.full((64000*256,2), (1, 2), dtype=numpy.uint8).tobytes()
         file_path = input_dir / f'1294797712_1294797712_{channel}.sub'
         with open(file_path, 'wb') as file:
             file.write(metadata)
@@ -520,7 +520,7 @@ def test_complex_pfb(run_script: Path, working_dir: Path) -> None:
 
     # Note: need to manually inspect output log file.
     remapped_row = numpy.zeros(28, dtype=numpy.complex64)
-    remapped_row[12] = 1.0+0j
+    remapped_row[12] = 1.0+2.0j
     remapped_arr = numpy.full((160*6400,28), remapped_row, dtype=numpy.complex64)
     remapped_arr[:,12] = numpy.convolve(remapped_arr[:,12], filterVals, 'same')
     timeDomain = numpy.zeros((6400*160,28), dtype=numpy.int16)
@@ -531,8 +531,10 @@ def test_complex_pfb(run_script: Path, working_dir: Path) -> None:
         signal = read_output_signal(output_dir / filename)
         # Check that the output downsampling is as expected. The new sampling frequency is 54, manually calculated.
         assert len(signal) == 160 * 64000 * 54
-        remapped_row = numpy.zeros(28, dtype=numpy.complex64)
-        assert len(signal) == 160 * 64000 * 54
+
+        error_sum = 0
         for ii in range(160*6400*54):
-            assert pow(abs(float(signal[ii]) - float(timeDomain[ii])), 2)/pow(timeDomain[ii], 2) <= 0.005
+             error_sum = error_sum + pow(abs(signal[ii] - timeDomain[ii]), 2)/pow(abs(timeDomain[ii]), 2)
+        assert error_sum/(160*6400*54) <= 0.005
+
         del signal      # Really don't want big array hanging around
