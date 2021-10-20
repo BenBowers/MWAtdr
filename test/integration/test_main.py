@@ -47,30 +47,30 @@ def test_many_signal_one_pfb(run_script: Path, working_dir: Path) -> None:
         file.write(zero_block)
         for _ in range(160):
             file.write(data_block1)
-    metadata = input_file_metadata_template.format(114,2).encode('ascii')       
-    file_path = input_dir / f'1294797712_1294797712_114.sub'    
+    metadata = input_file_metadata_template.format(114,2).encode('ascii')
+    file_path = input_dir / f'1294797712_1294797712_114.sub'
     with open(file_path, 'wb') as file:
         file.write(metadata)
         file.write(metadata_padding)
         file.write(zero_block)
         for _ in range(160):
             file.write(data_block2)
-    metadata = input_file_metadata_template.format(116,3).encode('ascii')           
-    file_path = input_dir / f'1294797712_1294797712_116.sub'    
+    metadata = input_file_metadata_template.format(116,3).encode('ascii')
+    file_path = input_dir / f'1294797712_1294797712_116.sub'
     with open(file_path, 'wb') as file:
         file.write(metadata)
         file.write(metadata_padding)
         file.write(zero_block)
         for _ in range(160):
             file.write(data_block3)
-    metadata = input_file_metadata_template.format(118,4).encode('ascii')           
-    file_path = input_dir / f'1294797712_1294797712_118.sub'    
+    metadata = input_file_metadata_template.format(118,4).encode('ascii')
+    file_path = input_dir / f'1294797712_1294797712_118.sub'
     with open(file_path, 'wb') as file:
         file.write(metadata)
         file.write(metadata_padding)
         file.write(zero_block)
         for _ in range(160):
-            file.write(data_block4)                    
+            file.write(data_block4)
 
     output_dir = working_dir / 'output_dir'
     output_dir.mkdir(exist_ok=False, parents=True)
@@ -101,12 +101,13 @@ def test_many_signal_one_pfb(run_script: Path, working_dir: Path) -> None:
     assert set(output_dir_contents) == set(tile_output_filenames + [log_file_name])
 
     # Note: need to manually inspect output log file.
-
+    # Calculate Block
+    known = numpy.fft.irfft([0,0,2+29j,0,-83-8j,54,-160], norm=None)*12
     for filename in tile_output_filenames:
         signal = read_output_signal(output_dir / filename)
-        expected = [42,255,115,0,167,255,246,255,188,255,118,1,82,254,46,1,59,255,246,255,39,0,187,0]*10240000
-        signallist = signal.tolist()
-        assert signallist == expected
+        signal = numpy.reshape(signal, (160 * 64000,12))
+        for row in signal :
+            numpy.array_equal(row, known)
         del signal
 
 def test_invalid_command_line_arguments(run_script: Path, working_dir: Path) -> None:
@@ -309,7 +310,7 @@ def test_all_one_pfb(run_script: Path, working_dir: Path) -> None:
     inv_polyphase_filter_path = working_dir / 'inverse_polyphase_filter_2.bin'
     inv_polyphase_filter = numpy.zeros((13, 256), dtype=numpy.float32)
     write_inv_polyphase_filter(inv_polyphase_filter_path, inv_polyphase_filter)
-    
+
     input_dir = working_dir / 'input_data'
     inverse_polyphase_filter_file = working_dir / 'inverse_polyphase_filter_2.bin'
     input_dir.mkdir(exist_ok=False, parents=True)
@@ -412,7 +413,7 @@ def test_zero_signal_identity_ipfb(run_script: Path, working_dir: Path) -> None:
     output_dir.mkdir(exist_ok=False, parents=True)
 
     result = run_application(run_script, input_dir, '1294797712', '1294797712', inv_polyphase_filter_path, output_dir, 'false')
-    
+
     assert result.returncode == 0
 
     # Note: these tiles are flagged as faulty and will be skipped: 102, 115, 151, 164, 999, 2013, 2017, 2044, 2047
