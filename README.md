@@ -39,7 +39,8 @@ Please see the sections below for detailed instruction on how to build and run t
 For building:
 
 - Docker. Any recent version with support for multi-stage builds should work, e.g. Docker Engine 20.x.
-- Singularity. Targeted version 3.5.3. (Not required for building on personal machine.)
+- Singularity. Targeted version 3.5.3. (Not required if building ONLY for use with Docker on personal machine.) Please also see the "Installing Singularity" section.
+- At least 20GB free disk space.
 
 For running on Garrawarla:
 
@@ -52,6 +53,9 @@ For integration testing:
 - Python. Targeted version 3.8.2.
 - Pytest. Targeted version 4.6.9.
 - `mwatdr_utils`. Please see `mwatdr_utils/README.md` for its requirements.
+
+Note: "targeted version" means the version the software is guaranteed to work with.
+Similar versions that aren't significantly older or newer may also work.
 
 ## Building and Running `main` for Use on Garrawarla
 
@@ -72,13 +76,18 @@ By default, Docker build will use base images which match the current system arc
 You can modify the Dockerfile to manually specify the architecture if you wish to build on other types of systems.
 
 The build will probably take quite a while the first time, due to some large libraries which are installed and built in the image.
-Do not be alarmed if it takes over 20 minutes.
+Do not be alarmed if it takes over 20 minutes.  
+The resulting image is approximately 5.5GB in size.
+
+Please note that at this stage, the built image is stored internally within Docker - no image file is produced (that is the next step).
 
 Next, you need to convert the Docker image to a Singularity image.  
 There are a few options for which system to perform the conversion on:
 
 - Use Singularity installed on your personal machine. Installation of Singularity is easy if you use Linux or Mac, but difficult for Windows.
 - Use Singularity already installed on Garrawarla, either on the login nodes or on the compute nodes with an interactive SLURM job. Using the compute nodes is likely fastest to build, but it does require transferring the >5GB Docker image to Garrawarla first.
+
+Please see the "Installing Singularity" section for further details on installing Singularity.
 
 Convert the Docker image to tar format:
 
@@ -97,7 +106,8 @@ This takes the `main.tar` Docker image you just saved and produces `main.sif`, t
 By default, Singularity uses the system temporary directory for working space, and may use a few gigabytes of space, which may be an issue for some systems - particularly Linux, where `/tmp` may be in RAM.  
 Therefore it is highly recommended to set `<some_dir>` to somewhere on disk.
 
-The Singularity build may take several minutes to complete.
+The Singularity build may take several minutes to complete.  
+The resulting image will be approximately 1.5GB in size.
 
 ### Running
 
@@ -137,6 +147,25 @@ Then simply run the `main` target with Docker, using the provided script:
 ```
 
 `<args>` are the application command line arguments. Please see the "User Interface" section for details.
+
+## Installing Singularity
+
+If you are building the application to run on Garrawarla, you will need to have Singularity installed on whichever machine you use to perform the build.  
+The difficulty of installation of Singularity depends on your operating system.
+
+### Linux
+
+Instructions can be found [here](https://sylabs.io/guides/3.8/admin-guide/installation.html#installation-on-linux) from Singularity and [here](https://pawseysc.github.io/singularity-containers/44-setup-singularity/index.html) from Pawsey.  
+
+### Mac
+
+For installing Singularity on Mac, we recommend using [Brew](https://brew.sh/).  
+Installation is then as simple as installing the [Singularity Brew package](https://formulae.brew.sh/formula/singularity#default) (a single terminal command).
+
+### Windows
+
+Installation on Windows is the most difficult, and thus we recommend not using Windows to build the application with Singularity if possible.  
+Instructions may be found [here](https://sylabs.io/guides/3.8/admin-guide/installation.html#installation-on-windows-or-mac) from Singularity.
 
 ## User Interface
 
