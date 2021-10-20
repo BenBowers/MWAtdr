@@ -324,7 +324,7 @@ def test_all_one_pfb(run_script: Path, working_dir: Path) -> None:
     for i, channel in enumerate(range(109, 132 + 1)):
         metadata = input_file_metadata.format(channel, i + 1).encode('ascii')
         metadata_padding = bytes(4096 - len(metadata))
-        one_block = numpy.ones(256*64000*2,dtype=numpy.int8).to_bytes()
+        one_block = numpy.ones(256*64000*2,dtype=numpy.int8).tobytes()
         zero_block = bytes(256 * 64000 * 2)
         file_path = input_dir / f'1294797712_1294797712_{channel}.sub'
         with open(file_path, 'wb') as file:
@@ -462,7 +462,7 @@ def test_complex_pfb(run_script: Path, working_dir: Path) -> None:
     write_inv_polyphase_filter(inv_polyphase_filter_path, inv_polyphase_filter)
 
     input_dir = working_dir / 'input_data'
-    input_dir.mkdir(mode=777, exist_ok=False, parents=True)
+    input_dir.mkdir(exist_ok=False, parents=True)
     shutil.copyfile(TEST_DATA_PATH / '1294797712.metafits', input_dir / '1294797712.metafits')
     input_file_metadata_template = \
         "HDR_SIZE 4096\nPOPULATED 1\nOBS_ID 1294797712\nSUBOBS_ID 1294797712\nMODE VOLTAGE_START\n" \
@@ -489,7 +489,7 @@ def test_complex_pfb(run_script: Path, working_dir: Path) -> None:
 
 
     output_dir = working_dir / 'output_dir'
-    output_dir.mkdir(mode=777, exist_ok=False, parents=True)
+    output_dir.mkdir(exist_ok=False, parents=True)
 
     result = run_application(run_script, input_dir, '1294797712', '1294797712', inv_polyphase_filter_path, output_dir, 'true')
     assert result.returncode == 0
@@ -524,7 +524,7 @@ def test_complex_pfb(run_script: Path, working_dir: Path) -> None:
     remapped_arr[:,12] = numpy.convolve(remapped_arr[:,12], filterVals, 'same')
     timeDomain = numpy.zeros((64000*160,54), dtype=numpy.int16)
     for ii in range(160*64000) :
-       timeDomain[ii] = numpy.fft.irfft(remapped_arr[ii], norm="forward")
+       timeDomain[ii] = numpy.fft.irfft(remapped_arr[ii], norm=None)*54
 
     timeDomain = timeDomain.flatten()
 
