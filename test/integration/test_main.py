@@ -527,20 +527,15 @@ def test_complex_pfb(run_script: Path, working_dir: Path) -> None:
        timeDomain[ii] = numpy.fft.irfft(remapped_arr[ii], norm="forward")
 
     timeDomain = timeDomain.flatten()
-    std_deviation = numpy.std(timeDomain)
 
     for filename in tile_output_filenames:
         signal = read_output_signal(output_dir / filename)
         # Check that the output downsampling is as expected. The new sampling frequency is 54, manually calculated.
         assert len(signal) == 160 * 64000 * 54
-        error_sum = 0
-        deviation_count = 0
-        for ii in range(160*64000*54):
-            abs_diff = abs(signal[ii]-timeDomain[ii])
-            error_sum = error_sum + pow(abs_diff, 2)/pow(abs(timeDomain[ii]), 2)
-            if ( abs_diff > std_deviation ):
-                deviation_count = deviation_count + 1
-        assert deviation_count/(160*6400*54) <= 0.00001
-        assert error_sum/(160*64000*54) <= 0.005
+        errors = signal - timeDomain
+        norm_sq_errors = (errors * errors) / (timeDomain * timeDomain)
+        assert numpy.mean(norm_sq_errors) <= 0.005
+        deviation_prob = numpy.mean(numpy.abs(errors) > numpy.std(timeDomain))
+        assert deviation_prob <= 1e-6
 
         del signal      # Really don't want big array hanging around
