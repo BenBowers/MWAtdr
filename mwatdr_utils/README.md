@@ -6,7 +6,7 @@ A Python library of utilities to assist interfacing with the MWA Time Data Recon
 
 ## Usage
 
-Add the `mwatdr_utils` directory to the Python module path, then:
+Ensure the `mwatdr_utils` directory is in the Python module search path, then:
 
 ```python
 import mwatdr_utils
