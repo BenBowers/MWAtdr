@@ -63,33 +63,29 @@ The instructions here are for building and running the main application for use 
 
 ### Building
 
-First, build the `main` target with Docker on your personal machine (since Garrawarla does not have Docker), using the provided script:
+First, we will build the `main` target with Docker on your personal machine, since Garrawarla does not have Docker.
+
+Note that you must perform the following step on an x86 machine, to match the CPU architecture of Garrawarla.  
+(By default, Docker build will use base images which match the current system architecture.
+If you wish to build on other types of systems, you can modify the Dockerfile to explicitly specify the architecture.)
+
+Run the provided build script as follows:
 
 ```bash
 ./docker_build.sh main Release garrawarla singularity
 ```
 
-This invokes Docker to build the main application image, using a configuration optimised for high performance on Garrawarla, and designed to run with Singularity.
-The name of the image is `mwatdr/main`.  
-Note that you must perform this step on an x86 machine, to match the CPU architecture of Garrawarla.
-By default, Docker build will use base images which match the current system architecture.
-You can modify the Dockerfile to manually specify the architecture if you wish to build on other types of systems.
-
-The build will probably take quite a while the first time, due to some large libraries which are installed and built in the image.
-Do not be alarmed if it takes over 20 minutes.  
-The resulting image is approximately 5.5GB in size.
-
-Please note that at this stage, the built image is stored internally within Docker - no image file is produced (that is the next step).
+This invokes Docker to build the main application image, using a configuration optimised for high performance on Garrawarla, and designed to run with Singularity. It will probably take quite a while the first time, due to some large libraries which are installed and built in the image.  
+The resulting image is named `mwatdr/main` and is approximately 5.5GB in size.  
+At this stage, the image is stored internally within Docker - no visible file output is produced.
 
 Next, you need to convert the Docker image to a Singularity image.  
 There are a few options for which system to perform the conversion on:
 
-- Use Singularity installed on your personal machine. Installation of Singularity is easy if you use Linux or Mac, but difficult for Windows.
+- Use Singularity installed on your personal machine. Installation of Singularity is fairly easy if you use Linux or Mac, but difficult for Windows. Please see the "Installing Singularity" section for details.
 - Use Singularity already installed on Garrawarla, either on the login nodes or on the compute nodes with an interactive SLURM job. Using the compute nodes is likely fastest to build, but it does require transferring the >5GB Docker image to Garrawarla first.
 
-Please see the "Installing Singularity" section for further details on installing Singularity.
-
-Convert the Docker image to tar format:
+Convert the Docker image to a tar file:
 
 ```bash
 docker save mwatdr/main -o main.tar
@@ -125,12 +121,12 @@ sbatch slurm_main.sh <args>
 
 ## Building and Running `main` for Use on Personal Machine
 
+The instructions here are for building and running the main application for use on your personal, standard computer.
+This may be useful for testing purposes.
+
 NOTE: The application is designed to run on Garrawarla, and your personal machine may not be powerful enough to feasibly run the `main` target.  
 For 24 frequency channels and 256 antenna inputs, we found `main` requires approximately 8GB of memory per process, and running with a few processes will take on the order of a few hours to complete.  
 It is possible to manually specify the number of processes to `mpirun` in `entrypoint.sh`, but there will be a tradeoff between memory usage and run time.
-
-The instructions here are for building and running the main application for use on your personal, standard computer.
-This may be useful for testing purposes.
 
 First, build the `main` target with Docker, using the provided script:
 
@@ -155,17 +151,17 @@ The difficulty of installation of Singularity depends on your operating system.
 
 ### Linux
 
-Instructions can be found [here](https://sylabs.io/guides/3.8/admin-guide/installation.html#installation-on-linux) from Singularity and [here](https://pawseysc.github.io/singularity-containers/44-setup-singularity/index.html) from Pawsey.  
+Instructions can be found [here](https://sylabs.io/guides/3.8/admin-guide/installation.html#installation-on-linux) from Singularity and [here](https://pawseysc.github.io/singularity-containers/44-setup-singularity/index.html) from Pawsey. Depending on your distro, it may be as simple as installing the Singularity package from your package manager.
 
 ### Mac
 
 For installing Singularity on Mac, we recommend using [Brew](https://brew.sh/).  
-Installation is then as simple as installing the [Singularity Brew package](https://formulae.brew.sh/formula/singularity#default) (a single terminal command).
+Installation is then as simple as installing the [Singularity Brew package](https://formulae.brew.sh/formula/singularity#default).
 
 ### Windows
 
 Installation on Windows is the most difficult, and thus we recommend not using Windows to build the application with Singularity if possible.  
-Instructions may be found [here](https://sylabs.io/guides/3.8/admin-guide/installation.html#installation-on-windows-or-mac) from Singularity.
+Instructions from Singularity may be found [here](https://sylabs.io/guides/3.8/admin-guide/installation.html#installation-on-windows-or-mac).
 
 ## User Interface
 
