@@ -101,13 +101,18 @@ def test_many_signal_one_pfb(run_script: Path, working_dir: Path) -> None:
     assert set(output_dir_contents) == set(tile_output_filenames + [log_file_name])
 
     # Note: need to manually inspect output log file.
+        expected = numpy.fft.irfft([0,0,2+29j,0,-83-8j,54,-160], norm=None)*12
+        expectedfull = numpy.full(1280000,expected,dtype=numpy.int16)
+        expectedfull = expectedfull.flatten()
 
     for filename in tile_output_filenames:
         signal = read_output_signal(output_dir / filename)
         signallist = signal.tolist()
-        expected = numpy.fft.irfft([0,0,2+29j,0,-83-8j,54,-160], norm=None)*12
-        expectedfull = numpy.full(1280000,array,dtype=numpy.int16)
-        assert signallist == expectedfull
+        error = signal - expectedfull
+        norm_sq_errors = (error * error) / (expectedfull * expectedfull)
+        assert numpy.mean(norm_sq_errors) <= 0.005
+        deviation_prob = numpy.mean(numpy.abs(error) > numpy.std(expectedfull))
+        assert deviation_prob <= 1e-6
         del signal
 
 def test_invalid_command_line_arguments(run_script: Path, working_dir: Path) -> None:
