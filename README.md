@@ -82,8 +82,8 @@ At this stage, the image is stored internally within Docker - no visible file ou
 Next, you need to convert the Docker image to a Singularity image.  
 There are a few options for which system to perform the conversion on:
 
-- Use Singularity installed on your personal machine. Installation of Singularity is fairly easy if you use Linux or Mac, but difficult for Windows. Please see the "Installing Singularity" section for details.
-- Use Singularity already installed on Garrawarla, either on the login nodes or on the compute nodes with an interactive SLURM job. Using the compute nodes is likely fastest to build, but it does require transferring the >5GB Docker image to Garrawarla first.
+- Use Singularity installed on your personal machine. The difficulty of installation depends on your operating system. Please see the "Installing Singularity" section for details.
+- Use Singularity already installed on Garrawarla, either on the login nodes or on the compute nodes with an interactive SLURM job. However, it does require transferring the >5GB Docker image to Garrawarla first. This is our recommended method if you have a good internet connection.
 
 Convert the Docker image to a tar file:
 
@@ -147,21 +147,23 @@ Then simply run the `main` target with Docker, using the provided script:
 ## Installing Singularity
 
 If you are building the application to run on Garrawarla, you will need to have Singularity installed on whichever machine you use to perform the build.  
-The difficulty of installation of Singularity depends on your operating system.
+If you choose not to build on Garrawarla, you will need to install Singularity yourself.
 
 ### Linux
 
-Instructions can be found [here](https://sylabs.io/guides/3.8/admin-guide/installation.html#installation-on-linux) from Singularity and [here](https://pawseysc.github.io/singularity-containers/44-setup-singularity/index.html) from Pawsey. Depending on your distro, it may be as simple as installing the Singularity package from your package manager.
+Depending on your distro, prebuilt Singularity packages may be available for simple installation from your package manager. Try searching for "singularity" or "singularity-container".
+
+Alternatively, you may need to build from source. Instructions can be found [here](https://sylabs.io/guides/3.8/admin-guide/installation.html#installation-on-linux) from Singularity and [here](https://pawseysc.github.io/singularity-containers/44-setup-singularity/index.html) from Pawsey.  
 
 ### Mac
 
-For installing Singularity on Mac, we recommend using [Brew](https://brew.sh/).  
-Installation is then as simple as installing the [Singularity Brew package](https://formulae.brew.sh/formula/singularity#default).
+Installation on Mac may be done by building Singularity from source, or using a Vagrant virtual machine.
+Instructions can be found [here](https://sylabs.io/guides/3.8/admin-guide/installation.html#installation-on-windows-or-mac).
 
 ### Windows
 
-Installation on Windows is the most difficult, and thus we recommend not using Windows to build the application with Singularity if possible.  
-Instructions from Singularity may be found [here](https://sylabs.io/guides/3.8/admin-guide/installation.html#installation-on-windows-or-mac).
+Installation on Windows may be done by building Singularity from source, or using a Vagrant virtual machine.
+Instructions can be found [here](https://sylabs.io/guides/3.8/admin-guide/installation.html#installation-on-windows-or-mac).
 
 ## User Interface
 
