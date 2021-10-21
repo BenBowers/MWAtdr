@@ -101,12 +101,17 @@ def test_many_signal_one_pfb(run_script: Path, working_dir: Path) -> None:
     assert set(output_dir_contents) == set(tile_output_filenames + [log_file_name])
 
     # Note: need to manually inspect output log file.
-
+    # Calculate Block
+    known = numpy.fft.irfft([0,0,2+29j,0,-83-8j,54,-160], norm=None)*12
+    timeDomain = numpy.full((160*64000, 12), known)
+    timeDomain = timeDomain.flatten()
     for filename in tile_output_filenames:
         signal = read_output_signal(output_dir / filename)
-        expected = [42,255,115,0,167,255,246,255,188,255,118,1,82,254,46,1,59,255,246,255,39,0,187,0]*10240000
-        signallist = signal.tolist()
-        assert signallist == expected
+        errors = signal - timeDomain
+        norm_sq_errors = (errors * errors) / (timeDomain * timeDomain)
+        assert numpy.mean(norm_sq_errors) <= 0.005
+        deviation_prob = numpy.mean(numpy.abs(errors) > numpy.std(timeDomain))
+        assert deviation_prob <= 1e-6
         del signal
 
 def test_invalid_command_line_arguments(run_script: Path, working_dir: Path) -> None:
